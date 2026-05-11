@@ -18,12 +18,12 @@
     "code-review"
   ],
   "skills": [
-    "./skills/prep/SKILL.md",
-    "./skills/research/SKILL.md",
-    "./skills/plan/SKILL.md",
-    "./skills/plan-review/SKILL.md",
-    "./skills/develop/SKILL.md",
-    "./skills/deploy/SKILL.md",
-    "./skills/orchestrate/SKILL.md"
+    "./skills/prep/",
+    "./skills/research/",
+    "./skills/plan/",
+    "./skills/plan-review/",
+    "./skills/develop/",
+    "./skills/deploy/",
+    "./skills/orchestrate/"
   ]
 }
