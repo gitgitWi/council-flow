@@ -15,6 +15,31 @@ Develop turns `tasks.md` into code, one checkbox at a time. Each unchecked behav
 
 If `tasks.md` does not exist and the user is asking for an implementation, run `flow:plan` first — even a 5-line `tasks.md` is better than freestyling.
 
+### Prep precondition check (run first, every invocation)
+
+Before touching code, verify the workspace is the one prep would have created. If not, commits will land on the wrong branch.
+
+```bash
+# Worktree + branch + planning dir presence
+WT_PATH="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "not a git repo"; exit 1; }
+WT_PARENT="$(basename "$(dirname "$WT_PATH")")"
+case "$WT_PARENT" in *.worktrees) IN_WORKTREE=1;; *) IN_WORKTREE=0;; esac
+BRANCH="$(git branch --show-current)"
+case "$BRANCH" in feature/*|fix/*|chore/*|refactor/*|docs/*) ON_TASK_BRANCH=1;; *) ON_TASK_BRANCH=0;; esac
+TASKS="$(ls -1 .planning/*/tasks.md 2>/dev/null | head -n1)"
+```
+
+Decision matrix:
+
+| Worktree | Task branch | `tasks.md` | Action |
+|---|---|---|---|
+| yes | yes | yes | Proceed with the core loop. |
+| any | any | no | **Stop.** Run `flow:plan` first — develop has nothing to execute without `tasks.md`. |
+| no | no | yes | Suspicious: there is a tasks file but no isolated worktree/branch. Tell the user, then ask: (a) run `flow:prep` to move the work into a worktree (preferred — preserves the in-progress branch by `--force` only with explicit consent), (b) continue in-place on the current branch (commits land here — confirm the user accepts that). Do not auto-decide. |
+| no | yes | yes | On a task branch but not in a worktree. Usually fine (the user just opened the branch directly without prep). Confirm with the user once at the start of the session, then continue. Future commits land on this branch. |
+
+Special case — **uncommitted changes on a non-task branch (e.g., `main`)**: stop immediately. Do not commit on `main`. Offer to stash + run `flow:prep` to move the work into a fresh worktree.
+
 ## The core loop
 
 For each unchecked item in `tasks.md`, top to bottom:

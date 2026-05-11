@@ -7,6 +7,38 @@ description: Produce a tight one-pager `plan.md` and a Given-When-Then checklist
 
 A flow plan is **a one-pager that explains the approach, not the code**. Inspired by Amazon's one-pager / six-pager: short, explicit, and self-contained. The reader should finish in five minutes and know what is going to be built and how.
 
+## Prep precondition check (run first, every invocation)
+
+Before writing anything, verify the worktree + branch + planning directory exist. If not, the user has skipped `flow:prep` and `plan.md` would land in the wrong place.
+
+```bash
+# 1. Are we in a flow worktree? (heuristic: parent dir name ends in .worktrees)
+WT_PATH="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "not a git repo"; exit 1; }
+WT_PARENT="$(basename "$(dirname "$WT_PATH")")"
+case "$WT_PARENT" in *.worktrees) IN_WORKTREE=1;; *) IN_WORKTREE=0;; esac
+
+# 2. Are we on a typed branch (feature/* | fix/* | chore/* | refactor/* | docs/*)?
+BRANCH="$(git branch --show-current)"
+case "$BRANCH" in feature/*|fix/*|chore/*|refactor/*|docs/*) ON_TASK_BRANCH=1;; *) ON_TASK_BRANCH=0;; esac
+
+# 3. Is there a .planning/<date>-<task>/meta.md to write into?
+META="$(ls -1 .planning/*/meta.md 2>/dev/null | head -n1)"
+[[ -n "$META" ]] && HAS_PLANNING=1 || HAS_PLANNING=0
+```
+
+Decision matrix:
+
+| In worktree | On task branch | Has `.planning/.../meta.md` | Action |
+|---|---|---|---|
+| yes | yes | yes | Proceed. This is the normal post-prep state. |
+| no | no | no | **Stop.** Tell the user prep was skipped and ask: (a) run `flow:prep` now (recommended), (b) proceed in-place on the current branch (only sensible for size S, and you must still create `.planning/<date>-<task>/meta.md` manually before writing the plan), (c) abort. |
+| any | yes | no | Branch exists but planning dir is missing. Ask the user whether the prior planning was cleaned up (rare) or this is a new task on a reused branch (more common). Create `.planning/<date>-<task>/meta.md` before writing the plan either way. |
+| any | any | yes | Planning dir exists. Proceed and write into the existing dir — do not create a second one for the same date+task. |
+
+Do not silently fix the situation. The decision affects which branch commits land on and where artifacts get audited; the user should make it.
+
+If the user picks "proceed in-place" without prep, write the size into the manually-created `meta.md` so downstream skills (especially `flow:develop`) see consistent metadata.
+
 ## Output files
 
 Both written under `<worktree>/.planning/<date>-<task>/`:
