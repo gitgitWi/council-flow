@@ -59,7 +59,16 @@ One line: "ship as-is" | "ship after minor edits" | "rework needed".
 
 ## Running the reviewers in parallel
 
-Issue all three Bash calls in the same message so they execute in parallel. See `../../references/multi-llm.md` for the exact invocation patterns.
+Issue all three Bash calls in the same message so they execute in parallel. See `../../references/multi-llm.md` for the exact invocation patterns, including the **mandatory pre-flight check, post-call verification, and quorum policy** when one or more reviewers fail (auth expiry, rate limit, network, etc.).
+
+Quick recap of the failure handling, in this skill's terms:
+
+- Run pre-flight (`command -v gemini` etc.) and skip any missing CLI up front.
+- Wrap each call with `timeout` and capture the exit code; never let one CLI failure abort the parent shell.
+- After the parallel batch returns, verify each reviewer file (exit code, non-empty, no failure signature) before reading it. If a check fails, write `code-reviews/plan-<reviewer>.FAILED.md` and continue.
+- **≥ 2 valid reviews** → synthesize as normal, list missing reviewer(s) under `## 결손 리뷰어` in `plan-summary.md`.
+- **1 valid review** → stop and ask the user (retry / swap reviewer / proceed as single-reviewer with explicit labelling).
+- **0 valid reviews** → stop, do not synthesize, surface failure records.
 
 ## Synthesizing the summary
 
@@ -74,7 +83,7 @@ After all three review files exist:
 # 플랜 리뷰 요약 — <task>
 
 ## 한 줄 평가
-<3개 모델의 verdict 종합>
+<성공한 모델들의 verdict 종합>
 
 ## 합의된 강점
 - ...
@@ -89,6 +98,10 @@ After all three review files exist:
 - [ ] plan.md에 반영할 것
 - [ ] tasks.md에 추가할 것
 - [ ] 사용자 확인 필요한 것
+
+## 결손 리뷰어
+(있을 때만 추가. 없으면 이 섹션 생략.)
+- gemini-3.1-pro: rate limit (자세한 내용은 `plan-gemini.FAILED.md`)
 
 ## 모델별 리뷰 원본
 - [Gemini 3.1 Pro](./plan-gemini.md)

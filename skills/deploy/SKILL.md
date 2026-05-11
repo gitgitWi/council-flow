@@ -112,9 +112,18 @@ note it as "L<start>-L<end>" and use the starting line.
 "merge as-is" | "merge after minor edits" | "request changes".
 ```
 
-After the calls return, **verify each file exists and has content.** A silent CLI failure must not slip through.
+After the calls return, **verify each file exists and has content.** A silent CLI failure must not slip through. The full verification + fallback policy (pre-flight, exit code, empty output, failure-signature grep, quorum policy, FAILED.md record format) lives in `../../references/multi-llm.md` — apply it here verbatim.
 
-See `../../references/multi-llm.md` for the exact invocation patterns.
+Quick recap for code review specifically:
+
+- Pre-flight (`command -v gemini` / `command -v opencode`); skip a missing CLI without aborting.
+- Wrap each call with `timeout 600`, capture exit code; never let one failure kill the parallel batch.
+- Verify each output: exit code 0, file non-empty, no `rate limit / unauthorized / model not found / ...` signature in the first 40 lines. Failures get a `code-<reviewer>.FAILED.md`.
+- **≥ 2 valid reviews** → synthesize as normal; list the missing reviewer under `## 결손 리뷰어` in `code-summary.md`, and inline comments only attribute models that actually produced output.
+- **1 valid review** → stop and ask the user (retry / swap reviewer / proceed as single-reviewer with explicit labelling). Do **not** post a single-reviewer code-review pretending it was multi-LLM.
+- **0 valid reviews** → stop. Do not post any review. Surface failure records.
+
+Posting a review with fewer than the original reviewer count is allowed; pretending the missing reviewer agreed is not. The model-signature footer on inline comments must list only the models that actually produced that finding.
 
 ## Step 5 — Synthesize code-summary.md (Korean)
 
@@ -143,6 +152,10 @@ Read each reviewer file once, extract findings, and write `code-reviews/code-sum
 
 ## 머지 권장
 - [ ] 권장 / 조건부 권장 / 비권장 + 이유
+
+## 결손 리뷰어
+(있을 때만 추가. 없으면 이 섹션 생략.)
+- gemini-3.1-pro: rate limit (자세한 내용은 `code-gemini.FAILED.md`)
 
 ## 모델별 리뷰 원본
 - [Gemini 3.1 Pro](./code-gemini.md)

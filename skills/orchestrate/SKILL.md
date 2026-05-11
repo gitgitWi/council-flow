@@ -85,6 +85,7 @@ Each sub-skill should report its outcome. If any step fails:
 
 - **prep fails** (branch exists, dirty tree, etc.) — surface the error, ask the user.
 - **research / plan / plan-review fail** — usually recoverable, show what went wrong and offer to retry.
+- **plan-review reviewer CLI(s) fail** (auth, rate limit, network, etc.) — the per-skill quorum policy applies (see `../../references/multi-llm.md`): ≥2 valid reviews → continue with synthesis and a `## 결손 리뷰어` note; 1 valid → ask user; 0 valid → stop. Orchestrate does not override these decisions.
 - **develop fails mid-implementation** — stop. The tasks.md state shows progress; the user can resume by invoking `flow:develop` directly when they want to continue.
 
 Do not retry silently. Orchestrate is a sequencer, not a self-healing pipeline.
