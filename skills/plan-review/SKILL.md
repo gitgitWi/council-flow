@@ -27,6 +27,69 @@ Use three reviewers by default; the diversity is the point.
 
 If the user wants only two reviewers (token / time budget), keep Gemini + one of the OpenCode models. Always keep at least two; one reviewer is not a "multi-LLM review."
 
+## Frontmatter (every generated document)
+
+The reviewer files, the synthesized summary, and any superseded plan version all carry frontmatter. Schema in `../../references/frontmatter.md`.
+
+Per-reviewer (`code-reviews/plan-<reviewer>.md`) — instruct the reviewer to start its output with this block (some CLIs strip it; if so, prepend it after the call returns):
+
+```yaml
+---
+title: "Plan review — <task> — <reviewer>"
+type: plan-review
+task: <kebab task name>
+task_date: <YYYY-MM-DD>
+created: <today>
+last_updated: <today>
+status: active
+size: <S|M|L>
+parent: ../plan.md
+related:
+  - ../tasks.md
+  - ./plan-summary.md (synthesized summary)
+reviewer: gemini-3.1-pro
+cli: gemini
+verdict: ship-as-is        # filled by Claude after reading reviewer output
+prompted_against:
+  - /abs/.../plan.md
+  - /abs/.../tasks.md
+---
+```
+
+Synthesized summary (`code-reviews/plan-summary.md`):
+
+```yaml
+---
+title: "Plan review summary — <task>"
+type: plan-summary
+task: <kebab task name>
+task_date: <YYYY-MM-DD>
+created: <today>
+last_updated: <today>
+status: active
+size: <S|M|L>
+parent: ../plan.md
+related:
+  - ./plan-gemini.md
+  - ./plan-kimi.md
+  - ./plan-deepseek.md
+reviewers:
+  - gemini-3.1-pro
+  - opencode-go/kimi-k2.6
+  - opencode-go/deepseek-v4-pro
+missing_reviewers: []      # populate with the failed reviewers, if any
+---
+```
+
+When versioning the plan (substantive changes apply), the renamed `plan.v<N>.md` gets:
+
+```yaml
+status: superseded
+superseded_by: ./plan.md
+```
+
+…and the new `plan.md` gets `version: <N+1>` and `supersedes: ./plan.v<N>.md`. Same rules for `tasks.md` ↔ `tasks.v<N>.md` if tasks change.
+
 ## Prompt template
 
 Same template across reviewers. Variables are filled in at call time.
@@ -121,5 +184,6 @@ Do **not** delete old plan versions. They are part of the audit trail.
 ## Reference
 
 - Multi-LLM invocation: `../../references/multi-llm.md`
+- Frontmatter schema: `../../references/frontmatter.md`
 - Model registry: `../../references/models.md`
 - Directory layout: `../../references/directory-structure.md`

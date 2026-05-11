@@ -83,6 +83,61 @@ Three reviewers by default. Write their outputs to `<worktree>/.planning/<date>-
 
 Reuse the prompt below across reviewers; only the output file changes. Issue all three Bash calls in the same message to run in parallel.
 
+### Frontmatter (every generated document)
+
+Each reviewer file and the synthesized `code-summary.md` carry frontmatter. Schema in `../../references/frontmatter.md`.
+
+Per-reviewer (`code-reviews/code-<reviewer>.md`) — instruct the reviewer to lead with this block; if its CLI strips frontmatter, prepend after the call returns:
+
+```yaml
+---
+title: "Code review — <task> — <reviewer>"
+type: code-review
+task: <kebab task name>
+task_date: <YYYY-MM-DD>
+created: <today>
+last_updated: <today>
+status: active
+size: <S|M|L>
+parent: ../plan.md
+related:
+  - ./code-summary.md
+reviewer: gemini-3.1-pro
+cli: gemini
+verdict: merge-as-is        # filled by Claude after reading reviewer output
+pr: <PR number>
+prompted_against:
+  - /tmp/flow-pr-diff.patch
+  - /abs/.../plan.md
+---
+```
+
+Synthesized summary (`code-reviews/code-summary.md`):
+
+```yaml
+---
+title: "Code review summary — <task>"
+type: code-summary
+task: <kebab task name>
+task_date: <YYYY-MM-DD>
+created: <today>
+last_updated: <today>
+status: active
+size: <S|M|L>
+parent: ../plan.md
+related:
+  - ./code-gemini.md
+  - ./code-kimi.md
+  - ./code-deepseek.md
+reviewers:
+  - gemini-3.1-pro
+  - opencode-go/kimi-k2.6
+  - opencode-go/deepseek-v4-pro
+missing_reviewers: []
+pr: <PR number>
+---
+```
+
 ```
 You are reviewing a pull request. Focus on correctness, security, missed edge
 cases, test coverage, and maintainability.
@@ -216,4 +271,5 @@ git push
 
 - Inline review posting mechanics: `../../references/inline-review-posting.md`
 - Multi-LLM invocation: `../../references/multi-llm.md`
+- Frontmatter schema: `../../references/frontmatter.md`
 - Model registry: `../../references/models.md`

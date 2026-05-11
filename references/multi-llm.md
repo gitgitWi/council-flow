@@ -128,9 +128,31 @@ After all reviewers return, for each reviewer file run **all three** of these ch
 When a reviewer fails (any of the three checks above), do **not** delete the partial output. Instead:
 
 1. Move the partial file aside: `mv plan-gemini.md plan-gemini.partial.md` (only if it has content; if empty, delete it).
-2. Write a short failure record at `code-reviews/plan-gemini.FAILED.md`:
+2. Write a short failure record at `code-reviews/plan-gemini.FAILED.md` (frontmatter schema in `frontmatter.md`):
 
    ```markdown
+   ---
+   title: "Plan review FAILED — <task> — gemini-3.1-pro"
+   type: review-failed
+   task: <kebab task name>
+   task_date: <YYYY-MM-DD>
+   created: <today>
+   last_updated: <today>
+   status: failed
+   size: <S|M|L>
+   parent: ../plan.md
+   related:
+     - ./plan-summary.md
+     - ./plan-gemini.partial.md  # only if partial output preserved
+   reviewer: gemini-3.1-pro
+   cli: gemini
+   detected_by: failure-signature   # missing-binary | nonzero-exit | empty-output | failure-signature
+   signature_matched: "rate limit"  # only when detected_by is failure-signature
+   exit_code: 0
+   when: 2026-05-11T15:42:00+09:00
+   partial_output: ./plan-gemini.partial.md  # omit if no partial preserved
+   ---
+
    # plan-gemini — FAILED
 
    - **Reviewer**: gemini-3.1-pro (CLI: gemini)
