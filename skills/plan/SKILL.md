@@ -137,7 +137,17 @@ is "just merge", say so explicitly.
 
 ## tasks.md structure
 
-Given-When-Then checklist. Each task is **a behavior, not a step**. The develop skill will treat each unchecked item as a TDD cycle (write test → implement → commit).
+Given-When-Then **checkbox list**. Each task is **a behavior, not a step**. The develop skill will treat each unchecked item as a TDD cycle (write test → implement → commit).
+
+> **Format is non-negotiable: `- [ ]` bullets, never a markdown table.**
+> "Checklist" in this plugin literally means "list of `- [ ]` items." A table cell cannot be checked off, cannot be appended to mid-task, and breaks `flow:develop`, which reads progress by scanning for `[ ]` vs `[x]`. The same rule applies to *any* file whose role is a checklist — audit checklists, status checklists, verification checklists. If you reach for a table to show "item / status / note," stop and use:
+>
+> ```markdown
+> - [ ] **Item** — note. Status: ❌
+> - [x] **Item** — note. Status: ✅
+> ```
+>
+> Tables are fine for *inventories* or *comparison matrices* (read-only reference data). They are wrong for anything called a checklist.
 
 ```markdown
 # Tasks — <task name>
@@ -164,6 +174,7 @@ Given-When-Then checklist. Each task is **a behavior, not a step**. The develop 
 
 **Rules:**
 
+- **Every item is a `- [ ]` checkbox.** No markdown tables, no plain bullets, no numbered lists. If `flow:develop` can't toggle it from `[ ]` to `[x]`, it doesn't belong here.
 - One behavior per checkbox. Don't bundle.
 - Mention "non-TDD" explicitly for config/dep/rename tasks — see `../../references/tdd-policy.md` for which tasks skip TDD.
 - The order roughly follows implementation order, but the develop skill picks the next unchecked task and decides if dependencies require reordering.
