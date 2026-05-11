@@ -2,56 +2,145 @@
 
 For model IDs and CLI flags, see `models.md`. This file is about *how* to drive other coding agents from inside a flow skill.
 
-## Core principle
+## Core principles
 
-**Never paste raw output from another LLM into your conversation.** Always pipe to a file, then read only the parts you need. Other LLMs emit verbose preambles, restatements, and reasoning that bloat the orchestrator's context.
+1. **Never paste raw output from another LLM into your conversation.** Read the file once during synthesis; do not stream raw CLI output into the orchestrator's context.
+2. **The contributor writes the file directly via its own Write tool.** Do not capture stdout as the artifact. Stdout becomes a diagnostic runlog; the file at the agreed path *is* the review. This plays to agent CLIs' native shape (they are built around tool loops, not stateless completion) and avoids stdout-wrapper drift across CLIs (Gemini wraps in JSON, opencode emits JSONL events, codex prefixes/suffixes).
+3. **Every contributor file ends with a sentinel.** Without an explicit completion marker, "file exists and is non-empty" cannot distinguish "still being written" from "wrote half then died." The sentinel is the only reliable signal that the contributor finished.
+
+The sentinel is, for every skill in this plugin:
+
+```
+<!-- council-flow:review-complete -->
+```
+
+It must appear as the **last line** of the contributor's output file (no trailing whitespace, no blank lines after).
+
+## Dispatch contract
+
+The prompt to every contributor must include, near the top, three explicit instructions:
+
+1. **Use your Write tool to write the review to `<absolute path>`.** Not stdout.
+2. **The last line of the file MUST be exactly `<!-- council-flow:review-complete -->`.**
+3. **Do not ask clarifying questions; do not print the review to stdout (only a one-line confirmation).**
+
+If a CLI does not expose a Write tool in non-interactive mode (rare today — `gemini --yolo`, `opencode run`, `codex exec`, `claude -p --allowed-tools 'Read,Write'` all do), fall back to stdout-capture and apply a `tee` of the runlog alongside it. Document the fallback in the skill that uses it.
 
 ## Calling pattern (Gemini)
 
 ```bash
-gemini --model gemini-3.1-pro --yolo --skip-trust --prompt "$(cat <<'PROMPT'
-You are reviewing a plan document for a software change.
+gemini --model gemini-3-pro-preview --yolo --skip-trust --prompt "$(cat <<'PROMPT'
+You are a non-interactive reviewer. Use Read and Write tools. Do not ask questions.
 
-Read the plan at <abs-path>/plan.md and the task list at <abs-path>/tasks.md.
-Produce a review with the following sections in Markdown:
+TASK:
+1. Read the plan at <abs-path>/plan.md and the task list at <abs-path>/tasks.md.
+2. Write your review using the Write tool to: <abs-path>/code-reviews/plan-gemini.md
+3. The LAST LINE of the file MUST be exactly:
+     <!-- council-flow:review-complete -->
+4. Print only: "wrote plan-gemini.md"
+
+Review sections (Markdown):
 - Strengths
 - Risks / gaps
 - Concrete suggestions (file:line where applicable)
 - Verdict: ship / revise
 
-Focus on correctness and missed edge cases. Be specific.
+Focus on correctness and missed edge cases.
 PROMPT
-)" > .planning/<task>/code-reviews/plan-gemini.md
+)" > .planning/<task>/code-reviews/_runlog-gemini.txt \
+   2> .planning/<task>/code-reviews/_runlog-gemini.stderr
 ```
+
+Note the `> _runlog-gemini.txt` — that captures stdout as a diagnostic log, **not** as the review. The review file is what Gemini's Write tool produced.
 
 ## Calling pattern (OpenCode)
 
 ```bash
-opencode --model opencode-go/kimi-k2.6 --prompt "$(cat <<'PROMPT'
-... same kind of prompt ...
+opencode run --model opencode-go/kimi-k2.6 --format json "$(cat <<'PROMPT'
+You are a non-interactive reviewer. Use Read and Write tools. Do not ask questions.
+
+TASK:
+1. Read the plan at <abs-path>/plan.md.
+2. Write your review using the Write tool to: <abs-path>/code-reviews/plan-kimi.md
+3. The LAST LINE of the file MUST be exactly:
+     <!-- council-flow:review-complete -->
+4. Print only: "wrote plan-kimi.md"
+
+(... review sections ...)
 PROMPT
-)" > .planning/<task>/code-reviews/plan-kimi.md
+)" > .planning/<task>/code-reviews/_runlog-kimi.jsonl \
+   2> .planning/<task>/code-reviews/_runlog-kimi.stderr
 ```
+
+**Caveat for `opencode run`:** every call loads ~30k tokens of agent context before the model sees the prompt (verified — even a one-word completion costs 30k input tokens). For latency-sensitive or token-sensitive dispatch, prefer Gemini. Document the cost explicitly in the calling skill so the user can opt out.
 
 ## Parallel execution
 
-For Plan Review and Code Review, run all reviewer CLIs in parallel — they are independent.
+For Plan Review and Code Review, dispatch all reviewer CLIs in parallel — they are independent. With the file-write contract this is straightforward:
 
 ```bash
-# In your skill, kick all three off in the same step
-gemini --model gemini-3.1-pro ... > .../plan-gemini.md &
-opencode --model opencode-go/kimi-k2.6 ... > .../plan-kimi.md &
-opencode --model opencode-go/deepseek-v4-pro ... > .../plan-deepseek.md &
+gemini --model gemini-3-pro-preview --yolo --skip-trust --prompt "$PROMPT_GEMINI" \
+    > .../_runlog-gemini.txt 2> .../_runlog-gemini.stderr &
+opencode run --model opencode-go/kimi-k2.6 --format json "$PROMPT_KIMI" \
+    > .../_runlog-kimi.jsonl 2> .../_runlog-kimi.stderr &
+opencode run --model opencode-go/deepseek-v4-pro --format json "$PROMPT_DEEPSEEK" \
+    > .../_runlog-deepseek.jsonl 2> .../_runlog-deepseek.stderr &
 wait
 ```
 
 If invoking from Claude tool calls instead of a single shell pipeline, issue the Bash calls in the same message so Claude executes them in parallel.
 
+## Heartbeat watcher (mandatory for any dispatch > 60s)
+
+Without a heartbeat, a hung contributor is indistinguishable from a slow one. Dispatch loops that just `wait` for the ceiling burn 10+ minutes of user time on a failure detectable in 60s.
+
+Run this watcher in parallel with the dispatch. Each iteration writes one line; the orchestrator can stream those lines to the user (via Monitor tool or chat output) so progress is visible. Exit on sentinel found, on stale (no size change for N checks), or on max-check timeout:
+
+```bash
+watch_review() {
+  local file="$1" max_checks="${2:-25}" sentinel='<!-- council-flow:review-complete -->'
+  local prev_size=-1 stale_count=0
+  for i in $(seq 1 "$max_checks"); do
+    sleep 60
+    local ts=$(date +%H:%M:%S)
+    if [[ ! -f "$file" ]]; then
+      echo "$ts [#$i/$max_checks] WAITING — $(basename "$file") not yet created"
+      continue
+    fi
+    local size=$(wc -c < "$file" | tr -d ' ')
+    local last=$(tail -1 "$file")
+    if [[ "$last" == "$sentinel" ]]; then
+      echo "$ts [#$i/$max_checks] DONE — $(basename "$file") ${size}B, sentinel found"
+      return 0
+    elif [[ "$size" == "$prev_size" ]]; then
+      stale_count=$((stale_count + 1))
+      echo "$ts [#$i/$max_checks] STALE — ${size}B unchanged (stale_count=$stale_count)"
+      [[ "$stale_count" -ge 3 ]] && { echo "$ts STALL — 3 consecutive stale checks, treating as failed"; return 2; }
+    else
+      stale_count=0
+      echo "$ts [#$i/$max_checks] WRITING — ${size}B (was ${prev_size}B)"
+    fi
+    prev_size=$size
+  done
+  echo "$(date +%H:%M:%S) TIMEOUT — $max_checks heartbeats elapsed without sentinel"
+  return 1
+}
+
+# Usage in parallel with dispatch:
+gemini ... > runlog &
+watch_review ".../plan-gemini.md" 25 &
+wait
+```
+
+Heartbeat output is a stream of one-line events. It is safe to display directly to the user — unlike contributor file content, it does not interpolate untrusted model output into Claude's context.
+
 ## After invocation
 
-1. Verify each output file exists and is non-empty.
-2. **Read each file once** to extract structured findings — strengths, risks, suggestions, verdict. Do not dump all three into context simultaneously.
-3. Synthesize a Korean summary (`plan-summary.md` / `code-summary.md`):
+1. **Verify each output file ends with the sentinel** (`tail -1 "$file"`). No sentinel = treat as failed regardless of file size; partial writes look identical to complete ones without it.
+2. **Verify each output file has structural content** — at minimum one `## ` heading and one `- ` bullet within the first 50 lines. A non-empty file that contains only agent boilerplate ("I'll help you review...") will pass a naive size/signature check; the structural check catches it.
+3. **Read each file once** to extract structured findings — strengths, risks, suggestions, verdict. Do not dump all three into context simultaneously.
+4. **Verify file:line references** the contributors cite — when synthesizing, grep contributor outputs for path-shaped strings, check against `git ls-files`, and surface unverifiable paths under a "Paths to verify" section. Contributors hallucinate paths regularly; the synthesis should not promote them silently.
+5. Synthesize a Korean summary (`plan-summary.md` / `code-summary.md`):
    - 합의된 강점
    - 합의된 위험 요소
    - 모델 간 의견이 갈리는 지점 (이 부분이 가장 중요)
@@ -90,28 +179,37 @@ If a CLI is missing, do not attempt to call it. Mark it skipped (see "Recording 
 
 ### Wrapping each invocation
 
-Wrap each call so that **the orchestrator never reads raw error output into context**, and so a single failure cannot kill the parent shell. Use `timeout`, capture stderr to a sidecar file, and check the exit code explicitly. Recommended pattern:
+Wrap each call so that **the orchestrator never reads raw error output into context**, and so a single failure cannot kill the parent shell. Use `timeout`, capture stdout/stderr to **diagnostic runlog files** (the review itself lands at the agreed path via the CLI's Write tool — see "Dispatch contract" above), and check the exit code explicitly. Recommended pattern:
 
 ```bash
+# Review file (what the CLI writes via its Write tool):
+REVIEW=.planning/<task>/code-reviews/plan-gemini.md
+# Diagnostic runlog files (stdout/stderr capture; not the review):
+RUNLOG=.planning/<task>/code-reviews/_runlog-gemini.txt
+RUNERR=.planning/<task>/code-reviews/_runlog-gemini.stderr
+EXIT=.planning/<task>/code-reviews/_runlog-gemini.exit
+
 # Run with a hard timeout. Always succeed at the shell level so `wait` doesn't abort.
-( timeout 600 gemini --model gemini-3.1-pro --yolo --skip-trust \
-    --prompt "$(cat <<'PROMPT'
-... reviewer prompt ...
+( timeout 600 gemini --model gemini-3-pro-preview --yolo --skip-trust \
+    --prompt "$(cat <<PROMPT
+... reviewer prompt; MUST tell the CLI to Write its review to $REVIEW and end
+with the sentinel <!-- council-flow:review-complete --> ...
 PROMPT
-)" > .planning/<task>/code-reviews/plan-gemini.md \
-    2> .planning/<task>/code-reviews/plan-gemini.stderr; \
-  echo $? > .planning/<task>/code-reviews/plan-gemini.exit ) || true &
+)" > "$RUNLOG" 2> "$RUNERR"; \
+  echo $? > "$EXIT" ) || true &
 ```
 
-Repeat per reviewer in the same shell pipeline (or in parallel Bash tool calls), then `wait`.
+Repeat per reviewer in the same shell pipeline (or in parallel Bash tool calls). Run `watch_review "$REVIEW"` (see "Heartbeat watcher" above) in parallel so progress is visible, then `wait`.
 
 ### Post-call verification (mandatory)
 
-After all reviewers return, for each reviewer file run **all three** of these checks before reading the file content:
+After all reviewers return, for each reviewer file run **all five** of these checks before reading the file content:
 
-1. **Exit code** — read `.exit` sidecar. `0` = success, `124` = timeout, anything else = CLI error.
-2. **File exists and is non-empty** — `[[ -s plan-gemini.md ]]`. Empty output usually means the CLI printed only to stderr.
-3. **No known failure signature in the output file** — case-insensitive grep for any of these tokens in the *first 40 lines* of the output (don't scan the whole file — the reviewer's own analysis may legitimately mention these words):
+1. **Exit code** — read `_runlog-*.exit`. `0` = success, `124` = timeout, anything else = CLI error.
+2. **Review file exists and is non-empty** — `[[ -s plan-gemini.md ]]`. Empty file = treat as failed.
+3. **Sentinel present** — `tail -1 plan-gemini.md` must equal `<!-- council-flow:review-complete -->`. Absent sentinel = treat as failed regardless of size (the CLI died mid-write, or never finished, or hallucinated being done).
+4. **Structural content present** — within the first 50 lines the file must contain at least one `## ` heading **and** one `- ` bullet. A non-empty file of agent boilerplate ("I'll help you review...") will pass size and signature checks but fails this.
+5. **No known failure signature in the output file** — case-insensitive grep for any of these tokens in the *first 40 lines* (don't scan the whole file — the reviewer's own analysis may legitimately mention these words):
 
    ```
    rate limit | quota exceeded | usage limit | 429

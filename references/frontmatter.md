@@ -31,6 +31,8 @@ One of these per document. Search-friendly — keep the spelling stable.
 |---|---|
 | `meta` | `meta.md` |
 | `research` | `research.md` |
+| `brainstorm` | `brainstorm.md` (multi-LLM brainstorming synthesis) |
+| `brainstorm-contribution` | `brainstorms/<role>-<model>.md` (per-model raw output) |
 | `plan` | `plan.md` |
 | `plan-version` | `plan.v<N>.md` (superseded plan) |
 | `tasks` | `tasks.md` |
@@ -101,6 +103,26 @@ time_box: 10m                            # nominal time-box used (5m | 10m | 20m
 used_external_llm: true                  # set when Gemini/OpenCode produced raw output under code-reviews/
 external_llm_outputs:                    # only when used_external_llm is true
   - ./code-reviews/research-gemini.md
+```
+
+### `brainstorm` (multi-LLM brainstorming synthesis, authored by `flow:plan`)
+
+```yaml
+contributors:                            # models whose raw output is folded in
+  - gemini-3.1-pro
+  - opencode-go/kimi-k2.6
+missing_contributors: []                 # models that failed (mirrors plan-summary pattern)
+```
+
+### `brainstorm-contribution` (per-model raw output under `brainstorms/`)
+
+```yaml
+contributor: gemini-3.1-pro              # CLI-facing model id
+cli: gemini                              # which CLI binary produced this
+lens: architecture                       # architecture | risk | security — the assigned role
+prompted_against:                        # absolute paths the contributor was told to read
+  - /abs/.../meta.md
+  - /abs/.../research.md
 ```
 
 ### `plan-review` and `code-review` (per-reviewer files)

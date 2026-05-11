@@ -9,8 +9,14 @@ All flow skills read and write to a single per-task directory. Predictable paths
 ├── meta.md              # task name, branch, worktree, size estimate, started-at
 ├── plan.md              # current canonical plan (English, with optional Korean summary)
 ├── plan.v1.md           # previous plan version, kept only if plan-review supersedes
-├── tasks.md             # GWT checklist — single source of truth for progress
+├── tasks.md             # GWT checkbox list — single source of truth for progress
 ├── research.md          # optional, written by `flow:research`
+├── brainstorm.md        # optional, multi-LLM brainstorming synthesis (size L always,
+│                        #   size M when cross-module / security-sensitive / public-surface)
+├── brainstorms/         # raw per-model brainstorming outputs, written by `flow:plan`
+│   ├── architecture-gemini.md
+│   ├── risk-kimi.md
+│   └── security-deepseek.md  # size L only by default
 └── code-reviews/        # written by `flow:plan-review` and `flow:deploy`
     ├── plan-gemini.md
     ├── plan-kimi.md
@@ -68,6 +74,6 @@ If a particular project does not want planning artifacts committed, add `.planni
 
 ## Language policy
 
-- `plan.md`, `tasks.md`, `research.md`, `meta.md`: **English** (LLM-facing). Optionally include a short Korean summary at the bottom if the user wants quick scanning.
+- `plan.md`, `tasks.md`, `research.md`, `meta.md`, `brainstorm.md`: **English** (LLM-facing). Optionally include a short Korean summary at the bottom if the user wants quick scanning.
 - `code-reviews/plan-summary.md` and `code-reviews/code-summary.md`: **Korean** (user-facing — these are read by the human alongside Claude).
-- Individual model review files (`*-gemini.md`, etc.): whatever the model emits, no translation.
+- Individual model output files (`code-reviews/*-gemini.md`, `brainstorms/*-gemini.md`, etc.): whatever the model emits, no translation.
