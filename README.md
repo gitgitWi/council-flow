@@ -28,15 +28,34 @@ Atomic commits. TDD-first. `.planning/<date>-<task>/` as the working memory. Mul
 - Branches: `<type>/<task-name>` where type ∈ `feature|fix|chore|refactor|docs`
 - Commits: Conventional Commits, atomic (one behavior per commit)
 
-## Install (self-marketplace, local)
+## Install
+
+### From GitHub (recommended)
 
 ```bash
 # In Claude Code
+/plugin marketplace add gitgitWi/council-flow
+/plugin install flow@council-flow
+```
+
+GitHub shorthand resolves to this repo. Equivalent full forms also work:
+
+```bash
+/plugin marketplace add https://github.com/gitgitWi/council-flow.git    # HTTPS
+/plugin marketplace add git@github.com:gitgitWi/council-flow.git        # SSH (private/auth)
+```
+
+### From a local clone
+
+```bash
+git clone https://github.com/gitgitWi/council-flow.git ~/Codes/council-flow
 /plugin marketplace add ~/Codes/council-flow
 /plugin install flow@council-flow
 ```
 
-Adjust the marketplace path if you cloned elsewhere.
+The marketplace name `council-flow` comes from `.claude-plugin/marketplace.json` and is the same regardless of install source.
+
+See the Claude Code docs for the full `/plugin marketplace add` reference: https://code.claude.com/docs/en/discover-plugins.md
 
 ## References
 
