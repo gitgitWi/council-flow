@@ -19,6 +19,8 @@
         "email": "gitgitWi@gmail.com"
       },
       "license": "MIT",
+      "repository": "https://github.com/gitgitWi/council-flow",
+      "homepage": "https://github.com/gitgitWi/council-flow",
       "keywords": [
         "workflow",
         "tdd",

@@ -53,6 +53,10 @@ Shared reference docs live at the plugin root and are linked from each SKILL.md:
 
 - `scripts/prep.sh` — worktree + branch + `.planning/` scaffolding (idempotent)
 
+## Acknowledgements
+
+Inspired by [claude-octopus](https://github.com/nyldn/claude-octopus) — many of the design decisions here (multi-LLM orchestration, phase-based workflow, skill-per-step structure, plan/review separation) draw directly from patterns nyldn established there. `council-flow` is a smaller, opinionated subset focused on a single bilingual TDD-first development loop, but the foundations are theirs.
+
 ## License
 
 MIT
