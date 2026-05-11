@@ -27,14 +27,27 @@ All flow skills read and write to a single per-task directory. Predictable paths
 - **Task name**: kebab-case, derived from the task goal. Match the branch's name-portion (e.g. branch `feature/add-google-login` → task name `add-google-login`).
 - **Versioning**: `plan-review` only renames the old plan to `plan.v1.md` when it makes substantive changes. If it just confirms the plan, no version bump.
 
+## Frontmatter
+
+Every document in `.planning/<date>-<task>/` carries a YAML frontmatter block — `title`, `type`, `task`, `task_date`, `created`, `last_updated`, `status`, `size`, `parent`, `related`, plus per-type fields (versioning for `plan`/`tasks`, reviewer/verdict for `code-reviews/*`, etc.). The schema is the single source of truth for agentic search across tasks; see `frontmatter.md` for the full field list and per-type extensions.
+
 ## meta.md format
 
 ```markdown
 ---
+title: "Meta — Add Google login"
+type: meta
 task: add-google-login
+task_date: 2026-05-11
+created: 2026-05-11
+last_updated: 2026-05-11
+status: active
+size: M
+parent: ../../  # the repo root (no further parent)
+related: []
 branch: feature/add-google-login
 worktree: /Users/.../est-works.worktrees/add-google-login
-size: M
+base: main
 started: 2026-05-11
 goal: |
   Allow users to sign in with Google in addition to email/password.
@@ -45,7 +58,7 @@ goal: |
 (Free-form. Optional.)
 ```
 
-`size`: one of `S`, `M`, `L` (see prep skill for criteria).
+`size`: one of `S`, `M`, `L` (see prep skill for criteria). Other per-type fields are documented in `frontmatter.md`.
 
 ## Git policy
 
