@@ -28,6 +28,7 @@ Key cross-cutting conventions encoded in the references (treat as authoritative 
 - **Multi-LLM output handling**: Other-LLM output (Gemini, OpenCode/Kimi, OpenCode/DeepSeek) is *always* written to a file under `code-reviews/`, never piped back into Claude's context as raw text. See `references/multi-llm.md`.
 - **Model IDs live in `references/models.md`** — when models change, update there, not in individual skills.
 - **Atomic + Conventional Commits** with TDD pairs (`test(...)` then `feat(...)`). See `references/commit-conventions.md` and `references/tdd-policy.md`.
+- **Prefer lists over tables** in all authored docs. Tables render inconsistently across renderers and on mobile — reserve them for decision/comparison matrices. See `references/doc-style.md`.
 
 ## Working on the plugin itself
 

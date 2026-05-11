@@ -187,3 +187,4 @@ Do **not** delete old plan versions. They are part of the audit trail.
 - Frontmatter schema: `../../references/frontmatter.md`
 - Model registry: `../../references/models.md`
 - Directory layout: `../../references/directory-structure.md`
+- Doc style (prefer lists over tables): `../../references/doc-style.md`

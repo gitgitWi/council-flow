@@ -273,3 +273,4 @@ git push
 - Multi-LLM invocation: `../../references/multi-llm.md`
 - Frontmatter schema: `../../references/frontmatter.md`
 - Model registry: `../../references/models.md`
+- Doc style (prefer lists over tables): `../../references/doc-style.md`

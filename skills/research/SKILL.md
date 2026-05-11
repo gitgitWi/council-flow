@@ -98,3 +98,4 @@ If the user mentions "we did this before" or similar, check claude-mem search fo
 - Directory layout: `../../references/directory-structure.md`
 - Frontmatter schema: `../../references/frontmatter.md`
 - Calling other LLMs: `../../references/multi-llm.md`
+- Doc style (prefer lists over tables): `../../references/doc-style.md`

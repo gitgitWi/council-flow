@@ -199,3 +199,4 @@ Given-When-Then **checkbox list**. Each task is **a behavior, not a step**. The 
 - Directory layout: `../../references/directory-structure.md`
 - Frontmatter schema: `../../references/frontmatter.md`
 - TDD policy (what gets tests, what doesn't): `../../references/tdd-policy.md`
+- Doc style (prefer lists over tables): `../../references/doc-style.md`
