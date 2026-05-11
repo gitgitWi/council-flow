@@ -20,9 +20,25 @@ If you are not sure whether to research: **time-box it.** Spend 5–10 minutes s
 
 ## What to produce
 
-`<worktree>/.planning/<date>-<task>/research.md`, structured as:
+`<worktree>/.planning/<date>-<task>/research.md`, with the standard frontmatter (full schema in `../../references/frontmatter.md`):
 
 ```markdown
+---
+title: "Research — <task>"
+type: research
+task: <kebab task name>
+task_date: <YYYY-MM-DD>
+created: <today>
+last_updated: <today>
+status: active           # this doc rarely changes status
+size: <S|M|L>
+parent: ./meta.md
+related:
+  - ./plan.md (will consume these findings)
+time_box: 10m            # 5m | 10m | 20m | 60m
+used_external_llm: false # set true if Gemini/OpenCode produced raw output under code-reviews/
+---
+
 # Research — <task>
 
 ## Decision-relevant findings
@@ -80,4 +96,5 @@ If the user mentions "we did this before" or similar, check claude-mem search fo
 ## Reference
 
 - Directory layout: `../../references/directory-structure.md`
+- Frontmatter schema: `../../references/frontmatter.md`
 - Calling other LLMs: `../../references/multi-llm.md`

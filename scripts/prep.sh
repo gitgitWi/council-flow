@@ -91,11 +91,19 @@ mkdir -p "${WORKTREE_PATH}/${PLANNING_DIR}/code-reviews"
 
 cat > "${WORKTREE_PATH}/${PLANNING_DIR}/meta.md" <<META
 ---
+title: "Meta — ${TASK}"
+type: meta
 task: ${TASK}
+task_date: ${DATE}
+created: ${DATE}
+last_updated: ${DATE}
+status: active
+size: ${SIZE}
+parent: ../../
+related: []
 branch: ${BRANCH}
 worktree: ${WORKTREE_PATH}
 base: ${BASE}
-size: ${SIZE}
 started: ${DATE}
 goal: |
   ${GOAL:-<fill in>}

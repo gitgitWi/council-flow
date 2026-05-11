@@ -48,6 +48,53 @@ Both written under `<worktree>/.planning/<date>-<task>/`:
 
 Both files are **English** (any coding agent picks them up). Add a `## Korean summary (요약)` at the bottom of `plan.md` if the user wants to skim it quickly.
 
+## Frontmatter (every generated document)
+
+Both `plan.md` and `tasks.md` open with a YAML frontmatter block. The schema and per-type fields are in `../../references/frontmatter.md`; mirror `task`, `task_date`, and `size` from `meta.md`. Do not skip this — `frontmatter.md` exists so future agents can locate documents by `type: plan` / `task: <name>` without reading bodies.
+
+`plan.md`:
+
+```yaml
+---
+title: "Plan — <task name>"
+type: plan
+task: <kebab task name>
+task_date: <YYYY-MM-DD>
+created: <today>
+last_updated: <today>
+status: draft         # bump to "active" once the user signs off, "done" after deploy
+size: <S|M|L>
+parent: ./meta.md
+related:
+  - ./tasks.md (GWT checklist)
+  - ./research.md (if exists — pre-plan investigation)
+version: 1
+plan_review_run: false
+---
+```
+
+`tasks.md`:
+
+```yaml
+---
+title: "Tasks — <task name>"
+type: tasks
+task: <kebab task name>
+task_date: <YYYY-MM-DD>
+created: <today>
+last_updated: <today>
+status: draft         # bump to "active" once develop starts, "done" after all boxes checked
+size: <S|M|L>
+parent: ./plan.md
+related:
+  - ./meta.md
+version: 1
+total_tasks: <count at authoring time>
+---
+```
+
+For size-L plans broken into phase files (`plan-phase-1.md`, …): each phase file uses `type: plan-phase` with a `phase: <N>` field and `parent: ./plan.md` (the index). See `frontmatter.md` for the full per-type spec.
+
 ## plan.md structure
 
 ```markdown
@@ -139,4 +186,5 @@ Given-When-Then checklist. Each task is **a behavior, not a step**. The develop 
 ## Reference
 
 - Directory layout: `../../references/directory-structure.md`
+- Frontmatter schema: `../../references/frontmatter.md`
 - TDD policy (what gets tests, what doesn't): `../../references/tdd-policy.md`
