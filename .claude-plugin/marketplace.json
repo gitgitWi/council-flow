@@ -1,0 +1,33 @@
+{
+  "name": "claude-flow-plugin",
+  "owner": {
+    "name": "wjh",
+    "email": "est.wjh@gmail.com"
+  },
+  "metadata": {
+    "description": "Self-hosted marketplace for the flow plugin — opinionated multi-step development workflow.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "flow",
+      "source": "./",
+      "description": "Multi-step development workflow: prep → research → plan → plan-review → develop → deploy. Atomic commits, TDD-first, multi-LLM review.",
+      "version": "0.1.0",
+      "author": {
+        "name": "wjh",
+        "email": "est.wjh@gmail.com"
+      },
+      "license": "MIT",
+      "keywords": [
+        "workflow",
+        "tdd",
+        "multi-llm",
+        "atomic-commit",
+        "planning",
+        "code-review"
+      ],
+      "category": "workflow"
+    }
+  ]
+}

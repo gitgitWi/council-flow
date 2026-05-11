@@ -1,0 +1,27 @@
+{
+  "name": "flow",
+  "version": "0.1.0",
+  "description": "Opinionated multi-step development workflow: prep → research → plan → plan-review → develop → deploy. Atomic commits, TDD-first, Multi-LLM review.",
+  "author": {
+    "name": "wjh",
+    "email": "est.wjh@gmail.com"
+  },
+  "license": "MIT",
+  "keywords": [
+    "workflow",
+    "tdd",
+    "multi-llm",
+    "atomic-commit",
+    "planning",
+    "code-review"
+  ],
+  "skills": [
+    "./skills/prep/SKILL.md",
+    "./skills/research/SKILL.md",
+    "./skills/plan/SKILL.md",
+    "./skills/plan-review/SKILL.md",
+    "./skills/develop/SKILL.md",
+    "./skills/deploy/SKILL.md",
+    "./skills/orchestrate/SKILL.md"
+  ]
+}
