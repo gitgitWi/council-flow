@@ -1,6 +1,6 @@
-# claude-flow-plugin
+# council-flow
 
-An opinionated multi-step development workflow for Claude Code, packaged as a plugin.
+An opinionated multi-step development workflow for Claude Code — a small "council" of LLMs (Claude as orchestrator + Gemini + OpenCode/Kimi + OpenCode/DeepSeek) plans, reviews, and ships your changes together.
 
 ```
 prep → (research) → plan → (plan-review) → develop → deploy
@@ -32,8 +32,8 @@ Atomic commits. TDD-first. `.planning/<date>-<task>/` as the working memory. Mul
 
 ```bash
 # In Claude Code
-/plugin marketplace add ~/Codes/claude-flow-plugin
-/plugin install flow@claude-flow-plugin
+/plugin marketplace add ~/Codes/council-flow
+/plugin install flow@council-flow
 ```
 
 Adjust the marketplace path if you cloned elsewhere.
