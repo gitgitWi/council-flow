@@ -4,3 +4,9 @@
 .idea/
 .vscode/
 node_modules/
+
+# Multi-LLM dispatch diagnostic runlogs (regenerable from CLI re-runs)
+# Per references/multi-llm.md: stdout/stderr/exit are captured as diagnostic
+# runlogs alongside the actual review file. The review (code-*.md) is the
+# audit artifact and stays in git; runlogs are noise.
+_runlog-*
