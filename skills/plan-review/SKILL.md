@@ -17,15 +17,23 @@ If any of these are missing, do not run plan-review — go back to `flow:plan` f
 
 ## Reviewers
 
-Use three reviewers by default; the diversity is the point.
+Use three reviewers by default; the diversity is the point. Model IDs come from `../../references/models.md` — do not hardcode here, and re-check that file when models move.
 
-| File | Model | CLI |
-|---|---|---|
-| `code-reviews/plan-gemini.md` | `gemini-3.1-pro` | `gemini` |
-| `code-reviews/plan-kimi.md` | `opencode-go/kimi-k2.6` | `opencode` |
-| `code-reviews/plan-deepseek.md` | `opencode-go/deepseek-v4-pro` | `opencode` |
+Default trio (good signal / cost / latency mix):
 
-If the user wants only two reviewers (token / time budget), keep Gemini + one of the OpenCode models. Always keep at least two; one reviewer is not a "multi-LLM review."
+- `code-reviews/plan-gemini.md` — `gemini-3-pro-preview` via `gemini`
+- `code-reviews/plan-kimi.md` — `opencode-go/kimi-k2.6` via `opencode`
+- `code-reviews/plan-deepseek.md` — `opencode-go/deepseek-v4-pro` via `opencode`
+
+Alternates (swap in when the default trio is unavailable or the user wants a different lens):
+
+- `code-reviews/plan-codex.md` — `gpt-5-codex` via `codex` (third diverse stack; useful as a codex-side voice beyond gemini + opencode)
+- `code-reviews/plan-deepseek-flash.md` — `opencode-go/deepseek-v4-flash` (faster DeepSeek variant; trade depth for latency)
+- `code-reviews/plan-glm.md` — `opencode-go/glm-5.1` (fastest second opinion)
+
+If the user wants only two reviewers (token / time budget), keep Gemini + one of the OpenCode/Codex options. Always keep at least two; one reviewer is not a "multi-LLM review."
+
+CLI invocation flags are normative in `../../references/multi-llm.md` — in particular: `opencode run` must use `-m provider/model` (not `--format json`); `codex exec` must pass `--skip-git-repo-check --sandbox workspace-write --cd <abs-path>`. Do not paraphrase these flags in this skill; they were the root cause of the prior session's opencode/codex timeouts.
 
 ## Frontmatter (every generated document)
 
@@ -47,7 +55,7 @@ parent: ../plan.md
 related:
   - ../tasks.md
   - ./plan-summary.md (synthesized summary)
-reviewer: gemini-3.1-pro
+reviewer: gemini-3-pro-preview
 cli: gemini
 verdict: ship-as-is        # filled by Claude after reading reviewer output
 prompted_against:
@@ -74,7 +82,7 @@ related:
   - ./plan-kimi.md
   - ./plan-deepseek.md
 reviewers:
-  - gemini-3.1-pro
+  - gemini-3-pro-preview
   - opencode-go/kimi-k2.6
   - opencode-go/deepseek-v4-pro
 missing_reviewers: []      # populate with the failed reviewers, if any
@@ -164,10 +172,10 @@ After all three review files exist:
 
 ## 결손 리뷰어
 (있을 때만 추가. 없으면 이 섹션 생략.)
-- gemini-3.1-pro: rate limit (자세한 내용은 `plan-gemini.FAILED.md`)
+- gemini-3-pro-preview: rate limit (자세한 내용은 `plan-gemini.FAILED.md`)
 
 ## 모델별 리뷰 원본
-- [Gemini 3.1 Pro](./plan-gemini.md)
+- [Gemini 3 Pro Preview](./plan-gemini.md)
 - [Kimi K2.6](./plan-kimi.md)
 - [DeepSeek v4 Pro](./plan-deepseek.md)
 ```
