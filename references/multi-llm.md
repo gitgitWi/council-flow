@@ -56,7 +56,7 @@ Note the `> _runlog-gemini.txt` — that captures stdout as a diagnostic log, **
 ## Calling pattern (OpenCode)
 
 ```bash
-opencode run -m opencode-go/kimi-k2.6 "$(cat <<'PROMPT'
+PROMPT="$(cat <<'PROMPT_BODY'
 You are a non-interactive reviewer. Use Read and Write tools. Do not ask questions.
 
 TASK:
@@ -67,27 +67,40 @@ TASK:
 4. Print only: "wrote plan-kimi.md"
 
 (... review sections ...)
-PROMPT
-)" > .planning/<task>/code-reviews/_runlog-kimi.txt \
-   2> .planning/<task>/code-reviews/_runlog-kimi.stderr
+PROMPT_BODY
+)"
+
+printf '%s' "$PROMPT" | \
+  opencode run --dangerously-skip-permissions -m opencode-go/kimi-k2.6 \
+    > .planning/<task>/code-reviews/_runlog-kimi.txt \
+    2> .planning/<task>/code-reviews/_runlog-kimi.stderr
 ```
 
-Flag notes (verified 2026-05-12 against the installed `opencode` CLI):
+Flag notes (verified 2026-05-12 against `opencode` v1.14.x — re-test on upgrades):
+
+- **`--dangerously-skip-permissions` is mandatory for the file-write contract.** Without it, the agent loop hangs waiting for human approval of the Write tool. Empirically verified: a 540s dispatch produced 0 bytes of stdout/stderr because the LLM session sat blocked on permission approval. With the flag, the same call completes in 2-7 minutes. octo:review does not need this flag because it uses stdout-capture, not file-write.
+
+- **Pipe the prompt via stdin — never as a positional argument.** This is load-bearing.
+
+  ```bash
+  printf '%s' "$PROMPT" | opencode run --dangerously-skip-permissions -m <provider/model>   # ✅ correct
+  opencode run --dangerously-skip-permissions -m <provider/model> "$PROMPT"                  # ❌ silent hang on review-shape prompts
+  ```
+
+  Past a certain prompt size/complexity threshold (empirically: ~2.5KB with markdown and backticks), `opencode run` with a positional-arg prompt bootstraps successfully (config, plugins, file watcher all init) and then **never starts the LLM session** — no `build · model` header, no tool calls, no provider HTTP. The process burns the full timeout producing zero output. octo:review's `spawn.sh` hit the same class of bug (Issue #173 in their tracker, fixed in v9.2.2) for codex/claude and now pipes prompts via stdin for all providers. This pattern is mandatory for us too.
 
 - `-m, --model <provider/model>` — required for non-default routing. Long form `--model` also works.
-- **Do not pass `--format json`** unless you specifically want to parse the JSONL event stream. The default formatted output is what runlog capture expects; `json` mode emits raw agent events (start, tool-call, tool-result, end) and shells trying to grep success markers from that stream get false negatives.
-- Prompt may be passed as a positional `[message..]` argument (as shown above) or piped via stdin. Positional is simpler when wrapping with `timeout`.
 
-**Caveat for `opencode run`:** every call loads ~30k tokens of agent context before the model sees the prompt (verified — even a one-word completion costs 30k input tokens). On top of that, `opencode-go/*` models route through a remote provider, so cold-start latency stacks on top of the agent context load. For latency- or token-sensitive dispatch, prefer Gemini; reserve OpenCode for review steps where the agent loop is actually wanted (real diff + tool access). Document the cost explicitly in the calling skill so the user can opt out.
+- **Do not pass `--format json`** unless you specifically want to parse the JSONL event stream. The default formatted output is what runlog capture expects; `json` mode emits raw agent events (start, tool-call, tool-result, end) and shells trying to grep success markers from that stream get false negatives.
+
+**Caveat for `opencode run` — wall-clock cost:** every call loads ~30k tokens of agent context before the model sees the prompt (verified — even a one-word completion costs 30k input tokens). On top of that, `opencode-go/*` models route through a remote provider, so cold-start latency stacks on top of the agent context load. Empirically: a moderate review prompt that Gemini completes in ~2 min takes 5-7 min on `opencode-go/glm-5.1`. **Set `timeout 900` (15 min) for opencode reviewers — 540s is too tight.** For latency- or token-sensitive dispatch, prefer Gemini; reserve OpenCode for review steps where the agent loop is actually wanted (real diff + tool access).
+
+**Agent self-reads context aggressively.** Even when the prompt says "Read only if needed", `opencode-go/glm-5.1` reads every referenced path. To minimize Read-time overhead, either (a) inline the diff in the prompt rather than pointing to a path, or (b) phrase the instruction as a hard constraint: *"DO NOT Read additional files. The provided diff is sufficient."* The soft "optional context" framing is treated as a request to load everything.
 
 ## Calling pattern (Codex)
 
 ```bash
-codex exec --skip-git-repo-check \
-           --model gpt-5-codex \
-           --sandbox workspace-write \
-           --cd /abs/path/to/worktree \
-           "$(cat <<'PROMPT'
+PROMPT="$(cat <<'PROMPT_BODY'
 You are a non-interactive reviewer. Use Read and Write tools. Do not ask questions.
 
 TASK:
@@ -98,13 +111,21 @@ TASK:
 4. Print only: "wrote plan-codex.md"
 
 (... review sections; review, do not implement ...)
-PROMPT
-)" > .planning/<task>/code-reviews/_runlog-codex.txt \
-   2> .planning/<task>/code-reviews/_runlog-codex.stderr
+PROMPT_BODY
+)"
+
+codex exec --skip-git-repo-check \
+           --model gpt-5-codex \
+           --sandbox workspace-write \
+           --cd /abs/path/to/worktree \
+           - <<<"$PROMPT" \
+    > .planning/<task>/code-reviews/_runlog-codex.txt \
+    2> .planning/<task>/code-reviews/_runlog-codex.stderr
 ```
 
 Flag notes (verified 2026-05-12 against the installed `codex` CLI):
 
+- **Pipe the prompt via stdin (`-` + here-string or `printf | codex exec ... -`).** Codex's `[PROMPT]` positional accepts the form but a positional review-shape prompt is at risk of the same silent-startup failure mode that bites `opencode run` (root cause is shared in the agent-CLI ecosystem: ARG_MAX or pre-LLM arg parsing). octo:review fixed this in their Issue #173 by switching all providers to stdin pipe. Mirror that here.
 - **`--skip-git-repo-check` is required** when dispatching from a path that may not be a git work tree (e.g., dispatching for a `.planning/` artifact when codex's CWD detection is conservative). Without it, codex refuses to run in non-interactive mode.
 - **`--sandbox workspace-write` is required for the file-write contract.** The default sandbox blocks the Write tool. Valid values include `read-only`, `workspace-write`, `danger-full-access`. Use `workspace-write` (writes within the CWD only) for reviewers.
 - **`--cd <abs-path>` pins the working directory.** Without it codex inherits the orchestrator's CWD, which may be a different worktree.
@@ -118,15 +139,23 @@ For Plan Review and Code Review, dispatch all reviewer CLIs in parallel — they
 ```bash
 gemini --model gemini-3.1-pro-preview --yolo --skip-trust --prompt "$PROMPT_GEMINI" \
     > .../_runlog-gemini.txt 2> .../_runlog-gemini.stderr &
-opencode run -m opencode-go/kimi-k2.6 "$PROMPT_KIMI" \
-    > .../_runlog-kimi.txt 2> .../_runlog-kimi.stderr &
-opencode run -m opencode-go/deepseek-v4-pro "$PROMPT_DEEPSEEK" \
-    > .../_runlog-deepseek.txt 2> .../_runlog-deepseek.stderr &
+
+# OpenCode reviewers — stdin pipe + --dangerously-skip-permissions mandatory.
+# See "Calling pattern (OpenCode)" above for why.
+( printf '%s' "$PROMPT_KIMI" | \
+  opencode run --dangerously-skip-permissions -m opencode-go/kimi-k2.6 \
+    > .../_runlog-kimi.txt 2> .../_runlog-kimi.stderr ) &
+( printf '%s' "$PROMPT_DEEPSEEK" | \
+  opencode run --dangerously-skip-permissions -m opencode-go/deepseek-v4-pro \
+    > .../_runlog-deepseek.txt 2> .../_runlog-deepseek.stderr ) &
+
 codex exec --skip-git-repo-check -m gpt-5-codex -s workspace-write \
-    --cd "$WORKTREE" "$PROMPT_CODEX" \
+    --cd "$WORKTREE" - <<<"$PROMPT_CODEX" \
     > .../_runlog-codex.txt 2> .../_runlog-codex.stderr &
 wait
 ```
+
+The `( ... ) &` subshell wrappers are required for OpenCode because the pipe is what's being backgrounded, not the `opencode run` invocation alone — without the subshell, `&` only backgrounds the `opencode` process after the pipe has fully consumed stdin, defeating parallelism. Codex's `- <<<"$PROMPT"` form pipes stdin via here-string (equivalent to `printf '%s' "$P" | codex exec ... -`), which is shorter than the subshell form and works because `codex exec` reads stdin without a pre-pipe consumer.
 
 If invoking from Claude tool calls instead of a single shell pipeline, issue the Bash calls in the same message so Claude executes them in parallel.
 
@@ -219,7 +248,15 @@ If a CLI is missing, do not attempt to call it. Mark it skipped (see "Recording 
 
 ### Wrapping each invocation
 
-Wrap each call so that **the orchestrator never reads raw error output into context**, and so a single failure cannot kill the parent shell. Use `timeout`, capture stdout/stderr to **diagnostic runlog files** (the review itself lands at the agreed path via the CLI's Write tool — see "Dispatch contract" above), and check the exit code explicitly. Recommended pattern:
+Wrap each call so that **the orchestrator never reads raw error output into context**, and so a single failure cannot kill the parent shell. Use `timeout`, capture stdout/stderr to **diagnostic runlog files** (the review itself lands at the agreed path via the CLI's Write tool — see "Dispatch contract" above), and check the exit code explicitly.
+
+**Timeout budget per provider** (verified 2026-05-12):
+
+- Gemini: `timeout 600` (10 min) is comfortable for plan/code review.
+- OpenCode: `timeout 900` (15 min). 540s is too tight given the 30k-token cold start + remote provider routing — see "Calling pattern (OpenCode)".
+- Codex: `timeout 600` (10 min); raise to 900 if the diff is large.
+
+Recommended pattern — Gemini (prompt as `--prompt` flag is fine, only opencode/codex need stdin pipe):
 
 ```bash
 # Review file (what the CLI writes via its Write tool):
@@ -236,6 +273,24 @@ EXIT=.planning/<task>/code-reviews/_runlog-gemini.exit
 with the sentinel <!-- council-flow:review-complete --> ...
 PROMPT
 )" > "$RUNLOG" 2> "$RUNERR"; \
+  echo $? > "$EXIT" ) || true &
+```
+
+Same pattern for OpenCode — prompt via stdin pipe, `--dangerously-skip-permissions` mandatory:
+
+```bash
+REVIEW=.planning/<task>/code-reviews/plan-kimi.md
+RUNLOG=.planning/<task>/code-reviews/_runlog-kimi.txt
+RUNERR=.planning/<task>/code-reviews/_runlog-kimi.stderr
+EXIT=.planning/<task>/code-reviews/_runlog-kimi.exit
+PROMPT="$(cat <<PROMPT_BODY
+... reviewer prompt; MUST tell the CLI to Write its review to $REVIEW ...
+PROMPT_BODY
+)"
+
+( printf '%s' "$PROMPT" | \
+    timeout 900 opencode run --dangerously-skip-permissions -m opencode-go/kimi-k2.6 \
+    > "$RUNLOG" 2> "$RUNERR"
   echo $? > "$EXIT" ) || true &
 ```
 
