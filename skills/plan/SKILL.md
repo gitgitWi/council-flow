@@ -256,10 +256,6 @@ For size-L plans broken into phase files (`plan-phase-1.md`, …): each phase fi
 ## Goal
 One paragraph. What does success look like for the user? Avoid mentioning files.
 
-## Non-goals
-Bulleted. What is explicitly out of scope. This list is more important than people
-think — it prevents scope creep during develop.
-
 ## Approach
 The shape of the solution in 3-7 bullets. Talk about *what changes* and *why this
 shape and not another*. No code blocks. If you're tempted to write code, write a
@@ -277,6 +273,11 @@ decides.
 ## Rollout
 How does this ship? Feature flag? Migration? Backwards-compat shim? If the answer
 is "just merge", say so explicitly.
+
+## Non-goals
+Bulleted. What is explicitly out of scope. Placed near the end because it is
+boundary-setting context, not the headline — but still load-bearing: this list
+prevents scope creep during develop, so don't omit it.
 
 ## Korean summary (요약)
 3-5 bullets, 사용자 빠른 확인용.
@@ -338,7 +339,7 @@ Given-When-Then **checkbox list**. Each task is **a behavior, not a step**. The 
 1. **Read** `meta.md` and `research.md` (if it exists). Don't restart research — build on it.
 2. **Read** the user's task goal in their words. If anything is ambiguous, ask one or two focused questions. Don't ask 10 questions; the plan-review step will surface anything you miss.
 3. **Decide** whether to brainstorm (see "Multi-LLM brainstorming" above for the trigger criteria). If yes, dispatch providers, synthesize `brainstorm.md`, and resolve any "open questions for the user" before drafting.
-4. **Draft** plan.md (Approach + Non-goals first, then Goal, Risks, Rollout). If `brainstorm.md` exists, consult it as you go — convergence informs assumptions, divergence informs explicit decisions in Approach. It is normal to write Approach before Goal — clarifying the approach often sharpens the goal.
+4. **Draft** plan.md. Drafting order can differ from document order: it is normal to write Approach first (clarifying the approach often sharpens the Goal), then Goal, Risks, Rollout, and finally Non-goals once scope boundaries are visible. The rendered document leads with Goal → Approach (두괄식) and pushes Non-goals near the end as boundary context. If `brainstorm.md` exists, consult it as you go — convergence informs assumptions, divergence informs explicit decisions in Approach.
 5. **Draft** tasks.md. Each task should look like something you could write a failing test for, except the explicit "non-TDD" ones.
 6. **Show** both files to the user for a quick review. Make any obvious edits before invoking `flow:plan-review` (if size warrants).
 
