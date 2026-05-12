@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-`council-flow` is a Claude Code **plugin marketplace** hosting a single plugin called `flow` — an opinionated multi-step development workflow (`prep → research → plan → plan-review → develop → deploy`). The plugin is consumed by other Claude Code installs via `/plugin marketplace add gitgitWi/council-flow`; this repo is the source.
+`council-flow` is a Claude Code **plugin marketplace** hosting a single plugin called `flow` — an opinionated multi-step development workflow (`prep → research → plan → plan-review → develop → deploy → code-review`). The plugin is consumed by other Claude Code installs via `/plugin marketplace add gitgitWi/council-flow`; this repo is the source.
+
+`code-review` is also invocable standalone for any existing PR — `flow:deploy` auto-invokes it after opening a PR, but the user can also invoke it directly when they want a multi-LLM review on a PR they did not create through the flow workflow.
 
 There is no application code, no build, no test runner, no linter. The shippable surface is:
 
