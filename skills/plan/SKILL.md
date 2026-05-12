@@ -102,7 +102,7 @@ mkdir -p .planning/<date>-<task>/brainstorms
 REVIEW_ARCH=.planning/<date>-<task>/brainstorms/architecture-gemini.md
 RUNLOG_ARCH=.planning/<date>-<task>/brainstorms/_runlog-architecture-gemini.txt
 
-( timeout 600 gemini --model gemini-3-pro-preview --yolo --skip-trust \
+( timeout 600 gemini --model gemini-3.1-pro-preview --yolo --skip-trust \
     --prompt "$(cat <<PROMPT
 You are a non-interactive reviewer. Use Read and Write tools. Do not ask questions.
 
@@ -199,7 +199,7 @@ missing_contributors: []
 
 ### Future refactor (open question)
 
-A self-brainstorm of this section by `gemini-3-pro-preview` recommended an alternative shape: **extract brainstorming into a dedicated explore phase between `flow:research` and `flow:plan`**, with a hard user checkpoint after `brainstorm.md` lands. The argument is context isolation (the planner LLM never reads raw contributor output) and reversibility (the user can steer between option-generation and plan-drafting). The current sub-phase shape is a pragmatic compromise; revisit if Option A produces planner drift or if users keep wanting to weigh in between brainstorm and plan.
+A self-brainstorm of this section by `gemini-3.1-pro-preview` recommended an alternative shape: **extract brainstorming into a dedicated explore phase between `flow:research` and `flow:plan`**, with a hard user checkpoint after `brainstorm.md` lands. The argument is context isolation (the planner LLM never reads raw contributor output) and reversibility (the user can steer between option-generation and plan-drafting). The current sub-phase shape is a pragmatic compromise; revisit if Option A produces planner drift or if users keep wanting to weigh in between brainstorm and plan.
 
 ## Frontmatter (every generated document)
 

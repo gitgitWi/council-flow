@@ -29,7 +29,7 @@ If a CLI does not expose a Write tool in non-interactive mode (rare today — `g
 ## Calling pattern (Gemini)
 
 ```bash
-gemini --model gemini-3-pro-preview --yolo --skip-trust --prompt "$(cat <<'PROMPT'
+gemini --model gemini-3.1-pro-preview --yolo --skip-trust --prompt "$(cat <<'PROMPT'
 You are a non-interactive reviewer. Use Read and Write tools. Do not ask questions.
 
 TASK:
@@ -116,7 +116,7 @@ Flag notes (verified 2026-05-12 against the installed `codex` CLI):
 For Plan Review and Code Review, dispatch all reviewer CLIs in parallel — they are independent. With the file-write contract this is straightforward:
 
 ```bash
-gemini --model gemini-3-pro-preview --yolo --skip-trust --prompt "$PROMPT_GEMINI" \
+gemini --model gemini-3.1-pro-preview --yolo --skip-trust --prompt "$PROMPT_GEMINI" \
     > .../_runlog-gemini.txt 2> .../_runlog-gemini.stderr &
 opencode run -m opencode-go/kimi-k2.6 "$PROMPT_KIMI" \
     > .../_runlog-kimi.txt 2> .../_runlog-kimi.stderr &
@@ -230,7 +230,7 @@ RUNERR=.planning/<task>/code-reviews/_runlog-gemini.stderr
 EXIT=.planning/<task>/code-reviews/_runlog-gemini.exit
 
 # Run with a hard timeout. Always succeed at the shell level so `wait` doesn't abort.
-( timeout 600 gemini --model gemini-3-pro-preview --yolo --skip-trust \
+( timeout 600 gemini --model gemini-3.1-pro-preview --yolo --skip-trust \
     --prompt "$(cat <<PROMPT
 ... reviewer prompt; MUST tell the CLI to Write its review to $REVIEW and end
 with the sentinel <!-- council-flow:review-complete --> ...
@@ -270,7 +270,7 @@ When a reviewer fails (any of the three checks above), do **not** delete the par
 
    ```markdown
    ---
-   title: "Plan review FAILED — <task> — gemini-3-pro-preview"
+   title: "Plan review FAILED — <task> — gemini-3.1-pro-preview"
    type: review-failed
    task: <kebab task name>
    task_date: <YYYY-MM-DD>
@@ -282,7 +282,7 @@ When a reviewer fails (any of the three checks above), do **not** delete the par
    related:
      - ./plan-summary.md
      - ./plan-gemini.partial.md  # only if partial output preserved
-   reviewer: gemini-3-pro-preview
+   reviewer: gemini-3.1-pro-preview
    cli: gemini
    detected_by: failure-signature   # missing-binary | nonzero-exit | empty-output | failure-signature
    signature_matched: "rate limit"  # only when detected_by is failure-signature
@@ -293,7 +293,7 @@ When a reviewer fails (any of the three checks above), do **not** delete the par
 
    # plan-gemini — FAILED
 
-   - **Reviewer**: gemini-3-pro-preview (CLI: gemini)
+   - **Reviewer**: gemini-3.1-pro-preview (CLI: gemini)
    - **When**: 2026-05-11 15:42 KST
    - **Detected by**: <one of: missing binary | exit code 1 | empty output | failure signature in output>
    - **Signature matched** (if any): "rate limit"

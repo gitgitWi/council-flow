@@ -21,7 +21,7 @@ Use three reviewers by default; the diversity is the point. Model IDs come from 
 
 Default trio (good signal / cost / latency mix):
 
-- `code-reviews/plan-gemini.md` — `gemini-3-pro-preview` via `gemini`
+- `code-reviews/plan-gemini.md` — `gemini-3.1-pro-preview` via `gemini`
 - `code-reviews/plan-kimi.md` — `opencode-go/kimi-k2.6` via `opencode`
 - `code-reviews/plan-deepseek.md` — `opencode-go/deepseek-v4-pro` via `opencode`
 
@@ -55,7 +55,7 @@ parent: ../plan.md
 related:
   - ../tasks.md
   - ./plan-summary.md (synthesized summary)
-reviewer: gemini-3-pro-preview
+reviewer: gemini-3.1-pro-preview
 cli: gemini
 verdict: ship-as-is        # filled by Claude after reading reviewer output
 prompted_against:
@@ -82,7 +82,7 @@ related:
   - ./plan-kimi.md
   - ./plan-deepseek.md
 reviewers:
-  - gemini-3-pro-preview
+  - gemini-3.1-pro-preview
   - opencode-go/kimi-k2.6
   - opencode-go/deepseek-v4-pro
 missing_reviewers: []      # populate with the failed reviewers, if any
@@ -172,10 +172,10 @@ After all three review files exist:
 
 ## 결손 리뷰어
 (있을 때만 추가. 없으면 이 섹션 생략.)
-- gemini-3-pro-preview: rate limit (자세한 내용은 `plan-gemini.FAILED.md`)
+- gemini-3.1-pro-preview: rate limit (자세한 내용은 `plan-gemini.FAILED.md`)
 
 ## 모델별 리뷰 원본
-- [Gemini 3 Pro Preview](./plan-gemini.md)
+- [Gemini 3.1 Pro Preview](./plan-gemini.md)
 - [Kimi K2.6](./plan-kimi.md)
 - [DeepSeek v4 Pro](./plan-deepseek.md)
 ```

@@ -53,7 +53,7 @@ If the diff is empty, stop. Tell the user the PR has no changes to review.
 
 Three reviewers by default. Model IDs come from `../../references/models.md` — do not hardcode here. Output paths:
 
-- `code-gemini.md` — `gemini-3-pro-preview` via `gemini`
+- `code-gemini.md` — `gemini-3.1-pro-preview` via `gemini`
 - `code-kimi.md` — `opencode-go/kimi-k2.6` via `opencode run`
 - `code-deepseek.md` — `opencode-go/deepseek-v4-pro` via `opencode run`
 
@@ -78,7 +78,7 @@ size: <S|M|L>                     # from meta.md if available; M otherwise
 parent: ../plan.md                # omit if no plan context
 related:
   - ./code-summary.md
-reviewer: gemini-3-pro-preview
+reviewer: gemini-3.1-pro-preview
 cli: gemini
 verdict: merge-as-is              # filled by Claude after reading reviewer output
 pr: <N>
@@ -106,7 +106,7 @@ related:
   - ./code-kimi.md
   - ./code-deepseek.md
 reviewers:
-  - gemini-3-pro-preview
+  - gemini-3.1-pro-preview
   - opencode-go/kimi-k2.6
   - opencode-go/deepseek-v4-pro
 missing_reviewers: []
@@ -197,10 +197,10 @@ Read each reviewer file once, extract findings, and write `code-reviews/code-sum
 
 ## 결손 리뷰어
 (있을 때만 추가. 없으면 이 섹션 생략.)
-- gemini-3-pro-preview: rate limit (자세한 내용은 `code-gemini.FAILED.md`)
+- gemini-3.1-pro-preview: rate limit (자세한 내용은 `code-gemini.FAILED.md`)
 
 ## 모델별 리뷰 원본
-- [Gemini 3 Pro](./code-gemini.md)
+- [Gemini 3.1 Pro](./code-gemini.md)
 - [Kimi K2.6](./code-kimi.md)
 - [DeepSeek v4 Pro](./code-deepseek.md)
 ```
@@ -211,7 +211,7 @@ Verify file:line references reviewers cite — grep their outputs for path-shape
 
 Aggregate inline findings across all reviewers:
 
-- **Dedupe** when multiple reviewers flagged the same `file:line` with the same concern. Sign the merged comment with all contributing models (`— signed: gemini-3-pro-preview, kimi-k2.6`).
+- **Dedupe** when multiple reviewers flagged the same `file:line` with the same concern. Sign the merged comment with all contributing models (`— signed: gemini-3.1-pro-preview, kimi-k2.6`).
 - **Keep separate** when reviewers flagged the same line with different concerns. Two distinct comments are fine.
 - **Filter** NIT comments if the count is overwhelming (>10). Keep them in the per-model files; only post the most important ones inline.
 
