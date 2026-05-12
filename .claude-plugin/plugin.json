@@ -1,7 +1,7 @@
 {
   "name": "flow",
   "version": "0.3.0",
-  "description": "Opinionated multi-step development workflow: prep → research → plan → plan-review → develop → deploy. Atomic commits, TDD-first, Multi-LLM review.",
+  "description": "Opinionated multi-step development workflow: prep → research → plan → plan-review → develop → deploy → code-review. Atomic commits, TDD-first, Multi-LLM review.",
   "author": {
     "name": "wjh",
     "email": "gitgitWi@gmail.com"
@@ -24,6 +24,7 @@
     "./skills/plan-review/",
     "./skills/develop/",
     "./skills/deploy/",
+    "./skills/code-review/",
     "./skills/orchestrate/"
   ]
 }

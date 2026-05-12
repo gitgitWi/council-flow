@@ -12,7 +12,7 @@
     {
       "name": "flow",
       "source": "./",
-      "description": "Multi-step development workflow: prep → research → plan → plan-review → develop → deploy. Atomic commits, TDD-first, multi-LLM review.",
+      "description": "Multi-step development workflow: prep → research → plan → plan-review → develop → deploy → code-review. Atomic commits, TDD-first, multi-LLM review.",
       "version": "0.3.0",
       "author": {
         "name": "wjh",
