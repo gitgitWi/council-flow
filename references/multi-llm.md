@@ -167,15 +167,41 @@ Run this watcher in parallel with the dispatch. Each iteration writes one line; 
 
 ```bash
 watch_review() {
-  local file="$1" max_checks="${2:-25}" sentinel='<!-- council-flow:review-complete -->'
-  local prev_size=-1 stale_count=0
+  # Args: <review-file> [<exit-file>] [<max-checks>]
+  # exit-file is the `.exit` sidecar written by the dispatch wrapper (see
+  # "Wrapping each invocation"). When present, the watcher exits as soon as
+  # the CLI process terminates — without it, a CLI that exits immediately
+  # (e.g., flag parse error, no provider auth) would still cause the watcher
+  # to loop for max_checks × 60s before giving up.
+  local file="$1"
+  local exit_file="${2:-}"
+  local max_checks="${3:-25}"
+  local sentinel='<!-- council-flow:review-complete -->'
+  local prev_size=-1 stale_count=0 wait_count=0
+  local wait_cap=5  # max consecutive "file not yet created" heartbeats before treating as failed
   for i in $(seq 1 "$max_checks"); do
     sleep 60
     local ts=$(date +%H:%M:%S)
+
+    # Early exit: dispatch wrapper already wrote the exit sidecar, so the
+    # CLI has terminated. Decide based on whether the review file is complete.
+    if [[ -n "$exit_file" && -f "$exit_file" ]]; then
+      local rc=$(<"$exit_file")
+      if [[ -f "$file" ]] && [[ "$(tail -1 "$file")" == "$sentinel" ]]; then
+        echo "$ts [#$i/$max_checks] DONE — CLI exited rc=$rc, sentinel found"
+        return 0
+      fi
+      echo "$ts [#$i/$max_checks] CLI_EXITED — rc=$rc but sentinel missing; treating as failed"
+      return 3
+    fi
+
     if [[ ! -f "$file" ]]; then
-      echo "$ts [#$i/$max_checks] WAITING — $(basename "$file") not yet created"
+      wait_count=$((wait_count + 1))
+      echo "$ts [#$i/$max_checks] WAITING — $(basename "$file") not yet created (wait_count=$wait_count/$wait_cap)"
+      [[ "$wait_count" -ge "$wait_cap" ]] && { echo "$ts NEVER_STARTED — file not created after ${wait_cap}m, treating as failed"; return 4; }
       continue
     fi
+
     local size=$(wc -c < "$file" | tr -d ' ')
     local last=$(tail -1 "$file")
     if [[ "$last" == "$sentinel" ]]; then
@@ -195,11 +221,22 @@ watch_review() {
   return 1
 }
 
-# Usage in parallel with dispatch:
-gemini ... > runlog &
-watch_review ".../plan-gemini.md" 25 &
+# Usage — pass the exit sidecar from the dispatch wrapper so the watcher
+# exits the instant the CLI terminates (instead of looping for 25 min on
+# a CLI that died in 5 seconds):
+( timeout 600 gemini ... > "$RUNLOG" 2> "$RUNERR"; echo $? > "$EXIT" ) &
+watch_review "$REVIEW" "$EXIT" 25 &
 wait
 ```
+
+**Why the exit-sidecar and wait_cap matter (CRITICAL).** The previous version of this watcher would loop for the full `max_checks × 60s` (default 25 minutes) any time the review file was never created, because the `! -f "$file"` branch only printed `WAITING` and `continue`'d without incrementing any failure counter. A CLI that exits immediately with a flag error, an auth failure, or a silent ARG_MAX-style startup hang (see "Calling pattern (OpenCode)") would burn the full timeout before `wait` released the parent shell, effectively making every dispatch a 25-minute floor on failures.
+
+Two-pronged fix:
+
+1. **`wait_count` capped at 5** — if 5 minutes elapse without the file appearing, return failure (`exit 4 — NEVER_STARTED`). Distinct from `stale_count` so that "writing slowly" and "never started" don't share a budget.
+2. **`exit_file` (sidecar) short-circuit** — when the dispatch wrapper writes its `.exit` file, the CLI is terminated. The watcher reads the exit code, checks for sentinel, and returns. No reason to keep heartbeating against a dead process.
+
+The exit-sidecar path is preferred; the `wait_count` cap is a fallback for callers that didn't wire the sidecar.
 
 Heartbeat output is a stream of one-line events. It is safe to display directly to the user — unlike contributor file content, it does not interpolate untrusted model output into Claude's context.
 
@@ -294,7 +331,7 @@ PROMPT_BODY
   echo $? > "$EXIT" ) || true &
 ```
 
-Repeat per reviewer in the same shell pipeline (or in parallel Bash tool calls). Run `watch_review "$REVIEW"` (see "Heartbeat watcher" above) in parallel so progress is visible, then `wait`.
+Repeat per reviewer in the same shell pipeline (or in parallel Bash tool calls). Run `watch_review "$REVIEW" "$EXIT"` (see "Heartbeat watcher" above — passing the exit sidecar so the watcher returns the moment the CLI dies, instead of looping for the full max_checks budget) in parallel so progress is visible, then `wait`.
 
 ### Post-call verification (mandatory)
 
