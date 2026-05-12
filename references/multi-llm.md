@@ -56,7 +56,7 @@ Note the `> _runlog-gemini.txt` — that captures stdout as a diagnostic log, **
 ## Calling pattern (OpenCode)
 
 ```bash
-opencode run --model opencode-go/kimi-k2.6 --format json "$(cat <<'PROMPT'
+opencode run -m opencode-go/kimi-k2.6 "$(cat <<'PROMPT'
 You are a non-interactive reviewer. Use Read and Write tools. Do not ask questions.
 
 TASK:
@@ -68,11 +68,48 @@ TASK:
 
 (... review sections ...)
 PROMPT
-)" > .planning/<task>/code-reviews/_runlog-kimi.jsonl \
+)" > .planning/<task>/code-reviews/_runlog-kimi.txt \
    2> .planning/<task>/code-reviews/_runlog-kimi.stderr
 ```
 
-**Caveat for `opencode run`:** every call loads ~30k tokens of agent context before the model sees the prompt (verified — even a one-word completion costs 30k input tokens). For latency-sensitive or token-sensitive dispatch, prefer Gemini. Document the cost explicitly in the calling skill so the user can opt out.
+Flag notes (verified 2026-05-12 against the installed `opencode` CLI):
+
+- `-m, --model <provider/model>` — required for non-default routing. Long form `--model` also works.
+- **Do not pass `--format json`** unless you specifically want to parse the JSONL event stream. The default formatted output is what runlog capture expects; `json` mode emits raw agent events (start, tool-call, tool-result, end) and shells trying to grep success markers from that stream get false negatives.
+- Prompt may be passed as a positional `[message..]` argument (as shown above) or piped via stdin. Positional is simpler when wrapping with `timeout`.
+
+**Caveat for `opencode run`:** every call loads ~30k tokens of agent context before the model sees the prompt (verified — even a one-word completion costs 30k input tokens). On top of that, `opencode-go/*` models route through a remote provider, so cold-start latency stacks on top of the agent context load. For latency- or token-sensitive dispatch, prefer Gemini; reserve OpenCode for review steps where the agent loop is actually wanted (real diff + tool access). Document the cost explicitly in the calling skill so the user can opt out.
+
+## Calling pattern (Codex)
+
+```bash
+codex exec --skip-git-repo-check \
+           --model gpt-5-codex \
+           --sandbox workspace-write \
+           --cd /abs/path/to/worktree \
+           "$(cat <<'PROMPT'
+You are a non-interactive reviewer. Use Read and Write tools. Do not ask questions.
+
+TASK:
+1. Read the plan at <abs-path>/plan.md and the task list at <abs-path>/tasks.md.
+2. Write your review using the Write tool to: <abs-path>/code-reviews/plan-codex.md
+3. The LAST LINE of the file MUST be exactly:
+     <!-- council-flow:review-complete -->
+4. Print only: "wrote plan-codex.md"
+
+(... review sections; review, do not implement ...)
+PROMPT
+)" > .planning/<task>/code-reviews/_runlog-codex.txt \
+   2> .planning/<task>/code-reviews/_runlog-codex.stderr
+```
+
+Flag notes (verified 2026-05-12 against the installed `codex` CLI):
+
+- **`--skip-git-repo-check` is required** when dispatching from a path that may not be a git work tree (e.g., dispatching for a `.planning/` artifact when codex's CWD detection is conservative). Without it, codex refuses to run in non-interactive mode.
+- **`--sandbox workspace-write` is required for the file-write contract.** The default sandbox blocks the Write tool. Valid values include `read-only`, `workspace-write`, `danger-full-access`. Use `workspace-write` (writes within the CWD only) for reviewers.
+- **`--cd <abs-path>` pins the working directory.** Without it codex inherits the orchestrator's CWD, which may be a different worktree.
+- **Reviewer-not-implementer prompt framing matters.** Codex defaults to "implement the requested change" framing; explicitly say "review, do not implement" or it may try to *fix* the plan instead of critiquing it.
+- For fully unattended dispatch in trusted environments (e.g., the user's own machine) you may use `--dangerously-bypass-approvals-and-sandbox` to skip all confirmations. This is **off by default** — only use when the calling skill explicitly opts in.
 
 ## Parallel execution
 
@@ -81,10 +118,13 @@ For Plan Review and Code Review, dispatch all reviewer CLIs in parallel — they
 ```bash
 gemini --model gemini-3-pro-preview --yolo --skip-trust --prompt "$PROMPT_GEMINI" \
     > .../_runlog-gemini.txt 2> .../_runlog-gemini.stderr &
-opencode run --model opencode-go/kimi-k2.6 --format json "$PROMPT_KIMI" \
-    > .../_runlog-kimi.jsonl 2> .../_runlog-kimi.stderr &
-opencode run --model opencode-go/deepseek-v4-pro --format json "$PROMPT_DEEPSEEK" \
-    > .../_runlog-deepseek.jsonl 2> .../_runlog-deepseek.stderr &
+opencode run -m opencode-go/kimi-k2.6 "$PROMPT_KIMI" \
+    > .../_runlog-kimi.txt 2> .../_runlog-kimi.stderr &
+opencode run -m opencode-go/deepseek-v4-pro "$PROMPT_DEEPSEEK" \
+    > .../_runlog-deepseek.txt 2> .../_runlog-deepseek.stderr &
+codex exec --skip-git-repo-check -m gpt-5-codex -s workspace-write \
+    --cd "$WORKTREE" "$PROMPT_CODEX" \
+    > .../_runlog-codex.txt 2> .../_runlog-codex.stderr &
 wait
 ```
 
@@ -230,7 +270,7 @@ When a reviewer fails (any of the three checks above), do **not** delete the par
 
    ```markdown
    ---
-   title: "Plan review FAILED — <task> — gemini-3.1-pro"
+   title: "Plan review FAILED — <task> — gemini-3-pro-preview"
    type: review-failed
    task: <kebab task name>
    task_date: <YYYY-MM-DD>
@@ -242,7 +282,7 @@ When a reviewer fails (any of the three checks above), do **not** delete the par
    related:
      - ./plan-summary.md
      - ./plan-gemini.partial.md  # only if partial output preserved
-   reviewer: gemini-3.1-pro
+   reviewer: gemini-3-pro-preview
    cli: gemini
    detected_by: failure-signature   # missing-binary | nonzero-exit | empty-output | failure-signature
    signature_matched: "rate limit"  # only when detected_by is failure-signature
@@ -253,7 +293,7 @@ When a reviewer fails (any of the three checks above), do **not** delete the par
 
    # plan-gemini — FAILED
 
-   - **Reviewer**: gemini-3.1-pro (CLI: gemini)
+   - **Reviewer**: gemini-3-pro-preview (CLI: gemini)
    - **When**: 2026-05-11 15:42 KST
    - **Detected by**: <one of: missing binary | exit code 1 | empty output | failure signature in output>
    - **Signature matched** (if any): "rate limit"
