@@ -99,6 +99,8 @@ Shared reference docs live at the plugin root and are linked from each SKILL.md:
 
 Inspired by [claude-octopus](https://github.com/nyldn/claude-octopus) — many of the design decisions here (multi-LLM orchestration, phase-based workflow, skill-per-step structure, plan/review separation) draw directly from patterns nyldn established there. `council-flow` is a smaller, opinionated subset focused on a single bilingual TDD-first development loop, but the foundations are theirs.
 
+The planning and research skills also borrow from [Superpowers](https://github.com/obra/superpowers) and [gstack](https://github.com/garrytan/gstack): Superpowers' emphasis on design-before-implementation, explicit alternatives, and self-review; and gstack's stronger problem framing, premise challenge, existing-code leverage, and plan-review rigor.
+
 ## License
 
 MIT
