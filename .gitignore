@@ -5,6 +5,14 @@
 .vscode/
 node_modules/
 
+# Dogfooding artifacts — when iterating on this plugin via its own workflow,
+# prep.sh seeds .planning/<date>-<task>/ with task-local working memory
+# (meta.md, plan.md, code-reviews/, ...). That's "committed by default" in
+# consumer projects, but shipping it through the marketplace would dump
+# every installer's tree with our in-flight notes. Ignore here so we can
+# dogfood freely without polluting the plugin source surface.
+.planning/
+
 # Multi-LLM dispatch diagnostic runlogs (regenerable from CLI re-runs)
 # Per references/multi-llm.md: stdout/stderr/exit are captured as diagnostic
 # runlogs alongside the actual review file. The review (code-*.md) is the

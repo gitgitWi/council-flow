@@ -48,4 +48,4 @@ When the user asks you to modify *this* repo (as opposed to running the workflow
 - Do not add a package manager, build pipeline, or test framework — the plugin is pure docs + one shell script and should stay that way.
 - Do not add new top-level directories beyond `.claude-plugin/`, `skills/`, `references/`, `scripts/` without strong reason. Predictable layout is part of the product.
 - Do not rewrite skills in Korean. The reverse-translation policy is explicit.
-- Do not edit `.planning/` in this repo — the plugin is self-hosted and doesn't dogfood its own workflow inside its own source tree.
+- Do not commit `.planning/` in this repo — it is gitignored so the workflow can be dogfooded here, but task-local working memory must not ship to plugin consumers via the marketplace.
