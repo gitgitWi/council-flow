@@ -256,10 +256,25 @@ For size-L plans broken into phase files (`plan-phase-1.md`, …): each phase fi
 ## Goal
 One paragraph. What does success look like for the user? Avoid mentioning files.
 
+## Decision context
+- Problem framing: who is affected, what outcome matters, and what constraints
+  are already known.
+- Premises: the assumptions this plan relies on. Mark any that are still
+  unverified and explain how the plan avoids depending on them too heavily.
+- Existing leverage: code, docs, tests, or workflows the plan will reuse rather
+  than rebuild.
+
 ## Approach
 The shape of the solution in 3-7 bullets. Talk about *what changes* and *why this
 shape and not another*. No code blocks. If you're tempted to write code, write a
 test signature in `tasks.md` instead.
+
+## Alternatives considered
+- Minimal viable: the smallest approach that could satisfy the goal.
+- Local architecture fit: the approach that best matches current project patterns.
+- Ideal / lateral: include only when meaningfully different.
+- End with the chosen approach and the decision rationale. Mention effort, risk,
+  reversibility, blast radius, and why rejected options were rejected.
 
 ## Phases (only if size = L)
 - Phase 1: <one line>
@@ -269,6 +284,16 @@ Each phase gets its own `plan-phase-N.md` if it has more than ~10 tasks.
 ## Risks & open questions
 Things that could derail the plan. Each entry: the risk, the mitigation, who
 decides.
+
+## Failure modes
+- Concrete ways the change can fail in production or during agent execution.
+- For each: expected handling, user/operator impact, and whether a test or
+  verification step covers it.
+
+## Test strategy
+- Unit/integration/e2e/eval coverage that maps to the behavior in `tasks.md`.
+- Existing tests to extend and new tests to add.
+- Explicitly say when a task is non-TDD and why.
 
 ## Rollout
 How does this ship? Feature flag? Migration? Backwards-compat shim? If the answer
@@ -288,6 +313,21 @@ prevents scope creep during develop, so don't omit it.
 - Detailed code. That goes in `tasks.md` (as test signatures) and in the actual implementation.
 - Step-by-step instructions. Those are `tasks.md`'s job.
 - Restating what's in `research.md`. Reference it, don't copy it.
+
+## Plan self-review
+
+Before showing the plan to the user, review it with fresh eyes and fix gaps inline:
+
+- **Coverage:** Every stated success criterion maps to at least one task.
+- **Placeholders:** No TBD/TODO/fill-in-later language remains.
+- **Reuse:** The plan explains what existing code/docs/tests it reuses, or why not.
+- **Alternatives:** At least two approaches were considered for non-trivial work,
+  with a clear chosen approach and rejected-option rationale.
+- **Failure modes:** Important nil/empty/error/timeout/concurrency paths are named
+  and either handled, tested, or explicitly out of scope.
+- **Scope:** Non-goals are explicit, and size S tasks are not bloated with M/L process.
+- **Handoff:** `tasks.md` is specific enough for `flow:develop` to execute without
+  rediscovering the architecture.
 
 ## tasks.md structure
 
@@ -339,15 +379,20 @@ Given-When-Then **checkbox list**. Each task is **a behavior, not a step**. The 
 1. **Read** `meta.md` and `research.md` (if it exists). Don't restart research — build on it.
 2. **Read** the user's task goal in their words. If anything is ambiguous, ask one or two focused questions. Don't ask 10 questions; the plan-review step will surface anything you miss.
 3. **Decide** whether to brainstorm (see "Multi-LLM brainstorming" above for the trigger criteria). If yes, dispatch providers, synthesize `brainstorm.md`, and resolve any "open questions for the user" before drafting.
-4. **Draft** plan.md. Drafting order can differ from document order: it is normal to write Approach first (clarifying the approach often sharpens the Goal), then Goal, Risks, Rollout, and finally Non-goals once scope boundaries are visible. The rendered document leads with Goal → Approach (두괄식) and pushes Non-goals near the end as boundary context. If `brainstorm.md` exists, consult it as you go — convergence informs assumptions, divergence informs explicit decisions in Approach.
-5. **Draft** tasks.md. Each task should look like something you could write a failing test for, except the explicit "non-TDD" ones.
-6. **Show** both files to the user for a quick review. Make any obvious edits before invoking `flow:plan-review` (if size warrants).
+4. **Choose** the approach. Use `research.md` candidate approaches and `brainstorm.md`
+   divergence as inputs. For size M/L, if two viable approaches remain close or the
+   choice changes user-visible scope, pause once and ask the user to choose before
+   writing the final plan.
+5. **Draft** plan.md. Drafting order can differ from document order: it is normal to write Approach first (clarifying the approach often sharpens the Goal), then Goal, Risks, Rollout, and finally Non-goals once scope boundaries are visible. The rendered document leads with Goal → Decision context → Approach (두괄식) and pushes Non-goals near the end as boundary context. If `brainstorm.md` exists, consult it as you go — convergence informs assumptions, divergence informs explicit decisions in Alternatives considered and Approach.
+6. **Draft** tasks.md. Each task should look like something you could write a failing test for, except the explicit "non-TDD" ones.
+7. **Self-review** plan.md and tasks.md using the checklist above. Fix gaps inline before presenting them.
+8. **Show** both files to the user for a quick review. Make any obvious edits before invoking `flow:plan-review` (if size warrants).
 
 ## Sizing decisions
 
 - **Size S** — plan.md can be 20-50 lines. tasks.md may have just 1-3 checkboxes. Skip phases, skip brainstorming, skip `flow:plan-review`.
-- **Size M** — plan.md ~100-300 lines. tasks.md ~5-15 checkboxes. Brainstorming when cross-module / security-sensitive / public-surface (else skip). Plan-review optional, default to yes when brainstorming ran or external API integration is involved.
-- **Size L** — plan.md ~300-500 lines + per-phase files. tasks.md scoped by phase. Brainstorming mandatory (3 providers including security lens). Plan-review mandatory.
+- **Size M** — plan.md ~100-300 lines. tasks.md ~5-15 checkboxes. Include meaningful alternatives, failure modes, and test strategy. Brainstorming when cross-module / security-sensitive / public-surface (else skip). Plan-review optional, default to yes when brainstorming ran or external API integration is involved.
+- **Size L** — plan.md ~300-500 lines + per-phase files. tasks.md scoped by phase. Include explicit decision context, alternatives, failure-mode registry, rollout/rollback posture, and test strategy. Brainstorming mandatory (3 providers including security lens). Plan-review mandatory.
 
 ## Reference
 

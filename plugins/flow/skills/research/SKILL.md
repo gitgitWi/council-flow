@@ -5,7 +5,7 @@ description: Investigate codebase context, related projects, and external source
 
 # flow:research — Pre-plan investigation
 
-Research exists to make the plan better. The output is not for shipping; it is a working document that the plan skill consumes. Optimize for *useful pointers and decision-relevant facts*, not for thoroughness.
+Research exists to make the plan better. The output is not for shipping; it is a working document that the plan skill consumes. Optimize for *useful pointers, decision-relevant facts, and explicit options*, not for thoroughness.
 
 ## When to run
 
@@ -41,18 +41,41 @@ used_external_llm: false # set true if Gemini/OpenCode produced raw output under
 
 # Research — <task>
 
+## Problem framing
+- User goal in one sentence, in the user's words when possible.
+- Who is affected by this change (end user, operator, maintainer, downstream agent).
+- Success criteria: what must be true for the task to be done.
+- Constraints and non-goals already known.
+
+## Premises to validate
+- List the assumptions the plan would rely on. Each line should say whether it is
+  verified, likely, or still unknown.
+- Challenge vague framing: if the task says "make it better", "simplify",
+  "support X", or "improve UX", define the measurable version.
+
 ## Decision-relevant findings
 - Crisp bullets. Each line should change at least one decision the planner will make.
 
 ## Existing code
 - file:line references to where related logic lives
+- Existing code, flows, docs, or past PRs that partially solve the problem
 - Patterns to follow / patterns to avoid (call out anti-patterns explicitly)
+- Anything the plan must reuse rather than rebuild, or a concrete reason not to
 - Test coverage gaps in the area being touched
 
 ## External references
 - Library API documentation (link + relevant version)
 - Internal docs / past PRs / past issues
 - Output from other-LLM research if used (saved separately, summarized here)
+
+## Candidate approaches
+- 2-3 viable shapes when the task is non-trivial. For each: summary, effort,
+  risk, reversibility, blast radius, and existing code reused.
+- Include a minimal viable approach and an ideal/local-architecture approach when
+  they differ. Add a creative/lateral approach only when it is meaningfully
+  different, not just bigger.
+- Do not pick the final answer here unless the evidence clearly eliminates every
+  alternative. The plan makes the decision.
 
 ## Open questions
 - Things that need user input before planning can proceed.
@@ -66,9 +89,20 @@ Keep this document under ~300 lines. If you find yourself writing more, you are 
 
 Use grep / find / Glob to locate related code. For broader exploration where you do not know the right keyword, spawn an `Explore` subagent — it scans without filling the orchestrator's context with raw file contents.
 
+When exploring, explicitly look for leverage before inventing structure:
+
+- Existing flows that already produce the desired data or behavior.
+- Shared helpers, adapters, tests, or docs that should be extended.
+- Nearby anti-patterns the plan should avoid copying.
+- Deferred TODOs or prior plans that overlap with the task.
+
 ### Web research (optional, fast path)
 
 When the user OK's it and the task involves a less-familiar library or API, delegate web research to Gemini's fast model. The Gemini output is verbose; save it to a file and summarize.
+
+If the task is about a library, framework, SDK, API, CLI tool, or cloud service,
+follow the current project's documented source-of-truth lookup first (for example,
+`ctx7` where configured) before relying on general web search or model memory.
 
 ```bash
 gemini --model gemini-3-flash-preview --yolo --skip-trust --prompt "$(cat <<'PROMPT'
@@ -86,12 +120,31 @@ Then read that file once, distill the load-bearing facts into `research.md` unde
 
 If the user mentions "we did this before" or similar, check claude-mem search for prior sessions before retracing the same path.
 
+### Approach framing
+
+Before finishing `research.md`, write candidate approaches when the choice is not
+obvious. Use this shape:
+
+```markdown
+## Candidate approaches
+- **Minimal viable** — smallest change that satisfies the success criteria.
+  Effort: S/M/L. Risk: low/medium/high. Reuses: <existing code/docs>.
+- **Local architecture fit** — approach that best matches current project
+  structure, even if it touches a little more code.
+  Effort: S/M/L. Risk: low/medium/high. Reuses: <existing code/docs>.
+- **Ideal / lateral** — include only when it changes the framing or long-term
+  trajectory in a meaningful way.
+  Effort: S/M/L. Risk: low/medium/high. Reuses: <existing code/docs>.
+```
+
 ## What NOT to do
 
 - **Don't research the obvious.** Linking to the React docs for `useState` is noise.
 - **Don't paste long code blocks.** Use file:line references instead — they stay current as the code evolves.
 - **Don't decide the implementation here.** Research surfaces options and constraints. The plan picks among them. Mixing the two means the plan has nowhere to add value.
 - **Don't research what the user has already told you.** If they said "we use Firebase Auth", don't go verify that.
+- **Don't skip problem framing.** If the problem statement is fuzzy, the plan will
+  encode fuzzy assumptions. Tighten the framing before drafting options.
 
 ## Reference
 
