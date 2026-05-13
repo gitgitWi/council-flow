@@ -32,30 +32,53 @@ Atomic commits. TDD-first. `.planning/<date>-<task>/` as the working memory. Mul
 
 ### From GitHub (recommended)
 
+Claude Code:
+
 ```bash
-# In Claude Code
 /plugin marketplace add gitgitWi/council-flow
 /plugin install flow@council-flow
+```
+
+Codex CLI:
+
+```bash
+codex plugin marketplace add gitgitWi/council-flow
 ```
 
 GitHub shorthand resolves to this repo. Equivalent full forms also work:
 
 ```bash
+# Claude Code
 /plugin marketplace add https://github.com/gitgitWi/council-flow.git    # HTTPS
 /plugin marketplace add git@github.com:gitgitWi/council-flow.git        # SSH (private/auth)
+
+# Codex CLI
+codex plugin marketplace add https://github.com/gitgitWi/council-flow.git    # HTTPS
+codex plugin marketplace add git@github.com:gitgitWi/council-flow.git        # SSH (private/auth)
 ```
 
 ### From a local clone
 
 ```bash
 git clone https://github.com/gitgitWi/council-flow.git ~/Codes/council-flow
+
+# Claude Code
 /plugin marketplace add ~/Codes/council-flow
 /plugin install flow@council-flow
+
+# Codex CLI
+codex plugin marketplace add ~/Codes/council-flow
 ```
 
 The marketplace name `council-flow` comes from `.claude-plugin/marketplace.json` and is the same regardless of install source.
 
 See the Claude Code docs for the full `/plugin marketplace add` reference: https://code.claude.com/docs/en/discover-plugins.md
+
+See the Codex CLI help for plugin marketplace options:
+
+```bash
+codex plugin marketplace add --help
+```
 
 ## References
 
