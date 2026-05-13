@@ -8,7 +8,7 @@
       "name": "flow",
       "source": {
         "source": "local",
-        "path": "./"
+        "path": "./plugins/flow"
       },
       "policy": {
         "installation": "INSTALLED_BY_DEFAULT",
