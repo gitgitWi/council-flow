@@ -51,13 +51,40 @@ If the diff is empty, stop. Tell the user the PR has no changes to review.
 
 ## Step 2 — Run multi-LLM code review in parallel
 
-Three reviewers by default. Model IDs come from `../../references/models.md` — do not hardcode here. Output paths:
+Three reviewers by default; ask the user before dispatching whether to add optional reviewers (see "Pre-flight + reviewer selection" below). Model IDs come from `../../references/models.md` — do not hardcode here. Default output paths:
 
+- `code-codex.md` — `gpt-5.5` via `codex`
 - `code-gemini.md` — `gemini-3.1-pro-preview` via `gemini`
 - `code-kimi.md` — `opencode-go/kimi-k2.6` via `opencode run`
-- `code-deepseek.md` — `opencode-go/deepseek-v4-pro` via `opencode run`
+
+Optional (if user opts in):
+
+- `code-deepseek.md` — `opencode-go/deepseek-v4-pro` via `opencode run` (deepest analysis, +10-15 min)
+- `code-glm.md` — `opencode-go/glm-5.1` via `opencode run` (fast extra opinion, +5-7 min)
 
 The dispatch contract (file-write, sentinel, runlog capture, heartbeat watcher, exit-code handling, failure signature grep, quorum policy) lives in `../../references/multi-llm.md`. Apply it verbatim — do not paraphrase or shortcut.
+
+### Pre-flight + reviewer selection
+
+Before dispatching any reviewer, do two things in sequence:
+
+**1. Pre-flight** — check which CLIs are installed:
+
+```bash
+command -v codex    >/dev/null 2>&1 && echo "codex: ok"    || echo "codex: MISSING"
+command -v gemini   >/dev/null 2>&1 && echo "gemini: ok"   || echo "gemini: MISSING"
+command -v opencode >/dev/null 2>&1 && echo "opencode: ok" || echo "opencode: MISSING"
+```
+
+A missing default-trio CLI is skipped (quorum policy in `../../references/multi-llm.md` still applies — need ≥ 2 valid reviews to synthesize).
+
+**2. Optional reviewer selection** — ask the user:
+
+> Optional reviewers available — add any to the dispatch batch?
+> - **DeepSeek v4 Pro** (`opencode-go/deepseek-v4-pro`) — deepest analysis, adds ~10-15 min
+> - **GLM 5.1** (`opencode-go/glm-5.1`) — fast extra opinion, adds ~5-7 min
+
+Wait for the user's response before dispatching. If the user says skip (or no response), proceed with the default trio only. Opted-in reviewers join the same parallel batch.
 
 ### Frontmatter (every generated document)
 
@@ -106,9 +133,12 @@ related:
   - ./code-kimi.md
   - ./code-deepseek.md
 reviewers:
+  - gpt-5.5
   - gemini-3.1-pro-preview
   - opencode-go/kimi-k2.6
-  - opencode-go/deepseek-v4-pro
+  # append optional reviewers if user opted in:
+  # - opencode-go/deepseek-v4-pro
+  # - opencode-go/glm-5.1
 missing_reviewers: []
 pr: <N>
 ---
@@ -152,7 +182,7 @@ note it as "L<start>-L<end>" and use the starting line.
 "merge as-is" | "merge after minor edits" | "request changes".
 ```
 
-Issue all reviewer Bash calls in the **same message** so they run in parallel; run the heartbeat watcher (`watch_review` from `../../references/multi-llm.md`) alongside.
+Issue all reviewer Bash calls (default trio + any opted-in) in the **same message** so they run in parallel; run the heartbeat watcher (`watch_review` from `../../references/multi-llm.md`) alongside.
 
 ### Quick recap of failure handling
 
@@ -200,9 +230,12 @@ Read each reviewer file once, extract findings, and write `code-reviews/code-sum
 - gemini-3.1-pro-preview: rate limit (자세한 내용은 `code-gemini.FAILED.md`)
 
 ## 모델별 리뷰 원본
+- [Codex gpt-5.5](./code-codex.md)
 - [Gemini 3.1 Pro](./code-gemini.md)
 - [Kimi K2.6](./code-kimi.md)
+<!-- 아래는 사용자가 optional 리뷰어를 선택한 경우에만 포함 -->
 - [DeepSeek v4 Pro](./code-deepseek.md)
+- [GLM 5.1](./code-glm.md)
 ```
 
 Verify file:line references reviewers cite — grep their outputs for path-shaped strings, check against `git ls-files`, and surface unverifiable paths in a "Paths to verify" section. Contributors hallucinate paths regularly; do not promote them silently.

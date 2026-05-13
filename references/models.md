@@ -13,13 +13,13 @@ Single source of truth for model IDs and CLI invocation. Update this file when m
 | Deep review | `opencode` | `opencode-go/deepseek-v4-pro` | Code review (deepest analysis, slowest). See "agent-mode cost" below. |
 | Cost-efficient review | `opencode` | `opencode-go/deepseek-v4-flash` | Faster DeepSeek variant — good signal/latency tradeoff. See "agent-mode cost" below. |
 | Fast review | `opencode` | `opencode-go/glm-5.1` | Quickest second opinion. See "agent-mode cost" below. |
-| Codex-side review | `codex` | `gpt-5-codex` | Plan/code review from the codex stack — useful as a third diverse voice beyond gemini + opencode. See "Codex sandbox" below. |
+| Codex-side review | `codex` | `gpt-5.5` | Plan/code review from the codex stack — default third reviewer alongside gemini + kimi. See "Codex sandbox" below. |
 
 Verification dates inline as comments — re-test when models move. Last full sweep: 2026-05-12.
 
 - `gemini-3.1-pro-preview` — verified for `--prompt` dispatch with `--yolo --skip-trust`.
 - `opencode-go/kimi-k2.6`, `opencode-go/deepseek-v4-pro`, `opencode-go/deepseek-v4-flash`, `opencode-go/glm-5.1` — provider authenticated via `opencode auth list` (OpenCode Go: api). Invocation must use `-m provider/model`; **do not** pass `--format json` (emits JSONL events, not formatted completion).
-- `gpt-5-codex` via `codex exec` — verified flags: `--skip-git-repo-check`, `-m`, `-s/--sandbox`, `-C/--cd`. Default sandbox blocks Write tool; pass `--sandbox workspace-write` for the file-write dispatch contract.
+- `gpt-5.5` via `codex exec` — verified flags: `--skip-git-repo-check`, `-m`, `-s/--sandbox`, `-C/--cd`. Default sandbox blocks Write tool; pass `--sandbox workspace-write` for the file-write dispatch contract.
 
 ## Agent-mode cost (opencode)
 

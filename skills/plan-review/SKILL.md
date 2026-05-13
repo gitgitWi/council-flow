@@ -19,21 +19,20 @@ If any of these are missing, do not run plan-review — go back to `flow:plan` f
 
 Use three reviewers by default; the diversity is the point. Model IDs come from `../../references/models.md` — do not hardcode here, and re-check that file when models move.
 
-Default trio (good signal / cost / latency mix):
+Default trio (diverse stack: codex + gemini + opencode):
 
+- `code-reviews/plan-codex.md` — `gpt-5.5` via `codex`
 - `code-reviews/plan-gemini.md` — `gemini-3.1-pro-preview` via `gemini`
 - `code-reviews/plan-kimi.md` — `opencode-go/kimi-k2.6` via `opencode`
-- `code-reviews/plan-deepseek.md` — `opencode-go/deepseek-v4-pro` via `opencode`
 
-Alternates (swap in when the default trio is unavailable or the user wants a different lens):
+Optional reviewers (ask the user before dispatching — see "Pre-flight + reviewer selection" below):
 
-- `code-reviews/plan-codex.md` — `gpt-5-codex` via `codex` (third diverse stack; useful as a codex-side voice beyond gemini + opencode)
-- `code-reviews/plan-deepseek-flash.md` — `opencode-go/deepseek-v4-flash` (faster DeepSeek variant; trade depth for latency)
-- `code-reviews/plan-glm.md` — `opencode-go/glm-5.1` (fastest second opinion)
+- `code-reviews/plan-deepseek.md` — `opencode-go/deepseek-v4-pro` via `opencode` (deepest analysis, +10-15 min)
+- `code-reviews/plan-glm.md` — `opencode-go/glm-5.1` via `opencode` (fast extra opinion, +5-7 min)
 
-If the user wants only two reviewers (token / time budget), keep Gemini + one of the OpenCode/Codex options. Always keep at least two; one reviewer is not a "multi-LLM review."
+If the user wants only two reviewers (token / time budget), keep Gemini + one of the Codex/OpenCode options. Always keep at least two; one reviewer is not a "multi-LLM review."
 
-CLI invocation flags are normative in `../../references/multi-llm.md` — in particular: `opencode run` must use `-m provider/model` (not `--format json`); `codex exec` must pass `--skip-git-repo-check --sandbox workspace-write --cd <abs-path>`. Do not paraphrase these flags in this skill; they were the root cause of the prior session's opencode/codex timeouts.
+CLI invocation flags are normative in `../../references/multi-llm.md` — in particular: `opencode run` must use `-m provider/model` (not `--format json`); `codex exec` (now a default reviewer) must pass `--skip-git-repo-check --sandbox workspace-write --cd <abs-path>`. Do not paraphrase these flags in this skill; they were the root cause of the prior session's opencode/codex timeouts.
 
 ## Frontmatter (every generated document)
 
@@ -82,9 +81,12 @@ related:
   - ./plan-kimi.md
   - ./plan-deepseek.md
 reviewers:
+  - gpt-5.5
   - gemini-3.1-pro-preview
   - opencode-go/kimi-k2.6
-  - opencode-go/deepseek-v4-pro
+  # append optional reviewers if user opted in:
+  # - opencode-go/deepseek-v4-pro
+  # - opencode-go/glm-5.1
 missing_reviewers: []      # populate with the failed reviewers, if any
 ---
 ```
@@ -128,9 +130,31 @@ where in the plan/tasks file.
 One line: "ship as-is" | "ship after minor edits" | "rework needed".
 ```
 
+## Pre-flight + reviewer selection
+
+Before dispatching any reviewer, do two things in sequence:
+
+**1. Pre-flight** — check which CLIs are installed:
+
+```bash
+command -v codex    >/dev/null 2>&1 && echo "codex: ok"    || echo "codex: MISSING"
+command -v gemini   >/dev/null 2>&1 && echo "gemini: ok"   || echo "gemini: MISSING"
+command -v opencode >/dev/null 2>&1 && echo "opencode: ok" || echo "opencode: MISSING"
+```
+
+A missing default-trio CLI is skipped (quorum policy in `../../references/multi-llm.md` still applies — need ≥ 2 valid reviews to synthesize).
+
+**2. Optional reviewer selection** — ask the user:
+
+> Optional reviewers available — add any to the dispatch batch?
+> - **DeepSeek v4 Pro** (`opencode-go/deepseek-v4-pro`) — deepest analysis, adds ~10-15 min
+> - **GLM 5.1** (`opencode-go/glm-5.1`) — fast extra opinion, adds ~5-7 min
+
+Wait for the user's response before dispatching. If the user says skip (or no response), proceed with the default trio only. Opted-in reviewers join the same parallel batch; do not run a second wave.
+
 ## Running the reviewers in parallel
 
-Issue all three Bash calls in the same message so they execute in parallel. See `../../references/multi-llm.md` for the exact invocation patterns, including the **mandatory pre-flight check, post-call verification, and quorum policy** when one or more reviewers fail (auth expiry, rate limit, network, etc.).
+Issue all reviewer Bash calls (default trio + any opted-in) in the same message so they execute in parallel. See `../../references/multi-llm.md` for the exact invocation patterns, including the **mandatory pre-flight check, post-call verification, and quorum policy** when one or more reviewers fail (auth expiry, rate limit, network, etc.).
 
 Quick recap of the failure handling, in this skill's terms:
 
@@ -175,9 +199,12 @@ After all three review files exist:
 - gemini-3.1-pro-preview: rate limit (자세한 내용은 `plan-gemini.FAILED.md`)
 
 ## 모델별 리뷰 원본
+- [Codex gpt-5.5](./plan-codex.md)
 - [Gemini 3.1 Pro Preview](./plan-gemini.md)
 - [Kimi K2.6](./plan-kimi.md)
+<!-- 아래는 사용자가 optional 리뷰어를 선택한 경우에만 포함 -->
 - [DeepSeek v4 Pro](./plan-deepseek.md)
+- [GLM 5.1](./plan-glm.md)
 ```
 
 ## Versioning the plan
