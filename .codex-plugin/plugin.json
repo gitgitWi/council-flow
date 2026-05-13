@@ -1,0 +1,43 @@
+{
+  "name": "flow",
+  "version": "0.6.0",
+  "description": "Opinionated multi-step development workflow: prep -> research -> plan -> plan-review -> develop -> deploy -> code-review. Atomic commits, TDD-first, multi-LLM review.",
+  "author": {
+    "name": "wjh",
+    "email": "gitgitWi@gmail.com",
+    "url": "https://github.com/gitgitWi"
+  },
+  "homepage": "https://github.com/gitgitWi/council-flow",
+  "repository": "https://github.com/gitgitWi/council-flow",
+  "license": "MIT",
+  "keywords": [
+    "workflow",
+    "tdd",
+    "multi-llm",
+    "atomic-commit",
+    "planning",
+    "code-review"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Council Flow",
+    "shortDescription": "Multi-step development workflow with planning, TDD, deploy, and review.",
+    "longDescription": "Council Flow provides an opinionated development workflow: prep, research, plan, plan-review, develop, deploy, and code-review. It emphasizes isolated worktrees, atomic conventional commits, TDD where practical, Korean user-facing summaries, and multi-LLM review loops.",
+    "developerName": "wjh",
+    "category": "Coding",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/gitgitWi/council-flow",
+    "privacyPolicyURL": "https://github.com/gitgitWi/council-flow",
+    "termsOfServiceURL": "https://github.com/gitgitWi/council-flow",
+    "defaultPrompt": [
+      "Run the Council Flow workflow for this task.",
+      "Create a Council Flow plan for this change.",
+      "Review this change with Council Flow."
+    ],
+    "brandColor": "#334155",
+    "screenshots": []
+  }
+}
