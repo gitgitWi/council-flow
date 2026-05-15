@@ -385,7 +385,9 @@ Given-When-Then **checkbox list**. Each task is **a behavior, not a step**. The 
 >
 > Tables are fine for *inventories* or *comparison matrices* (read-only reference data). They are wrong for anything called a checklist.
 
-Each TDD task carries an inline **commit hint** showing the expected commit boundary — typically one `test(...)` followed by one `feat(...)` (or `fix(...)`/`refactor(...)`). Non-TDD tasks carry a single hint. Hints are advisory: `flow:develop` reads them as the planned commit shape but may deviate when reality differs (split impl into 2 commits, fold trivial test into impl, etc.) and notes the deviation in commit body.
+Each TDD task carries an inline **commit hint** showing the expected commit boundary — typically one `test(...)` followed by one `feat(...)` (or `fix(...)`/`refactor(...)`). Non-TDD tasks carry a single hint.
+
+Hints are **advisory and human-/reviewer-readable only**. `flow:develop` does not currently parse `→ ...` lines; it still derives commit messages from the task body and `references/commit-conventions.md`. Treat hints as a planner-side aid for catching badly-scoped tasks (a behavior that needs three commits probably needs three checkboxes) and as a reviewer signal for what the planned commit shape was — not as a contract the develop skill enforces. A future PR may wire `flow:develop` to read and honor hints (and to record deviations in the commit body); until then, do not rely on that behavior.
 
 ```markdown
 # Tasks — <task name>
@@ -422,7 +424,7 @@ Each TDD task carries an inline **commit hint** showing the expected commit boun
 
 - **Every item is a `- [ ]` checkbox.** No markdown tables, no plain bullets, no numbered lists. If `flow:develop` can't toggle it from `[ ]` to `[x]`, it doesn't belong here.
 - One behavior per checkbox. Don't bundle.
-- **Commit hint(s) on every task.** `→ <type>(<scope>): <subject>` lines under the GWT body, one per planned commit. Follow `../../references/commit-conventions.md` for type/scope vocabulary.
+- **Commit hint(s) on every task.** → `<type>(<scope>): <subject>` lines under the GWT body, one per planned commit (arrow outside the backticks, matching the example block above). Follow `../../references/commit-conventions.md` for type/scope vocabulary.
 - Mention "non-TDD" explicitly for config/dep/rename tasks — see `../../references/tdd-policy.md` for which tasks skip TDD.
 - The order roughly follows implementation order, but the develop skill picks the next unchecked task and decides if dependencies require reordering.
 - Sub-tasks are allowed (nested checkboxes) when a single behavior splits naturally into validation + happy-path + error-path. Keep nesting one level deep.
