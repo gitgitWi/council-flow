@@ -270,10 +270,13 @@ shape and not another*. Stay at the level of *direction* — the file-by-file de
 goes in `## Change map` below; per-task implementation lives in `tasks.md`.
 
 When the change has non-trivial control flow, message passing, or state
-transitions, include **one Mermaid sequence (or flow) diagram** here. Diagrams are
-a faster read than prose for "who calls what, in what order." Skip the diagram
-when the shape is "edit a function, add a test" — diagrams for trivial flows are
-noise.
+transitions, include **at least one Mermaid sequence (or flow) diagram** here,
+rendered as a fenced ` ```mermaid ` code block so downstream renderers (GitHub,
+PR review tools, docs sites) pick it up correctly. Multiple diagrams are fine
+when distinct flows do not fit into one — size L plans with per-phase flows
+typically need more than one. Diagrams are a faster read than prose for "who
+calls what, in what order." Skip the diagram when the shape is "edit a function,
+add a test" — diagrams for trivial flows are noise.
 
 You may name concrete file paths and key type signatures inline when they sharpen
 the shape (e.g., "extend `BridgeRouter` to a `Record<RequestType, Handler>`
@@ -284,9 +287,11 @@ implementation, not here.
 ## Change map
 The file-level surface of the change. This section is what lets a reader (or
 another agent) decide "do I need to touch this code?" without reading the rest of
-the plan. Use lists, group by area when the change spans multiple modules. One
-line per file is the target — link to deeper sub-sections of `## Approach` when a
-file's change is non-obvious.
+the plan. Use lists, group by area when the change spans multiple modules. **One
+bullet per file is the target — keep each file to a single list item, using
+continuation lines under that bullet when needed.** When a file's change is
+non-obvious, refer the reader to the relevant `## Approach` bullet rather than
+inventing a sub-section.
 
 ### New
 - `path/to/new-file.ts` — one-line purpose. Key exports / signatures when load-bearing.
@@ -345,8 +350,13 @@ prevents scope creep during develop, so don't omit it.
 **Things to leave out of plan.md:**
 
 - Full implementation code. Inline snippets >~5 lines belong in `tasks.md` (as
-  test signatures) or in the actual implementation. Type signatures and short
-  contracts inside `## Approach` / `## Change map` are fine.
+  test signatures) or in the actual implementation. **Exception:** Mermaid
+  diagrams requested in `## Approach` are exempt from this limit — they are not
+  implementation code, they are the picture of it.
+- Long type signatures inside `## Change map`. Keep Change map entries to a
+  single list item (continuation lines fine). Type signatures longer than that —
+  or short contracts that need a few lines — belong in `## Approach`, not in
+  Change map bullets.
 - Step-by-step instructions. Those are `tasks.md`'s job.
 - Restating what's in `research.md`. Reference it, don't copy it.
 
@@ -359,9 +369,13 @@ Before showing the plan to the user, review it with fresh eyes and fix gaps inli
 - **Change map present:** For size M/L, every file the plan implies touching
   appears in `## Change map` (New / Modified / Deleted). A reader can answer
   "what files change?" without reading the rest of the plan.
+- **Change map coverage:** Every entry in `## Change map` is touched by at least
+  one task in `tasks.md`, and every file edited by `tasks.md` appears in
+  `## Change map` (or the section is intentionally collapsed for size S).
 - **Flow legible:** Where the change involves message passing or non-trivial
-  control flow, `## Approach` either has a Mermaid diagram or a short flow
-  description — not just bullet shape.
+  control flow, `## Approach` contains a Mermaid diagram (fenced ` ```mermaid `
+  block). Prose-only is allowed *only* when the planner explicitly states why a
+  diagram would be noise or infeasible — not as a default escape hatch.
 - **Reuse:** The plan explains what existing code/docs/tests it reuses, or why not.
 - **Alternatives:** At least two approaches were considered for non-trivial work,
   with a clear chosen approach and rejected-option rationale.
@@ -446,7 +460,7 @@ Hints are **advisory and human-/reviewer-readable only**. `flow:develop` does no
 ## Sizing decisions
 
 - **Size S** — plan.md can be 20-50 lines. tasks.md may have just 1-3 checkboxes (each with its commit hint). Skip phases, skip brainstorming, skip `flow:plan-review`. Change map can collapse into a sentence or be omitted when the touched files are obvious from `tasks.md`.
-- **Size M** — plan.md ~100-300 lines. tasks.md ~5-15 checkboxes. Include meaningful alternatives, failure modes, and test strategy. **Change map mandatory** (New / Modified / Deleted, one line per file). Add a Mermaid sequence/flow diagram in `## Approach` when message passing or non-trivial control flow is in scope. Brainstorming when cross-module / security-sensitive / public-surface (else skip). Plan-review optional, default to yes when brainstorming ran or external API integration is involved.
+- **Size M** — plan.md ~100-300 lines. tasks.md ~5-15 checkboxes. Include meaningful alternatives, failure modes, and test strategy. **Change map mandatory** (New / Modified / Deleted, one bullet per file). Add a Mermaid sequence/flow diagram in `## Approach` when message passing or non-trivial control flow is in scope. Brainstorming when cross-module / security-sensitive / public-surface (else skip). Plan-review optional, default to yes when brainstorming ran or external API integration is involved.
 - **Size L** — plan.md ~300-500 lines + per-phase files. tasks.md scoped by phase. Include explicit decision context, alternatives, failure-mode registry, rollout/rollback posture, and test strategy. **Change map mandatory and grouped by area/phase** when the change spans >10 files; each phase file repeats its own scoped Change map. Mermaid diagram(s) expected in `## Approach`. Brainstorming mandatory (3 providers including security lens). Plan-review mandatory.
 
 ## Reference
