@@ -45,161 +45,54 @@ All written under `<worktree>/.planning/<date>-<task>/`:
 
 - **`plan.md`** — approach, scope, architecture decisions, rollout. ~500 lines max for the whole thing (including any phase sub-plans). If it grows beyond that, split into `plan-phase-1.md`, `plan-phase-2.md` and let `plan.md` become a short index.
 - **`tasks.md`** — Given-When-Then checkbox list, the single source of truth for progress during develop.
-- **`brainstorm.md`** — *conditional.* Multi-LLM brainstorming synthesis, written before `plan.md` when scope warrants (see "Multi-LLM brainstorming" below). Raw per-model outputs go under `brainstorms/`.
+- **`brainstorm.md`** — *conditional.* Multi-LLM brainstorming synthesis,
+  written by `flow:brainstorm` before `plan.md` when scope warrants (see
+  "Optional brainstorming sub-phase" below). Raw per-model outputs go under
+  `brainstorms/`.
 
 All authored docs are **English** (any coding agent picks them up). Add a `## Korean summary (요약)` at the bottom of `plan.md` if the user wants to skim it quickly.
 
-## Multi-LLM brainstorming (run when scope warrants)
+## Optional brainstorming sub-phase
 
-Before drafting `plan.md`, run a multi-LLM brainstorming round when the change is large enough or cross-cutting enough that diverse perspectives meaningfully sharpen the approach. The point is to surface **architecture options, hidden risks, and security/correctness angles *before* the planner commits to a shape** — not to second-guess the plan afterward (that's `flow:plan-review`).
+Before drafting `plan.md`, consider running a multi-LLM brainstorming round.
+The point is to surface **architecture options, hidden risks, and
+security/correctness angles *before* the planner commits to a shape** — not to
+second-guess the plan afterward (that's `flow:plan-review`).
 
-### When to run
+The full mechanism — provider lenses, dispatch contract, idempotency check,
+synthesis template, anti-patterns — lives in the standalone **`flow:brainstorm`**
+skill. This section only documents *when* to invoke it from `flow:plan`.
 
-- **Size L** — always run. Large changes benefit most from multi-angle exploration.
+### Trigger criteria
+
+- **Size L** — always run.
 - **Size M** — run when any of:
-  - The change touches **multiple modules** (cross-module impact flagged in `meta.md` or surfaced from `research.md`).
-  - **Security-sensitive surface**: auth, payments, PII, cryptography, file uploads, anything user-controlled landing in a privileged context.
-  - **Public surface area** (a new external API endpoint, a published SDK, a webhook contract).
-  - The user explicitly asks for "options" / "alternatives" / "다각도로 보자" before planning.
+  - The change touches **multiple modules** (cross-module impact flagged in
+    `meta.md` or surfaced from `research.md`).
+  - **Security-sensitive surface**: auth, payments, PII, cryptography, file
+    uploads, anything user-controlled landing in a privileged context.
+  - **Public surface area** (a new external API endpoint, a published SDK, a
+    webhook contract).
+  - The user explicitly asks for "options" / "alternatives" / "다각도로 보자"
+    before planning.
 - **Size S** — skip. One perspective is fine for an atomic edit.
 
-If unsure for an M task, ask the user one short question. Default-no for plain M, default-yes for L.
+If unsure for an M task, ask the user one short question. Default-no for plain
+M, default-yes for L.
 
-### Provider roles
+### Invocation
 
-Two providers minimum (the `references/multi-llm.md` ≥2 quorum); three for size L. Each model gets a **focused lens** so outputs are differentiated, not duplicated.
+Invoke `flow:brainstorm`. It writes `brainstorm.md` (synthesis) and
+`brainstorms/` (raw per-model outputs) into the same
+`.planning/<date>-<task>/` directory, then returns. The planner then reads
+`brainstorm.md` while drafting `plan.md` — **convergence** informs assumptions,
+**divergence** informs explicit decisions in `## Alternatives considered` and
+`## Approach`. Do not read the raw `brainstorms/*.md` files directly; the
+synthesis is the planner-facing artifact.
 
-- **`gemini-3.1-pro` — Architecture & alternatives.** Surface 2–3 distinct architectural shapes for the change. Name load-bearing tradeoffs (cost / blast radius / reversibility). Bring ecosystem analogues.
-- **`opencode-go/kimi-k2.6` — Risk & failure modes.** Enumerate what could go wrong: race conditions, partial states, rollback paths, observability gaps, regressions in adjacent modules. Be concrete.
-- **`opencode-go/deepseek-v4-pro` — Security & correctness** *(size L, or M with security-sensitive surface)*. Threat-model the change: auth/authz, injection, data exposure, dependency surface, secrets handling.
-
-Model IDs come from `references/models.md` — if they move, edit there, not here.
-
-### Idempotency precondition
-
-Before dispatching anything, check whether the brainstorm has already run:
-
-```bash
-BRAINSTORM=.planning/<date>-<task>/brainstorm.md
-if [[ -f "$BRAINSTORM" ]] && grep -q '^status: active' "$BRAINSTORM"; then
-  echo "brainstorm.md already exists (status: active)"
-fi
-```
-
-If it does, **do not silently re-dispatch.** Ask the user: (a) keep the existing synthesis and skip the sub-phase, (b) regenerate (the existing `brainstorm.md` and `brainstorms/` files are moved to `brainstorm.v<N>.md` / `brainstorms.v<N>/`, mirroring the `plan.v<N>.md` versioning convention), or (c) abort. The most common path after an interrupted session is (a) — re-running the brainstorm doubles cost and clobbers the audit trail.
-
-### How to dispatch
-
-Follow the full dispatch + verification + quorum pattern in `references/multi-llm.md`. Key points specific to brainstorming:
-
-- **File-write contract.** Each contributor uses its native Write tool to write its review to a specific absolute path. The orchestrator captures stdout to a **runlog** file (diagnostic only — not the review). See `references/multi-llm.md` "Dispatch contract."
-- **Sentinel.** Every contributor file must end with `<!-- council-flow:review-complete -->`. Absent sentinel = treat as failed even if file size looks reasonable.
-- **Heartbeat.** Run `watch_review` (defined in `references/multi-llm.md`) in parallel with each dispatch so progress is visible at 1-minute resolution. A dispatch without a heartbeat is indistinguishable from a hung one for 10+ minutes.
-
-```bash
-mkdir -p .planning/<date>-<task>/brainstorms
-
-REVIEW_ARCH=.planning/<date>-<task>/brainstorms/architecture-gemini.md
-RUNLOG_ARCH=.planning/<date>-<task>/brainstorms/_runlog-architecture-gemini.txt
-
-( timeout 600 gemini --model gemini-3.1-pro-preview --yolo --skip-trust \
-    --prompt "$(cat <<PROMPT
-You are a non-interactive reviewer. Use Read and Write tools. Do not ask questions.
-
-TASK:
-1. Read the task brief at <abs>/meta.md and (if it exists) the research at <abs>/research.md.
-2. Write your brainstorm using the Write tool to: $REVIEW_ARCH
-3. The LAST LINE of the file MUST be exactly:
-     <!-- council-flow:review-complete -->
-4. Print only: "wrote architecture-gemini.md"
-
-Your lens: ARCHITECTURE & ALTERNATIVES.
-- Propose 2–3 distinct architectural shapes for this change.
-- For each: the shape in 2 sentences, and load-bearing tradeoffs (cost / blast radius / reversibility).
-- Name relevant ecosystem analogues.
-- Surface non-obvious design constraints the planner should know.
-
-Output format inside the file (Markdown, no preamble):
-## Option A — <name>
-- Shape: ...
-- Tradeoffs: ...
-## Option B — <name>
-...
-## Constraints surfaced
-- ...
-PROMPT
-)" > "$RUNLOG_ARCH" 2> "$RUNLOG_ARCH.stderr"; \
-  echo $? > "$RUNLOG_ARCH.exit" ) || true &
-
-# Run watch_review (from multi-llm.md) in parallel so progress is visible at 1-min resolution.
-watch_review "$REVIEW_ARCH" 25 &
-
-# Same wrapping for risk lens (kimi) — file-write to brainstorms/risk-kimi.md
-# Same wrapping for security lens (deepseek) — size L or security-sensitive only
-
-wait
-```
-
-Apply the full post-call verification (exit code, non-empty, **sentinel present**, **structural content present**, no failure signature) and quorum policy from `multi-llm.md`. If only one contributor succeeds, stop and ask the user (re-auth, swap, or proceed labeled "single-perspective").
-
-### Synthesis — `brainstorm.md`
-
-Read each raw output **once**, extract load-bearing ideas, and write a single English `brainstorm.md` at `.planning/<date>-<task>/brainstorm.md`. This is what the planner consults while drafting `plan.md`.
-
-```markdown
----
-title: "Brainstorm — <task name>"
-type: brainstorm
-task: <kebab task name>
-task_date: <YYYY-MM-DD>
-created: <today>
-last_updated: <today>
-status: active
-size: <M|L>
-parent: ./meta.md
-related:
-  - ./research.md (if exists)
-  - ./brainstorms/architecture-gemini.md
-  - ./brainstorms/risk-kimi.md
-contributors:
-  - gemini-3.1-pro
-  - opencode-go/kimi-k2.6
-missing_contributors: []
----
-
-# Brainstorm — <task>
-
-## Architecture options
-- 2–3 shapes the planner should weigh. One-line tradeoff each.
-
-## Risks worth designing against
-- Concrete failure modes raised by the brainstorm. Short and actionable.
-
-## Security / correctness angles
-- Threat-model bullets that should shape the plan or land as explicit non-goals.
-  (Omit this section entirely when no security lens was run.)
-
-## Convergence
-- Where models agreed. These are usually safe assumptions for the plan.
-
-## Divergence (most valuable section)
-- Where models disagreed. Each entry: which model said what, and the planner's
-  current lean — or "open question — needs user" when unresolved.
-
-## Open questions for the user
-- Anything the brainstorm could not resolve. Surface these before drafting the plan.
-```
-
-### What NOT to do
-
-- **Don't run brainstorming for size S.** It's noise.
-- **Don't paste raw model output into the conversation.** Files only — that's the whole point of `multi-llm.md`.
-- **Don't let the brainstorm become the plan.** The planner still drafts `plan.md`. Brainstorm is option-generation; plan is decision.
-- **Don't run brainstorm *and* plan-review on the same plan as a default.** They serve different stages — brainstorm before drafting, plan-review after. Doubling up is justified only when plan-review surfaces re-architecting questions that need fresh brainstorming.
-
-### Future refactor (open question)
-
-A self-brainstorm of this section by `gemini-3.1-pro-preview` recommended an alternative shape: **extract brainstorming into a dedicated explore phase between `flow:research` and `flow:plan`**, with a hard user checkpoint after `brainstorm.md` lands. The argument is context isolation (the planner LLM never reads raw contributor output) and reversibility (the user can steer between option-generation and plan-drafting). The current sub-phase shape is a pragmatic compromise; revisit if Option A produces planner drift or if users keep wanting to weigh in between brainstorm and plan.
+If `flow:brainstorm` reports an existing `brainstorm.md` from a prior session,
+its own idempotency check handles the keep/regenerate/abort decision — do not
+re-implement that logic here.
 
 ## Frontmatter (every generated document)
 
@@ -447,7 +340,7 @@ Hints are **advisory and human-/reviewer-readable only**. `flow:develop` does no
 
 1. **Read** `meta.md` and `research.md` (if it exists). Don't restart research — build on it.
 2. **Read** the user's task goal in their words. If anything is ambiguous, ask one or two focused questions. Don't ask 10 questions; the plan-review step will surface anything you miss.
-3. **Decide** whether to brainstorm (see "Multi-LLM brainstorming" above for the trigger criteria). If yes, dispatch providers, synthesize `brainstorm.md`, and resolve any "open questions for the user" before drafting.
+3. **Decide** whether to brainstorm (see "Optional brainstorming sub-phase" above for the trigger criteria). If yes, invoke `flow:brainstorm`; it synthesizes `brainstorm.md` and surfaces "open questions for the user" — resolve those before drafting.
 4. **Choose** the approach. Use `research.md` candidate approaches and `brainstorm.md`
    divergence as inputs. For size M/L, if two viable approaches remain close or the
    choice changes user-visible scope, pause once and ask the user to choose before
@@ -469,5 +362,6 @@ Hints are **advisory and human-/reviewer-readable only**. `flow:develop` does no
 - Frontmatter schema: `../../references/frontmatter.md`
 - TDD policy (what gets tests, what doesn't): `../../references/tdd-policy.md`
 - Doc style (prefer lists over tables): `../../references/doc-style.md`
-- Multi-LLM dispatch & quorum (used by brainstorming): `../../references/multi-llm.md`
+- Brainstorming skill (option-generation): `../brainstorm/SKILL.md`
+- Multi-LLM dispatch & quorum (used by `flow:brainstorm`): `../../references/multi-llm.md`
 - Model registry (lenses + IDs): `../../references/models.md`
