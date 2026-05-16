@@ -1,6 +1,6 @@
 {
   "name": "flow",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Opinionated multi-step development workflow: prep → research → plan → plan-review → develop → deploy → code-review. Atomic commits, TDD-first, Multi-LLM review.",
   "author": {
     "name": "wjh",
