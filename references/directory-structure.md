@@ -11,9 +11,10 @@ All flow skills read and write to a single per-task directory. Predictable paths
 ├── plan.v1.md           # previous plan version, kept only if plan-review supersedes
 ├── tasks.md             # GWT checkbox list — single source of truth for progress
 ├── research.md          # optional, written by `flow:research`
-├── brainstorm.md        # optional, multi-LLM brainstorming synthesis (size L always,
-│                        #   size M when cross-module / security-sensitive / public-surface)
-├── brainstorms/         # raw per-model brainstorming outputs, written by `flow:plan`
+├── brainstorm.md        # optional, multi-LLM brainstorming synthesis, written by
+│                        #   `flow:brainstorm` (direct invocation or sub-phase of
+│                        #   `flow:research` / `flow:plan`)
+├── brainstorms/         # raw per-model brainstorming outputs, written by `flow:brainstorm`
 │   ├── architecture-gemini.md
 │   ├── risk-kimi.md
 │   └── security-deepseek.md  # size L only by default
@@ -32,6 +33,7 @@ All flow skills read and write to a single per-task directory. Predictable paths
 - **Date prefix**: `yyyy-mm-dd` reflecting when prep ran. Local timezone is fine.
 - **Task name**: kebab-case, derived from the task goal. Match the branch's name-portion (e.g. branch `feature/add-google-login` → task name `add-google-login`).
 - **Standalone PR review variant**: when `flow:code-review` runs on a PR that was not created through this workflow (no matching task directory), it creates `<repo-root>/.planning/<yyyy-mm-dd>-pr<N>-review/code-reviews/` instead. Same internal layout (reviewer files + `code-summary.md`); the directory name encodes the PR number rather than a kebab task name. No `meta.md`, `plan.md`, or `tasks.md` is required in this variant.
+- **Standalone brainstorm variant**: when `flow:brainstorm` is invoked directly (no `flow:prep` ran) on an inline task brief, it creates `<repo-root>/.planning/<yyyy-mm-dd>-brainstorm-<slug>/` instead. `<slug>` is a kebab-cased 4–6 word condensation of the brief (collisions get `-2`, `-3`). Same internal layout for `brainstorm.md` + `brainstorms/`; a minimal `meta.md` is generated from the inline brief.
 - **Versioning**: `plan-review` only renames the old plan to `plan.v1.md` when it makes substantive changes. If it just confirms the plan, no version bump.
 
 ## Frontmatter

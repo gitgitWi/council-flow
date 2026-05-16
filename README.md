@@ -3,7 +3,7 @@
 An opinionated multi-step development workflow for Claude Code — a small "council" of LLMs (Claude as orchestrator + Gemini + OpenCode/Kimi + OpenCode/DeepSeek) plans, reviews, and ships your changes together.
 
 ```
-prep → (research) → plan → (plan-review) → develop → deploy
+prep → (research) → (brainstorm) → plan → (plan-review) → develop → deploy
 ```
 
 Atomic commits. TDD-first. `.planning/<date>-<task>/` as the working memory. Multi-LLM review (Gemini, OpenCode/Kimi, OpenCode/DeepSeek) at plan time and review time.
@@ -14,6 +14,7 @@ Atomic commits. TDD-first. `.planning/<date>-<task>/` as the working memory. Mul
 |---|---|
 | `flow:prep` | Create worktree, branch, `.planning/<date>-<task>/` folder, size estimate |
 | `flow:research` | Optional pre-plan investigation, writes `research.md` |
+| `flow:brainstorm` | Optional multi-LLM option-generation, writes `brainstorm.md`; standalone or sub-phase of `flow:research`/`flow:plan` |
 | `flow:plan` | One-pager `plan.md` + GWT `tasks.md` |
 | `flow:plan-review` | Multi-LLM critique of the plan, Korean summary, version bump on changes |
 | `flow:develop` | TDD cycle per `tasks.md` checkbox, atomic conventional commits |

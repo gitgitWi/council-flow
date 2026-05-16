@@ -105,7 +105,7 @@ external_llm_outputs:                    # only when used_external_llm is true
   - ./code-reviews/research-gemini.md
 ```
 
-### `brainstorm` (multi-LLM brainstorming synthesis, authored by `flow:plan`)
+### `brainstorm` (multi-LLM brainstorming synthesis, authored by `flow:brainstorm` — invoked directly or as a sub-phase from `flow:research` / `flow:plan`)
 
 ```yaml
 contributors:                            # models whose raw output is folded in
@@ -114,7 +114,7 @@ contributors:                            # models whose raw output is folded in
 missing_contributors: []                 # models that failed (mirrors plan-summary pattern)
 ```
 
-### `brainstorm-contribution` (per-model raw output under `brainstorms/`)
+### `brainstorm-contribution` (per-model raw output under `brainstorms/`, authored by `flow:brainstorm`)
 
 ```yaml
 contributor: gemini-3.1-pro              # CLI-facing model id

@@ -1,6 +1,6 @@
 ---
 name: orchestrate
-description: Run the full flow workflow end-to-end — prep → optional research → plan (with optional multi-LLM brainstorming) → optional plan-review → develop → deploy — based on a single task goal from the user. Use this when the user wants to hand off a complete task and let the workflow run, rather than driving each step manually. Skips research, brainstorming, and plan-review automatically for size S tasks; runs the full pipeline for size L. Even when the user just says "build me X", consider this skill if the task warrants the full discipline.
+description: Run the full flow workflow end-to-end — prep → optional research → optional brainstorm → plan → optional plan-review → develop → deploy — based on a single task goal from the user. Use this when the user wants to hand off a complete task and let the workflow run, rather than driving each step manually. Skips research, brainstorming, and plan-review automatically for size S tasks; runs the full pipeline for size L. Even when the user just says "build me X", consider this skill if the task warrants the full discipline.
 ---
 
 # flow:orchestrate — End-to-end workflow runner
@@ -21,25 +21,35 @@ Orchestrate is a thin sequencer. It does not reimplement any of the individual s
 
 2. flow:research          [skip if size = S, or user opted out]
    └── writes research.md
+   └── may suggest flow:brainstorm if candidate approaches list has 3+
+       comparable shapes (advisory — orchestrate, not research, dispatches)
 
-3. flow:plan              [always]
-   └── (sub-phase) multi-LLM brainstorm if size = L, or size = M with cross-module /
-       security-sensitive / public-surface flag → writes brainstorm.md + brainstorms/
-   └── writes plan.md, tasks.md
+3. flow:brainstorm        [run if size = L, or size = M with cross-module /
+                           security-sensitive / public-surface flag; ask
+                           otherwise; skip if size = S]
+   └── writes brainstorm.md (synthesis) + brainstorms/ (raw per-model output)
 
-4. flow:plan-review       [run if size = L; ask user if size = M; skip if size = S]
+4. flow:plan              [always]
+   └── writes plan.md, tasks.md (consults brainstorm.md when it exists)
+
+5. flow:plan-review       [run if size = L; ask user if size = M; skip if size = S]
    └── writes code-reviews/plan-*.md and plan-summary.md
    └── if substantive changes: bumps plan.md → plan.v1.md, writes new plan.md
 
-5. — Checkpoint with user —
+6. — Checkpoint with user —
    Show plan.md, tasks.md, and plan-summary.md (if exists). Wait for go/no-go.
 
-6. flow:develop           [after user confirms]
+7. flow:develop           [after user confirms]
    └── executes tasks.md, atomic commits, all checkboxes filled
 
-7. flow:deploy            [as a separate session — see below]
+8. flow:deploy            [as a separate session — see below]
    └── pushes, opens Korean PR, runs multi-LLM review, posts inline comments
 ```
+
+`flow:brainstorm` is also invocable standalone (`/flow:brainstorm`) outside the
+orchestrate pipeline — useful when the user wants to weigh options on a sketch
+without committing to a plan yet. Orchestrate is one of several callers, not
+the only one.
 
 ## Size-based skip logic
 
@@ -47,8 +57,8 @@ Orchestrate is a thin sequencer. It does not reimplement any of the individual s
 |---|---|---|---|
 | prep | yes | yes | yes |
 | research | skip | ask | yes |
-| plan (always) | yes | yes | yes |
-| ↳ brainstorm sub-phase | skip | ask (default yes if cross-module / security / public-surface) | yes |
+| brainstorm | skip | ask (default yes if cross-module / security / public-surface) | yes |
+| plan | yes | yes | yes |
 | plan-review | skip | ask | yes |
 | user checkpoint | skip | yes | yes |
 | develop | yes | yes | yes |
@@ -99,6 +109,7 @@ Each individual skill is the source of truth for its own behavior. This skill on
 
 - `flow:prep`
 - `flow:research`
+- `flow:brainstorm`
 - `flow:plan`
 - `flow:plan-review`
 - `flow:develop`

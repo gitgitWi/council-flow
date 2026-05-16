@@ -137,6 +137,14 @@ obvious. Use this shape:
   Effort: S/M/L. Risk: low/medium/high. Reuses: <existing code/docs>.
 ```
 
+If the candidate list ends up with **3+ viable shapes whose risk and effort are
+genuinely comparable**, or the user explicitly asks for option-generation,
+*suggest* `flow:brainstorm` as the next step in an `## Open questions` bullet —
+e.g., "More than one viable shape; consider `/flow:brainstorm` before planning
+to weigh them with diverse lenses." This is advisory only; research does not
+auto-dispatch. The user (or `flow:orchestrate`) decides whether to fan out
+before invoking `flow:plan`. See `../brainstorm/SKILL.md` for triggers.
+
 ## What NOT to do
 
 - **Don't research the obvious.** Linking to the React docs for `useState` is noise.
@@ -152,3 +160,4 @@ obvious. Use this shape:
 - Frontmatter schema: `../../references/frontmatter.md`
 - Calling other LLMs: `../../references/multi-llm.md`
 - Doc style (prefer lists over tables): `../../references/doc-style.md`
+- Brainstorming handoff (option-generation): `../brainstorm/SKILL.md`
