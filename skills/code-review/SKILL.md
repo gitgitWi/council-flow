@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: Run a multi-LLM code review on a pull request — gather the diff, dispatch reviewer CLIs in parallel via the file-write contract, synthesize a Korean summary, and post inline comments tagged by severity and model signature. Use this for any PR review whether the PR was just opened by flow:deploy or already exists on GitHub. Even when the user says "review PR #N", "이 PR 리뷰해줘", "기존 PR 멀티 LLM 리뷰", or "second opinion on this PR", invoke this skill — multi-LLM diversity is the point, not optional dressing. Auto-resolves output directory: an existing flow task's `code-reviews/` if available, otherwise a fresh `.planning/<date>-pr<N>-review/code-reviews/`. Run in its own session so reviewer LLMs see a clean diff without orchestrator noise.
+description: Run a multi-LLM code review on a pull request — gather the diff, dispatch reviewer CLIs in parallel via the file-write contract, synthesize a Korean summary, and post inline comments tagged by severity and model signature. Use this for any PR review whether the PR was just opened by flow:deploy or already exists on GitHub. Even when the user says "review PR #N", "이 PR 리뷰해줘", "기존 PR 멀티 LLM 리뷰", or "second opinion on this PR", invoke this skill — multi-LLM diversity is the point, not optional dressing. Auto-resolves output directory: an existing flow task's `review/` if available, otherwise a fresh `.planning/<date>-pr<N>-review/review/`. Run in its own session so reviewer LLMs see a clean diff without orchestrator noise.
 ---
 
 # flow:code-review — Multi-LLM PR review
@@ -28,8 +28,8 @@ If `gh` is unauthenticated or the PR does not exist, stop and tell the user. Do 
 
 Resolve in this order; first match wins:
 
-1. **Flow task worktree** — if the current working directory is inside a worktree whose branch matches the PR's `headRefName`, and `.planning/<date>-<task>/` exists, use `.planning/<date>-<task>/code-reviews/`. This is the deploy auto-invoke case.
-2. **Standalone PR review** — otherwise create `.planning/<YYYY-MM-DD>-pr<N>-review/code-reviews/` in the **current worktree**. The date is today (local timezone). Example: `.planning/2026-05-12-pr42-review/code-reviews/`.
+1. **Flow task worktree** — if the current working directory is inside a worktree whose branch matches the PR's `headRefName`, and `.planning/<date>-<task>/` exists, use `.planning/<date>-<task>/review/`. This is the deploy auto-invoke case.
+2. **Standalone PR review** — otherwise create `.planning/<YYYY-MM-DD>-pr<N>-review/review/` in the **current worktree**. The date is today (local timezone). Example: `.planning/2026-05-12-pr42-review/review/`.
 
 Print the resolved path before starting so the user knows where artifacts will land.
 
@@ -90,7 +90,7 @@ Wait for the user's response before dispatching. If the user says skip (or no re
 
 Each reviewer file and the synthesized `code-summary.md` carry frontmatter. Schema in `../../references/frontmatter.md`. Instruct each reviewer to lead with this block; if the CLI strips it, prepend after the call returns.
 
-Per-reviewer (`code-reviews/code-<reviewer>.md`):
+Per-reviewer (`review/code-<reviewer>.md`):
 
 ```yaml
 ---
@@ -115,7 +115,7 @@ prompted_against:
 ---
 ```
 
-Synthesized summary (`code-reviews/code-summary.md`):
+Synthesized summary (`review/code-summary.md`):
 
 ```yaml
 ---
@@ -199,7 +199,7 @@ Posting a review with fewer than the original reviewer count is allowed; pretend
 
 ## Step 3 — Synthesize code-summary.md (Korean)
 
-Read each reviewer file once, extract findings, and write `code-reviews/code-summary.md` in Korean:
+Read each reviewer file once, extract findings, and write `review/code-summary.md` in Korean:
 
 ```markdown
 # 코드 리뷰 요약 — PR #<N>
@@ -274,11 +274,11 @@ If the comment count is off (GitHub silently drops comments whose line numbers f
 
 ## Step 6 — Commit the review artifacts
 
-The `code-reviews/` files are part of the audit trail. Commit policy depends on where the artifacts landed and which branch is currently checked out:
+The `review/` files are part of the audit trail. Commit policy depends on where the artifacts landed and which branch is currently checked out:
 
 - **Same branch as the PR head** (deploy auto-invoke, or user reviewing their own branch's PR):
   ```bash
-  git add .planning/<date>-<task-or-pr>-review/code-reviews/
+  git add .planning/<date>-<task-or-pr>-review/review/
   git commit -m "docs(review): add multi-LLM PR review artifacts for PR #<N>"
   git push
   ```

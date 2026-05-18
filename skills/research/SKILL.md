@@ -36,7 +36,7 @@ parent: ./meta.md
 related:
   - ./plan.md (will consume these findings)
 time_box: 10m            # 5m | 10m | 20m | 60m
-used_external_llm: false # set true if Gemini/OpenCode produced raw output under code-reviews/
+used_external_llm: false # set true if Gemini/OpenCode produced raw output under review/
 ---
 
 # Research — <task>
@@ -111,7 +111,7 @@ Cover: authentication flow, required scopes, callback behavior, error responses,
 and any breaking changes in the last 12 months.
 Cite source URLs.
 PROMPT
-)" > .planning/<date>-<task>/code-reviews/research-gemini.md
+)" > .planning/<date>-<task>/review/research-gemini.md
 ```
 
 Then read that file once, distill the load-bearing facts into `research.md` under **External references**, and discard the rest from your active context.

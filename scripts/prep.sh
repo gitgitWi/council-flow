@@ -87,7 +87,9 @@ mkdir -p "${WORKTREES_DIR}"
 git worktree add -b "${BRANCH}" "${WORKTREE_PATH}" "${BASE}"
 
 # --- create planning folder + meta.md ---
-mkdir -p "${WORKTREE_PATH}/${PLANNING_DIR}/code-reviews"
+mkdir -p "${WORKTREE_PATH}/${PLANNING_DIR}/review"
+mkdir -p "${WORKTREE_PATH}/${PLANNING_DIR}/translates"
+mkdir -p "${WORKTREE_PATH}/${PLANNING_DIR}/versions"
 
 cat > "${WORKTREE_PATH}/${PLANNING_DIR}/meta.md" <<META
 ---

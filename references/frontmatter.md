@@ -38,11 +38,13 @@ One of these per document. Search-friendly — keep the spelling stable.
 | `tasks` | `tasks.md` |
 | `tasks-version` | `tasks.v<N>.md` (superseded tasks) |
 | `plan-phase` | `plan-phase-<N>.md` (size-L breakouts) |
-| `plan-review` | `code-reviews/plan-<reviewer>.md` |
-| `plan-summary` | `code-reviews/plan-summary.md` |
-| `code-review` | `code-reviews/code-<reviewer>.md` |
-| `code-summary` | `code-reviews/code-summary.md` |
-| `review-failed` | `code-reviews/<reviewer>.FAILED.md` |
+| `plan-review` | `review/plan-<reviewer>.md` |
+| `plan-summary` | `review/plan-summary.md` |
+| `code-review` | `review/code-<reviewer>.md` |
+| `code-summary` | `review/code-summary.md` |
+| `review-failed` | `review/<reviewer>.FAILED.md` |
+| `plan-translation` | `translates/plan.ko.md` |
+| `tasks-translation` | `translates/tasks.ko.md` |
 
 ## Status values
 
@@ -100,9 +102,9 @@ parent: ./plan.md                        # plan.md is the index when phases exis
 
 ```yaml
 time_box: 10m                            # nominal time-box used (5m | 10m | 20m | 60m)
-used_external_llm: true                  # set when Gemini/OpenCode produced raw output under code-reviews/
+used_external_llm: true                  # set when Gemini/OpenCode produced raw output under review/
 external_llm_outputs:                    # only when used_external_llm is true
-  - ./code-reviews/research-gemini.md
+  - ./review/research-gemini.md
 ```
 
 ### `brainstorm` (multi-LLM brainstorming synthesis, authored by `flow:plan`)
@@ -163,7 +165,7 @@ partial_output: ./plan-gemini.partial.md # only when partial output was preserve
 ## Conventions
 
 - **Dates in `YYYY-MM-DD`** for `created`, `last_updated`, `task_date`, `started`. Use full ISO 8601 (with time and tz) only for `when` on FAILED records.
-- **Relative paths** for everything inside the same `.planning/<date>-<task>/` directory (`./plan.md`, `./code-reviews/...`). Use absolute paths only for `worktree` (in meta) and `prompted_against` (in reviewer files), where absoluteness is the point.
+- **Relative paths** for everything inside the same `.planning/<date>-<task>/` directory (`./plan.md`, `./review/...`). Use absolute paths only for `worktree` (in meta) and `prompted_against` (in reviewer files), where absoluteness is the point.
 - **Mirror, don't compute.** `task`, `task_date`, `size` are mirrored from `meta.md` at authoring time. Do not invent a process to keep them in sync; if `meta.md` changes, fix the others by hand or accept the drift.
 - **`related` is for navigation, not provenance.** Each entry is `<path> (<one-line reason>)`. If a doc is the canonical anchor (parent), put it in `parent`, not `related`.
 

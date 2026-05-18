@@ -17,14 +17,20 @@ All flow skills read and write to a single per-task directory. Predictable paths
 │   ├── architecture-gemini.md
 │   ├── risk-kimi.md
 │   └── security-deepseek.md  # size L only by default
-└── code-reviews/        # written by `flow:plan-review` and `flow:deploy`
-    ├── plan-gemini.md
-    ├── plan-kimi.md
-    ├── plan-summary.md       # Claude's aggregated take, Korean
-    ├── code-gemini.md
-    ├── code-kimi.md
-    ├── code-deepseek.md
-    └── code-summary.md       # Claude's aggregated take, Korean
+├── review/              # written by `flow:plan-review` and `flow:code-review`
+│   ├── plan-gemini.md
+│   ├── plan-kimi.md
+│   ├── plan-summary.md       # Claude's aggregated take, Korean
+│   ├── code-gemini.md
+│   ├── code-kimi.md
+│   ├── code-deepseek.md
+│   └── code-summary.md       # Claude's aggregated take, Korean
+├── translates/          # Korean translations of plan.md and tasks.md
+│   ├── plan.ko.md
+│   └── tasks.ko.md
+└── versions/            # superseded plan/tasks versions and their translations
+    ├── plan.v1.md
+    └── plan.ko.v1.md
 ```
 
 ## Naming rules
@@ -76,5 +82,6 @@ If a particular project does not want planning artifacts committed, add `.planni
 ## Language policy
 
 - `plan.md`, `tasks.md`, `research.md`, `meta.md`, `brainstorm.md`: **English** (LLM-facing). Optionally include a short Korean summary at the bottom if the user wants quick scanning.
-- `code-reviews/plan-summary.md` and `code-reviews/code-summary.md`: **Korean** (user-facing — these are read by the human alongside Claude).
-- Individual model output files (`code-reviews/*-gemini.md`, `brainstorms/*-gemini.md`, etc.): whatever the model emits, no translation.
+- `review/plan-summary.md` and `review/code-summary.md`: **Korean** (user-facing — these are read by the human alongside Claude).
+- `translates/plan.ko.md` and `translates/tasks.ko.md`: **Korean** (translated copies of plan.md and tasks.md for user scanning).
+- Individual model output files (`review/*-gemini.md`, `brainstorms/*-gemini.md`, etc.): whatever the model emits, no translation.

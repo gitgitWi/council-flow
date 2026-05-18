@@ -70,12 +70,12 @@ codex exec --skip-git-repo-check \
 Codex's `--sandbox` controls what the model's generated shell/tool calls can do, not what the wrapper does. The three useful values:
 
 - `read-only` — cannot write files. Use for "just analyze, never modify" jobs.
-- `workspace-write` — can write only inside the CWD subtree. The right default for reviewers writing into `.planning/<task>/code-reviews/`.
+- `workspace-write` — can write only inside the CWD subtree. The right default for reviewers writing into `.planning/<task>/review/`.
 - `danger-full-access` — unrestricted; reserve for explicit user opt-in.
 
 ## Output handling rule
 
-**Do not pipe other-LLM output back into the Claude conversation as raw text.** Always save to a file under `.planning/<task>/code-reviews/<model>.md` (or wherever the calling skill specifies) and read only the summary or relevant parts. This keeps Claude's context lean.
+**Do not pipe other-LLM output back into the Claude conversation as raw text.** Always save to a file under `.planning/<task>/review/<model>.md` (or wherever the calling skill specifies) and read only the summary or relevant parts. This keeps Claude's context lean.
 
 ## When to use multi-LLM
 

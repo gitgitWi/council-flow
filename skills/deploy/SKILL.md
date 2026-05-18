@@ -50,7 +50,7 @@ PR body in Korean, using this template:
 
 ## 관련 링크
 - 플랜: `.planning/<date>-<task>/plan.md`
-- 리뷰 요약: `.planning/<date>-<task>/code-reviews/code-summary.md` (자동 생성 예정)
+- 리뷰 요약: `.planning/<date>-<task>/review/code-summary.md` (자동 생성 예정)
 ```
 
 Create with HEREDOC for correct formatting:
@@ -66,7 +66,7 @@ Capture the PR number from the URL `gh pr create` prints.
 
 ## Step 3 — Hand off to flow:code-review
 
-Invoke `flow:code-review` with the PR number from Step 2. Because the current branch matches the PR's head and `.planning/<date>-<task>/` exists, code-review will resolve the output directory to `.planning/<date>-<task>/code-reviews/` automatically — same layout as before.
+Invoke `flow:code-review` with the PR number from Step 2. Because the current branch matches the PR's head and `.planning/<date>-<task>/` exists, code-review will resolve the output directory to `.planning/<date>-<task>/review/` automatically — same layout as before.
 
 Tell the user:
 

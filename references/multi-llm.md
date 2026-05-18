@@ -34,7 +34,7 @@ You are a non-interactive reviewer. Use Read and Write tools. Do not ask questio
 
 TASK:
 1. Read the plan at <abs-path>/plan.md and the task list at <abs-path>/tasks.md.
-2. Write your review using the Write tool to: <abs-path>/code-reviews/plan-gemini.md
+2. Write your review using the Write tool to: <abs-path>/review/plan-gemini.md
 3. The LAST LINE of the file MUST be exactly:
      <!-- council-flow:review-complete -->
 4. Print only: "wrote plan-gemini.md"
@@ -47,8 +47,8 @@ Review sections (Markdown):
 
 Focus on correctness and missed edge cases.
 PROMPT
-)" > .planning/<task>/code-reviews/_runlog-gemini.txt \
-   2> .planning/<task>/code-reviews/_runlog-gemini.stderr
+)" > .planning/<task>/review/_runlog-gemini.txt \
+   2> .planning/<task>/review/_runlog-gemini.stderr
 ```
 
 Note the `> _runlog-gemini.txt` — that captures stdout as a diagnostic log, **not** as the review. The review file is what Gemini's Write tool produced.
@@ -61,7 +61,7 @@ You are a non-interactive reviewer. Use Read and Write tools. Do not ask questio
 
 TASK:
 1. Read the plan at <abs-path>/plan.md.
-2. Write your review using the Write tool to: <abs-path>/code-reviews/plan-kimi.md
+2. Write your review using the Write tool to: <abs-path>/review/plan-kimi.md
 3. The LAST LINE of the file MUST be exactly:
      <!-- council-flow:review-complete -->
 4. Print only: "wrote plan-kimi.md"
@@ -72,8 +72,8 @@ PROMPT_BODY
 
 printf '%s' "$PROMPT" | \
   opencode run --dangerously-skip-permissions -m opencode-go/kimi-k2.6 \
-    > .planning/<task>/code-reviews/_runlog-kimi.txt \
-    2> .planning/<task>/code-reviews/_runlog-kimi.stderr
+    > .planning/<task>/review/_runlog-kimi.txt \
+    2> .planning/<task>/review/_runlog-kimi.stderr
 ```
 
 Flag notes (verified 2026-05-12 against `opencode` v1.14.x — re-test on upgrades):
@@ -105,7 +105,7 @@ You are a non-interactive reviewer. Use Read and Write tools. Do not ask questio
 
 TASK:
 1. Read the plan at <abs-path>/plan.md and the task list at <abs-path>/tasks.md.
-2. Write your review using the Write tool to: <abs-path>/code-reviews/plan-codex.md
+2. Write your review using the Write tool to: <abs-path>/review/plan-codex.md
 3. The LAST LINE of the file MUST be exactly:
      <!-- council-flow:review-complete -->
 4. Print only: "wrote plan-codex.md"
@@ -119,8 +119,8 @@ codex exec --skip-git-repo-check \
            --sandbox workspace-write \
            --cd /abs/path/to/worktree \
            - <<<"$PROMPT" \
-    > .planning/<task>/code-reviews/_runlog-codex.txt \
-    2> .planning/<task>/code-reviews/_runlog-codex.stderr
+    > .planning/<task>/review/_runlog-codex.txt \
+    2> .planning/<task>/review/_runlog-codex.stderr
 ```
 
 Flag notes (verified 2026-05-12 against the installed `codex` CLI):
@@ -297,11 +297,11 @@ Recommended pattern — Gemini (prompt as `--prompt` flag is fine, only opencode
 
 ```bash
 # Review file (what the CLI writes via its Write tool):
-REVIEW=.planning/<task>/code-reviews/plan-gemini.md
+REVIEW=.planning/<task>/review/plan-gemini.md
 # Diagnostic runlog files (stdout/stderr capture; not the review):
-RUNLOG=.planning/<task>/code-reviews/_runlog-gemini.txt
-RUNERR=.planning/<task>/code-reviews/_runlog-gemini.stderr
-EXIT=.planning/<task>/code-reviews/_runlog-gemini.exit
+RUNLOG=.planning/<task>/review/_runlog-gemini.txt
+RUNERR=.planning/<task>/review/_runlog-gemini.stderr
+EXIT=.planning/<task>/review/_runlog-gemini.exit
 
 # Run with a hard timeout. Always succeed at the shell level so `wait` doesn't abort.
 ( timeout 600 gemini --model gemini-3.1-pro-preview --yolo --skip-trust \
@@ -316,10 +316,10 @@ PROMPT
 Same pattern for OpenCode — prompt via stdin pipe, `--dangerously-skip-permissions` mandatory:
 
 ```bash
-REVIEW=.planning/<task>/code-reviews/plan-kimi.md
-RUNLOG=.planning/<task>/code-reviews/_runlog-kimi.txt
-RUNERR=.planning/<task>/code-reviews/_runlog-kimi.stderr
-EXIT=.planning/<task>/code-reviews/_runlog-kimi.exit
+REVIEW=.planning/<task>/review/plan-kimi.md
+RUNLOG=.planning/<task>/review/_runlog-kimi.txt
+RUNERR=.planning/<task>/review/_runlog-kimi.stderr
+EXIT=.planning/<task>/review/_runlog-kimi.exit
 PROMPT="$(cat <<PROMPT_BODY
 ... reviewer prompt; MUST tell the CLI to Write its review to $REVIEW ...
 PROMPT_BODY
@@ -358,7 +358,7 @@ After all reviewers return, for each reviewer file run **all five** of these che
 When a reviewer fails (any of the three checks above), do **not** delete the partial output. Instead:
 
 1. Move the partial file aside: `mv plan-gemini.md plan-gemini.partial.md` (only if it has content; if empty, delete it).
-2. Write a short failure record at `code-reviews/plan-gemini.FAILED.md` (frontmatter schema in `frontmatter.md`):
+2. Write a short failure record at `review/plan-gemini.FAILED.md` (frontmatter schema in `frontmatter.md`):
 
    ```markdown
    ---
