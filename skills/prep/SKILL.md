@@ -44,6 +44,8 @@ bash <plugin-dir>/scripts/prep.sh \
 
 The script prints the worktree path on stdout. Capture it — every subsequent skill operates inside that path.
 
+The script auto-detects the project's package manager by checking for lockfiles in the new worktree (priority: pnpm > bun > npm > yarn > uv) and runs the corresponding install command. If no lockfile is found, the step is skipped. Dependency install is non-fatal — a failure prints a warning but does not abort prep.
+
 ## After the script runs
 
 1. **`cd` into the worktree.** Confirm with `git rev-parse --show-toplevel` that you are in the new worktree before doing anything else. The rest of the workflow assumes the working directory is the worktree.
