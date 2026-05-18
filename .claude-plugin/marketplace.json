@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "Self-hosted marketplace for the flow plugin — opinionated multi-step development workflow.",
-    "version": "0.8.0"
+    "version": "0.8.1"
   },
   "plugins": [
     {
       "name": "flow",
       "source": "./",
       "description": "Multi-step development workflow: prep → research → plan → plan-review → develop → deploy → code-review. Atomic commits, TDD-first, multi-LLM review.",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "author": {
         "name": "wjh",
         "email": "gitgitWi@gmail.com"
