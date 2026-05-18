@@ -34,9 +34,9 @@ One of these per document. Search-friendly — keep the spelling stable.
 | `brainstorm` | `brainstorm.md` (multi-LLM brainstorming synthesis) |
 | `brainstorm-contribution` | `brainstorms/<role>-<model>.md` (per-model raw output) |
 | `plan` | `plan.md` |
-| `plan-version` | `plan.v<N>.md` (superseded plan) |
+| `plan-version` | `versions/plan.v<N>.md` (superseded plan) |
 | `tasks` | `tasks.md` |
-| `tasks-version` | `tasks.v<N>.md` (superseded tasks) |
+| `tasks-version` | `versions/tasks.v<N>.md` (superseded tasks) |
 | `plan-phase` | `plan-phase-<N>.md` (size-L breakouts) |
 | `plan-review` | `review/plan-<reviewer>.md` |
 | `plan-summary` | `review/plan-summary.md` |
@@ -74,7 +74,7 @@ goal: |
 ```yaml
 version: 1                               # 1 for the first plan; bumps on plan-review revisions
 supersedes: ./versions/plan.v1.md        # only on plan.md when a previous version exists
-superseded_by: ./plan.md                 # only on versions/plan.v<N>.md
+superseded_by: ../plan.md                # only on versions/plan.v<N>.md
 plan_review_run: true                    # set true after flow:plan-review touched it
 ```
 
@@ -85,7 +85,7 @@ A new `plan.md` after `plan-review` produces substantive changes carries `versio
 ```yaml
 version: 1
 supersedes: ./versions/tasks.v1.md
-superseded_by: ./tasks.md
+superseded_by: ../tasks.md
 total_tasks: 12                          # optional — set at authoring time, do not maintain
 ```
 

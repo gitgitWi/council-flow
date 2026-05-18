@@ -95,7 +95,7 @@ When versioning the plan (substantive changes apply), the moved `versions/plan.v
 
 ```yaml
 status: superseded
-superseded_by: ./plan.md
+superseded_by: ../plan.md
 ```
 
 …and the new `plan.md` gets `version: <N+1>` and `supersedes: ./versions/plan.v<N>.md`. Same rules for `tasks.md` ↔ `versions/tasks.v<N>.md` if tasks change.
@@ -212,7 +212,7 @@ After all three review files exist:
 The user reads `plan-summary.md` and decides what to apply.
 
 - **No substantive change needed** — keep `plan.md` as-is. Don't bump.
-- **Substantive changes** — move current `plan.md` to `versions/plan.v<N>.md` (next available `N` starting at 1). Also move `translates/plan.ko.md` to `versions/plan.ko.v<N>.md` if it exists. Write the new `plan.md` with edits applied. Note in the new plan's header which version it came from and what changed at a high level. Same versioning rule for `tasks.md` / `tasks.ko.md` if tasks change.
+- **Substantive changes** — move current `plan.md` to `versions/plan.v<N>.md` (next available `N` starting at 1). Also move `translates/plan.ko.md` to `versions/plan.ko.v<N>.md` if it exists — update its `source:` frontmatter from `../plan.md` to `./plan.v<N>.md` so it points to the plan it actually translates, not the new one. Write the new `plan.md` with edits applied. Note in the new plan's header which version it came from and what changed at a high level. Same versioning rule for `tasks.md` / `tasks.ko.md` if tasks change.
 - **Re-dispatch Korean translation** — after writing the new `plan.md` (and `tasks.md` if changed), dispatch Korean translation using the same method as `flow:plan` (Sonnet subagent by default, GLM 5.1 on user request). The new translations land at `translates/plan.ko.md` and `translates/tasks.ko.md`.
 
 Do **not** delete old plan versions. They are part of the audit trail — `versions/` preserves them.

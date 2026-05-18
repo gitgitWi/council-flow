@@ -29,7 +29,9 @@ All flow skills read and write to a single per-task directory. Predictable paths
 │   └── tasks.ko.md
 └── versions/            # superseded plan/tasks versions and their translations
     ├── plan.v1.md
-    └── plan.ko.v1.md
+    ├── plan.ko.v1.md
+    ├── tasks.v1.md
+    └── tasks.ko.v1.md
 ```
 
 ## Naming rules
