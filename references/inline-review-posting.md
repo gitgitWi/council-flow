@@ -62,7 +62,7 @@ The signature line (`— signed: <model-id>`) tells the human which model raised
 
 ## Top-level review body
 
-The review's top-level `body` field is the **Korean aggregated summary** the user reads first. It comes from `code-reviews/code-summary.md` content. Include:
+The review's top-level `body` field is the **Korean aggregated summary** the user reads first. It comes from `review/code-summary.md` content. Include:
 
 1. 전체 평가 한 줄
 2. 합의된 주요 이슈 (3-5개)

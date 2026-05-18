@@ -21,14 +21,14 @@ Use three reviewers by default; the diversity is the point. Model IDs come from 
 
 Default trio (diverse stack: codex + gemini + opencode):
 
-- `code-reviews/plan-codex.md` — `gpt-5.5` via `codex`
-- `code-reviews/plan-gemini.md` — `gemini-3.1-pro-preview` via `gemini`
-- `code-reviews/plan-kimi.md` — `opencode-go/kimi-k2.6` via `opencode`
+- `review/plan-codex.md` — `gpt-5.5` via `codex`
+- `review/plan-gemini.md` — `gemini-3.1-pro-preview` via `gemini`
+- `review/plan-kimi.md` — `opencode-go/kimi-k2.6` via `opencode`
 
 Optional reviewers (ask the user before dispatching — see "Pre-flight + reviewer selection" below):
 
-- `code-reviews/plan-deepseek.md` — `opencode-go/deepseek-v4-pro` via `opencode` (deepest analysis, +10-15 min)
-- `code-reviews/plan-glm.md` — `opencode-go/glm-5.1` via `opencode` (fast extra opinion, +5-7 min)
+- `review/plan-deepseek.md` — `opencode-go/deepseek-v4-pro` via `opencode` (deepest analysis, +10-15 min)
+- `review/plan-glm.md` — `opencode-go/glm-5.1` via `opencode` (fast extra opinion, +5-7 min)
 
 If the user wants only two reviewers (token / time budget), keep Gemini + one of the Codex/OpenCode options. Always keep at least two; one reviewer is not a "multi-LLM review."
 
@@ -38,7 +38,7 @@ CLI invocation flags are normative in `../../references/multi-llm.md` — in par
 
 The reviewer files, the synthesized summary, and any superseded plan version all carry frontmatter. Schema in `../../references/frontmatter.md`.
 
-Per-reviewer (`code-reviews/plan-<reviewer>.md`) — instruct the reviewer to start its output with this block (some CLIs strip it; if so, prepend it after the call returns):
+Per-reviewer (`review/plan-<reviewer>.md`) — instruct the reviewer to start its output with this block (some CLIs strip it; if so, prepend it after the call returns):
 
 ```yaml
 ---
@@ -63,7 +63,7 @@ prompted_against:
 ---
 ```
 
-Synthesized summary (`code-reviews/plan-summary.md`):
+Synthesized summary (`review/plan-summary.md`):
 
 ```yaml
 ---
@@ -91,14 +91,14 @@ missing_reviewers: []      # populate with the failed reviewers, if any
 ---
 ```
 
-When versioning the plan (substantive changes apply), the renamed `plan.v<N>.md` gets:
+When versioning the plan (substantive changes apply), the moved `versions/plan.v<N>.md` gets:
 
 ```yaml
 status: superseded
-superseded_by: ./plan.md
+superseded_by: ../plan.md
 ```
 
-…and the new `plan.md` gets `version: <N+1>` and `supersedes: ./plan.v<N>.md`. Same rules for `tasks.md` ↔ `tasks.v<N>.md` if tasks change.
+…and the new `plan.md` gets `version: <N+1>` and `supersedes: ./versions/plan.v<N>.md`. Same rules for `tasks.md` ↔ `versions/tasks.v<N>.md` if tasks change.
 
 ## Prompt template
 
@@ -160,7 +160,7 @@ Quick recap of the failure handling, in this skill's terms:
 
 - Run pre-flight (`command -v gemini` etc.) and skip any missing CLI up front.
 - Wrap each call with `timeout` and capture the exit code; never let one CLI failure abort the parent shell.
-- After the parallel batch returns, verify each reviewer file (exit code, non-empty, no failure signature) before reading it. If a check fails, write `code-reviews/plan-<reviewer>.FAILED.md` and continue.
+- After the parallel batch returns, verify each reviewer file (exit code, non-empty, no failure signature) before reading it. If a check fails, write `review/plan-<reviewer>.FAILED.md` and continue.
 - **≥ 2 valid reviews** → synthesize as normal, list missing reviewer(s) under `## 결손 리뷰어` in `plan-summary.md`.
 - **1 valid review** → stop and ask the user (retry / swap reviewer / proceed as single-reviewer with explicit labelling).
 - **0 valid reviews** → stop, do not synthesize, surface failure records.
@@ -172,7 +172,7 @@ After all three review files exist:
 1. **Read each file once.** Extract: each reviewer's top 3 risks, top 3 suggestions, and verdict.
 2. **Look for agreement.** Items raised by 2+ reviewers are high signal. Items raised by only one but with strong reasoning still matter — don't filter by vote count alone.
 3. **Look for disagreement.** When reviewers conflict (e.g., one says "use event sourcing", another says "stay relational"), this is the most valuable part of the review — surface the disagreement, don't paper over it.
-4. **Write** `code-reviews/plan-summary.md` in **Korean** (this file is for the user, not for downstream agents):
+4. **Write** `review/plan-summary.md` in **Korean** (this file is for the user, not for downstream agents):
 
 ```markdown
 # 플랜 리뷰 요약 — <task>
@@ -212,9 +212,10 @@ After all three review files exist:
 The user reads `plan-summary.md` and decides what to apply.
 
 - **No substantive change needed** — keep `plan.md` as-is. Don't bump.
-- **Substantive changes** — rename current `plan.md` to `plan.v<N>.md` (next available `N` starting at 1), then write the new `plan.md` with edits applied. Note in the new plan's header which version it came from and what changed at a high level. Same versioning rule for `tasks.md` if it changes.
+- **Substantive changes** — move current `plan.md` to `versions/plan.v<N>.md` (next available `N` starting at 1). Also move `translates/plan.ko.md` to `versions/plan.ko.v<N>.md` if it exists — update its `source:` frontmatter from `../plan.md` to `./plan.v<N>.md` so it points to the plan it actually translates, not the new one. Write the new `plan.md` with edits applied. Note in the new plan's header which version it came from and what changed at a high level. Same versioning rule for `tasks.md` / `tasks.ko.md` if tasks change.
+- **Re-dispatch Korean translation** — after writing the new `plan.md` (and `tasks.md` if changed), dispatch Korean translation using the same method as `flow:plan` (Sonnet subagent by default, GLM 5.1 on user request). The new translations land at `translates/plan.ko.md` and `translates/tasks.ko.md`.
 
-Do **not** delete old plan versions. They are part of the audit trail.
+Do **not** delete old plan versions. They are part of the audit trail — `versions/` preserves them.
 
 ## Reference
 

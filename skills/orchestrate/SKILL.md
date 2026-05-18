@@ -28,7 +28,7 @@ Orchestrate is a thin sequencer. It does not reimplement any of the individual s
    └── writes plan.md, tasks.md
 
 4. flow:plan-review       [run if size = L; ask user if size = M; skip if size = S]
-   └── writes code-reviews/plan-*.md and plan-summary.md
+   └── writes review/plan-*.md and plan-summary.md
    └── if substantive changes: bumps plan.md → plan.v1.md, writes new plan.md
 
 5. — Checkpoint with user —
@@ -60,7 +60,7 @@ Orchestrate is a thin sequencer. It does not reimplement any of the individual s
 
 This is the only mandatory pause in orchestrate. Show the user:
 
-1. The plan summary (Korean section of plan.md, or plan-summary.md if plan-review ran)
+1. The plan summary (`translates/plan.ko.md`, or `review/plan-summary.md` if plan-review ran)
 2. The tasks.md checkbox list
 3. Anything that came up as an open question
 

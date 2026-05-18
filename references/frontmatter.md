@@ -34,15 +34,17 @@ One of these per document. Search-friendly — keep the spelling stable.
 | `brainstorm` | `brainstorm.md` (multi-LLM brainstorming synthesis) |
 | `brainstorm-contribution` | `brainstorms/<role>-<model>.md` (per-model raw output) |
 | `plan` | `plan.md` |
-| `plan-version` | `plan.v<N>.md` (superseded plan) |
+| `plan-version` | `versions/plan.v<N>.md` (superseded plan) |
 | `tasks` | `tasks.md` |
-| `tasks-version` | `tasks.v<N>.md` (superseded tasks) |
+| `tasks-version` | `versions/tasks.v<N>.md` (superseded tasks) |
 | `plan-phase` | `plan-phase-<N>.md` (size-L breakouts) |
-| `plan-review` | `code-reviews/plan-<reviewer>.md` |
-| `plan-summary` | `code-reviews/plan-summary.md` |
-| `code-review` | `code-reviews/code-<reviewer>.md` |
-| `code-summary` | `code-reviews/code-summary.md` |
-| `review-failed` | `code-reviews/<reviewer>.FAILED.md` |
+| `plan-review` | `review/plan-<reviewer>.md` |
+| `plan-summary` | `review/plan-summary.md` |
+| `code-review` | `review/code-<reviewer>.md` |
+| `code-summary` | `review/code-summary.md` |
+| `review-failed` | `review/<reviewer>.FAILED.md` |
+| `plan-translation` | `translates/plan.ko.md` |
+| `tasks-translation` | `translates/tasks.ko.md` |
 
 ## Status values
 
@@ -71,19 +73,19 @@ goal: |
 
 ```yaml
 version: 1                               # 1 for the first plan; bumps on plan-review revisions
-supersedes: ./plan.v1.md                 # only on plan.md when a previous version exists
-superseded_by: ./plan.md                 # only on plan.v<N>.md
+supersedes: ./versions/plan.v1.md        # only on plan.md when a previous version exists
+superseded_by: ../plan.md                # only on versions/plan.v<N>.md
 plan_review_run: true                    # set true after flow:plan-review touched it
 ```
 
-A new `plan.md` after `plan-review` produces substantive changes carries `version: <N+1>` and `supersedes: ./plan.v<N>.md`. The previous file is renamed to `plan.v<N>.md` with `status: superseded` and `superseded_by: ./plan.md`.
+A new `plan.md` after `plan-review` produces substantive changes carries `version: <N+1>` and `supersedes: ./versions/plan.v<N>.md`. The previous file is moved to `versions/plan.v<N>.md` with `status: superseded` and `superseded_by: ./plan.md`. Its Korean translation moves to `versions/plan.ko.v<N>.md`.
 
 ### `tasks` and `tasks-version`
 
 ```yaml
 version: 1
-supersedes: ./tasks.v1.md
-superseded_by: ./tasks.md
+supersedes: ./versions/tasks.v1.md
+superseded_by: ../tasks.md
 total_tasks: 12                          # optional — set at authoring time, do not maintain
 ```
 
@@ -100,9 +102,9 @@ parent: ./plan.md                        # plan.md is the index when phases exis
 
 ```yaml
 time_box: 10m                            # nominal time-box used (5m | 10m | 20m | 60m)
-used_external_llm: true                  # set when Gemini/OpenCode produced raw output under code-reviews/
+used_external_llm: true                  # set when Gemini/OpenCode produced raw output under review/
 external_llm_outputs:                    # only when used_external_llm is true
-  - ./code-reviews/research-gemini.md
+  - ./review/research-gemini.md
 ```
 
 ### `brainstorm` (multi-LLM brainstorming synthesis, authored by `flow:plan`)
@@ -160,10 +162,18 @@ when: 2026-05-11T15:42:00+09:00          # ISO timestamp of detection
 partial_output: ./plan-gemini.partial.md # only when partial output was preserved
 ```
 
+### `plan-translation` and `tasks-translation`
+
+```yaml
+source: ../plan.md                       # or ../tasks.md — the English file this translates
+language: ko
+translator: sonnet                       # or glm-5.1
+```
+
 ## Conventions
 
 - **Dates in `YYYY-MM-DD`** for `created`, `last_updated`, `task_date`, `started`. Use full ISO 8601 (with time and tz) only for `when` on FAILED records.
-- **Relative paths** for everything inside the same `.planning/<date>-<task>/` directory (`./plan.md`, `./code-reviews/...`). Use absolute paths only for `worktree` (in meta) and `prompted_against` (in reviewer files), where absoluteness is the point.
+- **Relative paths** for everything inside the same `.planning/<date>-<task>/` directory (`./plan.md`, `./review/...`). Use absolute paths only for `worktree` (in meta) and `prompted_against` (in reviewer files), where absoluteness is the point.
 - **Mirror, don't compute.** `task`, `task_date`, `size` are mirrored from `meta.md` at authoring time. Do not invent a process to keep them in sync; if `meta.md` changes, fix the others by hand or accept the drift.
 - **`related` is for navigation, not provenance.** Each entry is `<path> (<one-line reason>)`. If a doc is the canonical anchor (parent), put it in `parent`, not `related`.
 
