@@ -7,8 +7,7 @@ All flow skills read and write to a single per-task directory. Predictable paths
 ```
 <repo-root>/.planning/<yyyy-mm-dd>-<kebab-task-name>/
 ├── meta.md              # task name, branch, worktree, size estimate, started-at
-├── plan.md              # current canonical plan (English, with optional Korean summary)
-├── plan.v1.md           # previous plan version, kept only if plan-review supersedes
+├── plan.md              # current canonical plan (English)
 ├── tasks.md             # GWT checkbox list — single source of truth for progress
 ├── research.md          # optional, written by `flow:research`
 ├── brainstorm.md        # optional, multi-LLM brainstorming synthesis (size L always,
@@ -37,12 +36,12 @@ All flow skills read and write to a single per-task directory. Predictable paths
 
 - **Date prefix**: `yyyy-mm-dd` reflecting when prep ran. Local timezone is fine.
 - **Task name**: kebab-case, derived from the task goal. Match the branch's name-portion (e.g. branch `feature/add-google-login` → task name `add-google-login`).
-- **Standalone PR review variant**: when `flow:code-review` runs on a PR that was not created through this workflow (no matching task directory), it creates `<repo-root>/.planning/<yyyy-mm-dd>-pr<N>-review/code-reviews/` instead. Same internal layout (reviewer files + `code-summary.md`); the directory name encodes the PR number rather than a kebab task name. No `meta.md`, `plan.md`, or `tasks.md` is required in this variant.
-- **Versioning**: `plan-review` only renames the old plan to `plan.v1.md` when it makes substantive changes. If it just confirms the plan, no version bump.
+- **Standalone PR review variant**: when `flow:code-review` runs on a PR that was not created through this workflow (no matching task directory), it creates `<repo-root>/.planning/<yyyy-mm-dd>-pr<N>-review/review/` instead. Same internal layout (reviewer files + `code-summary.md`); the directory name encodes the PR number rather than a kebab task name. No `meta.md`, `plan.md`, or `tasks.md` is required in this variant.
+- **Versioning**: `plan-review` moves the old plan to `versions/plan.v<N>.md` (and its translation to `versions/plan.ko.v<N>.md`) only when substantive changes apply. If it just confirms the plan, no version bump.
 
 ## Frontmatter
 
-Every document in `.planning/<date>-<task>/` carries a YAML frontmatter block — `title`, `type`, `task`, `task_date`, `created`, `last_updated`, `status`, `size`, `parent`, `related`, plus per-type fields (versioning for `plan`/`tasks`, reviewer/verdict for `code-reviews/*`, etc.). The schema is the single source of truth for agentic search across tasks; see `frontmatter.md` for the full field list and per-type extensions.
+Every document in `.planning/<date>-<task>/` carries a YAML frontmatter block — `title`, `type`, `task`, `task_date`, `created`, `last_updated`, `status`, `size`, `parent`, `related`, plus per-type fields (versioning for `plan`/`tasks`, reviewer/verdict for `review/*`, etc.). The schema is the single source of truth for agentic search across tasks; see `frontmatter.md` for the full field list and per-type extensions.
 
 ## meta.md format
 
@@ -81,7 +80,7 @@ If a particular project does not want planning artifacts committed, add `.planni
 
 ## Language policy
 
-- `plan.md`, `tasks.md`, `research.md`, `meta.md`, `brainstorm.md`: **English** (LLM-facing). Optionally include a short Korean summary at the bottom if the user wants quick scanning.
+- `plan.md`, `tasks.md`, `research.md`, `meta.md`, `brainstorm.md`: **English** (LLM-facing).
 - `review/plan-summary.md` and `review/code-summary.md`: **Korean** (user-facing — these are read by the human alongside Claude).
 - `translates/plan.ko.md` and `translates/tasks.ko.md`: **Korean** (translated copies of plan.md and tasks.md for user scanning).
 - Individual model output files (`review/*-gemini.md`, `brainstorms/*-gemini.md`, etc.): whatever the model emits, no translation.

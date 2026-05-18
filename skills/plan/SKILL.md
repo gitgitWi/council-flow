@@ -47,7 +47,7 @@ All written under `<worktree>/.planning/<date>-<task>/`:
 - **`tasks.md`** — Given-When-Then checkbox list, the single source of truth for progress during develop.
 - **`brainstorm.md`** — *conditional.* Multi-LLM brainstorming synthesis, written before `plan.md` when scope warrants (see "Multi-LLM brainstorming" below). Raw per-model outputs go under `brainstorms/`.
 
-All authored docs are **English** (any coding agent picks them up). Add a `## Korean summary (요약)` at the bottom of `plan.md` if the user wants to skim it quickly.
+All authored docs are **English** (any coding agent picks them up). Korean translations are dispatched as a separate step after drafting (see "Korean translation dispatch" below).
 
 ## Multi-LLM brainstorming (run when scope warrants)
 
@@ -343,8 +343,6 @@ Bulleted. What is explicitly out of scope. Placed near the end because it is
 boundary-setting context, not the headline — but still load-bearing: this list
 prevents scope creep during develop, so don't omit it.
 
-## Korean summary (요약)
-3-5 bullets, 사용자 빠른 확인용.
 ```
 
 **Things to leave out of plan.md:**
@@ -455,7 +453,57 @@ Hints are **advisory and human-/reviewer-readable only**. `flow:develop` does no
 5. **Draft** plan.md. Drafting order can differ from document order: it is normal to write Approach first (clarifying the shape often sharpens the Goal), then sketch the **Change map** (this surfaces missed files and forces the approach to be concrete), then Goal, Risks, Rollout, and finally Non-goals once scope boundaries are visible. The rendered document leads with Goal → Decision context → Approach → Change map (두괄식, then file surface) and pushes Non-goals near the end as boundary context. If `brainstorm.md` exists, consult it as you go — convergence informs assumptions, divergence informs explicit decisions in Alternatives considered and Approach.
 6. **Draft** tasks.md. Each task should look like something you could write a failing test for, except the explicit "non-TDD" ones. Add the commit hint(s) inline as you go — drafting the hint forces you to confirm the commit boundary fits one behavior. Cross-check that every entry in `## Change map` is touched by at least one task.
 7. **Self-review** plan.md and tasks.md using the checklist above. Fix gaps inline before presenting them.
-8. **Show** both files to the user for a quick review. Make any obvious edits before invoking `flow:plan-review` (if size warrants).
+8. **Dispatch Korean translation.** Generate `translates/plan.ko.md` and `translates/tasks.ko.md` (see "Korean translation dispatch" below).
+9. **Show** both files to the user for a quick review. Make any obvious edits before invoking `flow:plan-review` (if size warrants).
+
+## Korean translation dispatch
+
+After self-review passes, generate Korean translations of `plan.md` and `tasks.md` so the user can skim the plan quickly in Korean. Translations live under `translates/` — they are user-facing reading copies, not LLM-facing artifacts.
+
+### Dispatch method
+
+**Primary — Sonnet subagent.** Spawn a Claude Code Task agent with `model: sonnet`. The subagent reads `plan.md` and `tasks.md` from the planning directory and writes:
+
+- `translates/plan.ko.md`
+- `translates/tasks.ko.md`
+
+Prompt the subagent to preserve all structural formatting (headings, checkboxes, code blocks, Mermaid diagrams) and translate only the prose. The subagent writes the files directly via its Write tool.
+
+**Alternative — GLM 5.1 via opencode CLI.** If the user requests a cost-efficient translation (e.g., "GLM으로 번역해줘"), use `opencode run -m opencode-go/glm-5.1` with the file-write contract instead. Pipe the prompt via stdin per `references/multi-llm.md`. This is opt-in only — do not default to it.
+
+### Translation frontmatter
+
+Each translation file carries frontmatter for agentic search:
+
+```yaml
+---
+title: "Plan (Korean) — <task name>"
+type: plan-translation          # or tasks-translation
+task: <kebab task name>
+task_date: <YYYY-MM-DD>
+created: <today>
+last_updated: <today>
+status: active
+size: <S|M|L>
+parent: ../plan.md              # or ../tasks.md
+source: ../plan.md              # the English file this translates
+language: ko
+translator: sonnet              # or glm-5.1
+---
+```
+
+### Version management
+
+When `flow:plan-review` versions the plan, old versions move to `versions/`:
+
+- `plan.md` → `versions/plan.v<N>.md`
+- `translates/plan.ko.md` → `versions/plan.ko.v<N>.md`
+
+After writing the new `plan.md`, `flow:plan-review` re-dispatches Korean translation using the same method above. Same logic applies to `tasks.md` / `tasks.ko.md` when tasks change.
+
+### When to skip
+
+Size S plans (20-50 lines, 1-3 tasks) — skip translation unless the user explicitly asks. The plan is short enough to scan in English.
 
 ## Sizing decisions
 

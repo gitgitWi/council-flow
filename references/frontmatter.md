@@ -73,18 +73,18 @@ goal: |
 
 ```yaml
 version: 1                               # 1 for the first plan; bumps on plan-review revisions
-supersedes: ./plan.v1.md                 # only on plan.md when a previous version exists
-superseded_by: ./plan.md                 # only on plan.v<N>.md
+supersedes: ./versions/plan.v1.md        # only on plan.md when a previous version exists
+superseded_by: ./plan.md                 # only on versions/plan.v<N>.md
 plan_review_run: true                    # set true after flow:plan-review touched it
 ```
 
-A new `plan.md` after `plan-review` produces substantive changes carries `version: <N+1>` and `supersedes: ./plan.v<N>.md`. The previous file is renamed to `plan.v<N>.md` with `status: superseded` and `superseded_by: ./plan.md`.
+A new `plan.md` after `plan-review` produces substantive changes carries `version: <N+1>` and `supersedes: ./versions/plan.v<N>.md`. The previous file is moved to `versions/plan.v<N>.md` with `status: superseded` and `superseded_by: ./plan.md`. Its Korean translation moves to `versions/plan.ko.v<N>.md`.
 
 ### `tasks` and `tasks-version`
 
 ```yaml
 version: 1
-supersedes: ./tasks.v1.md
+supersedes: ./versions/tasks.v1.md
 superseded_by: ./tasks.md
 total_tasks: 12                          # optional — set at authoring time, do not maintain
 ```
@@ -160,6 +160,14 @@ signature_matched: rate limit            # the matched token if detected_by is f
 exit_code: 0                             # the captured exit code (0 if signature in stdout)
 when: 2026-05-11T15:42:00+09:00          # ISO timestamp of detection
 partial_output: ./plan-gemini.partial.md # only when partial output was preserved
+```
+
+### `plan-translation` and `tasks-translation`
+
+```yaml
+source: ../plan.md                       # or ../tasks.md — the English file this translates
+language: ko
+translator: sonnet                       # or glm-5.1
 ```
 
 ## Conventions

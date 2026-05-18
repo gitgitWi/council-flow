@@ -25,8 +25,8 @@ The flow is sequenced by `skills/orchestrate/SKILL.md`, which is a thin wrapper 
 Key cross-cutting conventions encoded in the references (treat as authoritative — don't reinvent):
 
 - **`.planning/<yyyy-mm-dd>-<kebab-task>/`** is the per-task working memory. All artifacts (`meta.md`, `plan.md`, `tasks.md`, `research.md`, `review/`) live here. Committed by default. See `references/directory-structure.md`.
-- **Language split**: LLM-facing docs (`plan.md`, `tasks.md`, `research.md`, `meta.md`, every `SKILL.md`, every `references/*.md`) MUST be English. User-facing summaries (`plan-summary.md`, `code-summary.md`, PR body) MUST be Korean. This split is structural, not stylistic — don't translate either direction without reason.
-- **Plan versioning**: `plan-review` renames the old `plan.md` to `plan.v<N>.md` *only* when substantive changes apply. Never delete prior versions.
+- **Language split**: LLM-facing docs (`plan.md`, `tasks.md`, `research.md`, `meta.md`, every `SKILL.md`, every `references/*.md`) MUST be English. User-facing summaries (`plan-summary.md`, `code-summary.md`, PR body) and translations (`translates/plan.ko.md`, `translates/tasks.ko.md`) MUST be Korean. This split is structural, not stylistic — don't translate either direction without reason.
+- **Plan versioning**: `plan-review` moves the old `plan.md` to `versions/plan.v<N>.md` *only* when substantive changes apply. Never delete prior versions.
 - **Multi-LLM output handling**: Other-LLM output (Gemini, OpenCode/Kimi, OpenCode/DeepSeek) is *always* written to a file under `review/`, never piped back into Claude's context as raw text. See `references/multi-llm.md`.
 - **Model IDs live in `references/models.md`** — when models change, update there, not in individual skills.
 - **Atomic + Conventional Commits** with TDD pairs (`test(...)` then `feat(...)`). See `references/commit-conventions.md` and `references/tdd-policy.md`.
