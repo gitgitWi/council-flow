@@ -21,23 +21,23 @@ case "$WT_PARENT" in *.worktrees) IN_WORKTREE=1;; *) IN_WORKTREE=0;; esac
 BRANCH="$(git branch --show-current)"
 case "$BRANCH" in feature/*|fix/*|chore/*|refactor/*|docs/*) ON_TASK_BRANCH=1;; *) ON_TASK_BRANCH=0;; esac
 
-# 3. Is there a .planning/<date>-<task>/meta.md to write into?
-META="$(ls -1 .planning/*/meta.md 2>/dev/null | head -n1)"
-[[ -n "$META" ]] && HAS_PLANNING=1 || HAS_PLANNING=0
+# 3. Is there a .planning/<date>-<task>/prepare.md to write into?
+PREPARE="$(ls -1 .planning/*/prepare.md 2>/dev/null | head -n1)"
+[[ -n "$PREPARE" ]] && HAS_PLANNING=1 || HAS_PLANNING=0
 ```
 
 Decision matrix:
 
-| In worktree | On task branch | Has `.planning/.../meta.md` | Action |
+| In worktree | On task branch | Has `.planning/.../prepare.md` | Action |
 |---|---|---|---|
 | yes | yes | yes | Proceed. This is the normal post-prep state. |
-| no | no | no | **Stop.** Tell the user prep was skipped and ask: (a) run `flow:prep` now (recommended), (b) proceed in-place on the current branch (only sensible for size S, and you must still create `.planning/<date>-<task>/meta.md` manually before writing the plan), (c) abort. |
-| any | yes | no | Branch exists but planning dir is missing. Ask the user whether the prior planning was cleaned up (rare) or this is a new task on a reused branch (more common). Create `.planning/<date>-<task>/meta.md` before writing the plan either way. |
+| no | no | no | **Stop.** Tell the user prep was skipped and ask: (a) run `flow:prep` now (recommended), (b) proceed in-place on the current branch (only sensible for size S, and you must still create `.planning/<date>-<task>/prepare.md` manually before writing the plan), (c) abort. |
+| any | yes | no | Branch exists but planning dir is missing. Ask the user whether the prior planning was cleaned up (rare) or this is a new task on a reused branch (more common). Create `.planning/<date>-<task>/prepare.md` before writing the plan either way. |
 | any | any | yes | Planning dir exists. Proceed and write into the existing dir — do not create a second one for the same date+task. |
 
 Do not silently fix the situation. The decision affects which branch commits land on and where artifacts get audited; the user should make it.
 
-If the user picks "proceed in-place" without prep, write the size into the manually-created `meta.md` so downstream skills (especially `flow:develop`) see consistent metadata.
+If the user picks "proceed in-place" without prep, write the size into the manually-created `prepare.md` so downstream skills (especially `flow:develop`) see consistent metadata.
 
 ## Output files
 
@@ -57,7 +57,7 @@ Before drafting `plan.md`, run a multi-LLM brainstorming round when the change i
 
 - **Size L** — always run. Large changes benefit most from multi-angle exploration.
 - **Size M** — run when any of:
-  - The change touches **multiple modules** (cross-module impact flagged in `meta.md` or surfaced from `research.md`).
+  - The change touches **multiple modules** (cross-module impact flagged in `prepare.md` or surfaced from `research.md`).
   - **Security-sensitive surface**: auth, payments, PII, cryptography, file uploads, anything user-controlled landing in a privileged context.
   - **Public surface area** (a new external API endpoint, a published SDK, a webhook contract).
   - The user explicitly asks for "options" / "alternatives" / "다각도로 보자" before planning.
@@ -107,7 +107,7 @@ RUNLOG_ARCH=.planning/<date>-<task>/brainstorms/_runlog-architecture-gemini.txt
 You are a non-interactive reviewer. Use Read and Write tools. Do not ask questions.
 
 TASK:
-1. Read the task brief at <abs>/meta.md and (if it exists) the research at <abs>/research.md.
+1. Read the task brief at <abs>/prepare.md and (if it exists) the research at <abs>/research.md.
 2. Write your brainstorm using the Write tool to: $REVIEW_ARCH
 3. The LAST LINE of the file MUST be exactly:
      <!-- council-flow:review-complete -->
@@ -156,7 +156,7 @@ created: <today>
 last_updated: <today>
 status: active
 size: <M|L>
-parent: ./meta.md
+parent: ./prepare.md
 related:
   - ./research.md (if exists)
   - ./brainstorms/architecture-gemini.md
@@ -203,7 +203,7 @@ A self-brainstorm of this section by `gemini-3.1-pro-preview` recommended an alt
 
 ## Frontmatter (every generated document)
 
-Both `plan.md` and `tasks.md` open with a YAML frontmatter block. The schema and per-type fields are in `../../references/frontmatter.md`; mirror `task`, `task_date`, and `size` from `meta.md`. Do not skip this — `frontmatter.md` exists so future agents can locate documents by `type: plan` / `task: <name>` without reading bodies.
+Both `plan.md` and `tasks.md` open with a YAML frontmatter block. The schema and per-type fields are in `../../references/frontmatter.md`; mirror `task` and `size` from `prepare.md`, and `task_date` from the directory name's date prefix. Do not skip this — `frontmatter.md` exists so future agents can locate documents by `type: plan` / `task: <name>` without reading bodies.
 
 `plan.md`:
 
@@ -217,7 +217,7 @@ created: <today>
 last_updated: <today>
 status: draft         # bump to "active" once the user signs off, "done" after deploy
 size: <S|M|L>
-parent: ./meta.md
+parent: ./prepare.md
 related:
   - ./tasks.md (GWT checklist)
   - ./research.md (if exists — pre-plan investigation)
@@ -240,7 +240,7 @@ status: draft         # bump to "active" once develop starts, "done" after all b
 size: <S|M|L>
 parent: ./plan.md
 related:
-  - ./meta.md
+  - ./prepare.md
 version: 1
 total_tasks: <count at authoring time>
 ---
@@ -443,7 +443,7 @@ Hints are **advisory and human-/reviewer-readable only**. `flow:develop` does no
 
 ## Workflow
 
-1. **Read** `meta.md` and `research.md` (if it exists). Don't restart research — build on it.
+1. **Read** `prepare.md` and `research.md` (if it exists). Don't restart research — build on it.
 2. **Read** the user's task goal in their words. If anything is ambiguous, ask one or two focused questions. Don't ask 10 questions; the plan-review step will surface anything you miss.
 3. **Decide** whether to brainstorm (see "Multi-LLM brainstorming" above for the trigger criteria). If yes, dispatch providers, synthesize `brainstorm.md`, and resolve any "open questions for the user" before drafting.
 4. **Choose** the approach. Use `research.md` candidate approaches and `brainstorm.md`

@@ -32,7 +32,7 @@ created: <today>
 last_updated: <today>
 status: active           # this doc rarely changes status
 size: <S|M|L>
-parent: ./meta.md
+parent: ./prepare.md
 related:
   - ./plan.md (will consume these findings)
 time_box: 10m            # 5m | 10m | 20m | 60m

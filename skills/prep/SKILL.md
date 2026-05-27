@@ -11,6 +11,16 @@ You are setting up the workspace for a new task in the `flow` workflow. The goal
 
 Ask the user for these if they are not obvious from the conversation. If the conversation already contains the answer, do not ask again.
 
+### Clarifying an unclear goal
+
+If the user's goal is vague or could reasonably be read more than one way, ask before scaffolding — a wrong task name or branch is annoying to undo once the worktree exists. Keep it to one or two focused questions, and **offer concrete options so the user can pick quickly** instead of composing an answer from scratch. Good things to clarify with options:
+
+- **Scope boundary** — "Just the API, or the UI too?" / "Fix this one case, or the general class of bug?"
+- **Type** when the goal mixes intents — e.g. "refactor that also fixes a bug": is the headline `refactor` or `fix`?
+- **Task name** when several kebab forms fit — propose two or three and let the user choose.
+
+Use the AskUserQuestion tool so the options render as selectable choices; always leave room for the user to type their own. Skip the questions entirely when the goal is already unambiguous — do not manufacture a clarification round for a clear request.
+
 | Input | Required | Default |
 |---|---|---|
 | Task goal (one or two sentences in user's words) | yes | — |
@@ -27,7 +37,7 @@ Ask one question if you cannot infer; otherwise just decide:
 - **M** — touches one module / a few files (≤ ~5), may add a small new surface area, no schema changes. Default for most feature work.
 - **L** — crosses modules, introduces new domain concepts, database schema changes, public API changes, or replaces existing subsystems. Plan-review is strongly recommended at this size.
 
-Record the size in `meta.md` (the prep script handles this). The plan and develop skills will look at `size` to decide whether to add research / plan-review steps.
+Record the size in `prepare.md` (the prep script handles this). The plan and develop skills will look at `size` to decide whether to add research / plan-review steps.
 
 ## Run the prep script
 
@@ -49,7 +59,7 @@ The script auto-detects the project's package manager by checking for lockfiles 
 ## After the script runs
 
 1. **`cd` into the worktree.** Confirm with `git rev-parse --show-toplevel` that you are in the new worktree before doing anything else. The rest of the workflow assumes the working directory is the worktree.
-2. **Verify** `.planning/<date>-<task>/meta.md` exists and contains the size/goal. If the user's goal needs more detail than fit on one line, append to the Notes section of meta.md.
+2. **Verify** `.planning/<date>-<task>/prepare.md` exists and contains the size/goal. If the user's goal needs more detail than fit on one line, append to the Notes section of prepare.md.
 3. **Report back to the user** with the worktree path, branch name, and size estimate, and ask whether to proceed to planning (`flow:plan`) or jump straight to develop (`flow:develop` — only sensible for size S).
 
 ## Reference
@@ -64,4 +74,4 @@ For `.planning/` directory conventions, see `../../references/directory-structur
 
 ## When to skip prep
 
-The user may explicitly say "do this on the current branch". In that case skip the worktree but still create `.planning/<date>-<task>/` and `meta.md` so downstream skills have somewhere to write. Mention to the user that you are not creating an isolated worktree.
+The user may explicitly say "do this on the current branch". In that case skip the worktree but still create `.planning/<date>-<task>/` and `prepare.md` so downstream skills have somewhere to write. Mention to the user that you are not creating an isolated worktree.

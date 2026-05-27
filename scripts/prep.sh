@@ -106,25 +106,22 @@ else
   echo "prep: no lockfile found, skipping dependency install" >&2
 fi
 
-# --- create planning folder + meta.md ---
+# --- create planning folder + prepare.md ---
 mkdir -p "${WORKTREE_PATH}/${PLANNING_DIR}/review"
 mkdir -p "${WORKTREE_PATH}/${PLANNING_DIR}/translates"
 mkdir -p "${WORKTREE_PATH}/${PLANNING_DIR}/versions"
 
-cat > "${WORKTREE_PATH}/${PLANNING_DIR}/meta.md" <<META
+cat > "${WORKTREE_PATH}/${PLANNING_DIR}/prepare.md" <<PREPARE
 ---
-title: "Meta — ${TASK}"
-type: meta
+title: "Prepare — ${TASK}"
+type: prepare
 task: ${TASK}
-task_date: ${DATE}
-created: ${DATE}
 last_updated: ${DATE}
 status: active
 size: ${SIZE}
 parent: ../../
 related: []
 branch: ${BRANCH}
-worktree: ${WORKTREE_PATH}
 base: ${BASE}
 started: ${DATE}
 goal: |
@@ -134,7 +131,7 @@ goal: |
 ## Notes
 
 (Free-form. Optional.)
-META
+PREPARE
 
 # --- output for caller ---
 echo "${WORKTREE_PATH}"

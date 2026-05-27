@@ -101,7 +101,7 @@ task_date: <YYYY-MM-DD>           # task date if flow task; today otherwise
 created: <today>
 last_updated: <today>
 status: active
-size: <S|M|L>                     # from meta.md if available; M otherwise
+size: <S|M|L>                     # from prepare.md if available; M otherwise
 parent: ../plan.md                # omit if no plan context
 related:
   - ./code-summary.md

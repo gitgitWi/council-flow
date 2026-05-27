@@ -8,13 +8,13 @@ Every file written by a flow skill into `.planning/<date>-<task>/` carries a YAM
 ---
 title: <human-readable title>            # "Plan — Add Google login"
 type: <doc type>                         # see "Type values" below
-task: <kebab task name>                  # matches meta.md task and branch suffix
+task: <kebab task name>                  # matches prepare.md task and branch suffix
 task_date: <YYYY-MM-DD>                  # the date prefix in the directory name
 created: <YYYY-MM-DD>                    # when this file was first written
 last_updated: <YYYY-MM-DD>               # bumped on substantive edits
 status: <status>                         # see "Status values" below
-size: <S|M|L>                            # mirrored from meta.md for single-doc lookup
-parent: <relative path>                  # usually ./meta.md or ./plan.md
+size: <S|M|L>                            # mirrored from prepare.md for single-doc lookup
+parent: <relative path>                  # usually ./prepare.md or ./plan.md
 related:                                 # one bullet per cross-link, with a short reason
   - ./plan.md (current plan)
   - ./tasks.md (GWT checklist)
@@ -29,7 +29,7 @@ One of these per document. Search-friendly — keep the spelling stable.
 
 | `type` | File |
 |---|---|
-| `meta` | `meta.md` |
+| `prepare` | `prepare.md` |
 | `research` | `research.md` |
 | `brainstorm` | `brainstorm.md` (multi-LLM brainstorming synthesis) |
 | `brainstorm-contribution` | `brainstorms/<role>-<model>.md` (per-model raw output) |
@@ -52,22 +52,23 @@ One of these per document. Search-friendly — keep the spelling stable.
 |---|---|
 | `draft` | Being authored right now; not stable. |
 | `active` | Current canonical document for its type. |
-| `done` | Work it described is complete (typical for `meta`/`tasks` after deploy). |
+| `done` | Work it described is complete (typical for `prepare`/`tasks` after deploy). |
 | `superseded` | A newer version exists; see `superseded_by`. Used on `plan.v<N>.md` etc. |
 | `failed` | Reviewer CLI failed to produce valid output. Used only on `review-failed`. |
 
 ## Per-type fields (in addition to common)
 
-### `meta` (written by `flow:prep`)
+### `prepare` (written by `flow:prep`)
 
 ```yaml
 branch: feature/add-google-login
-worktree: /Users/.../<repo>.worktrees/add-google-login
 base: main
 started: 2026-05-11
 goal: |
   Allow users to sign in with Google in addition to email/password.
 ```
+
+`prepare.md` is the one exception to the common-fields block: it **omits `task_date` and `created`**. Both would be identical to `started` (prep writes all three on the same day), and the directory name already carries the date — `started` is the single date that matters for the task. It also has no `worktree` field: the worktree path is an absolute, machine-specific value, and `.planning/` is committed, so recording it would bake a stale path into the repo. Find the worktree with `git rev-parse --show-toplevel` from inside it instead.
 
 ### `plan` and `plan-version`
 
@@ -123,7 +124,7 @@ contributor: gemini-3.1-pro              # CLI-facing model id
 cli: gemini                              # which CLI binary produced this
 lens: architecture                       # architecture | risk | security — the assigned role
 prompted_against:                        # absolute paths the contributor was told to read
-  - /abs/.../meta.md
+  - /abs/.../prepare.md
   - /abs/.../research.md
 ```
 
@@ -173,8 +174,8 @@ translator: sonnet                       # or glm-5.1
 ## Conventions
 
 - **Dates in `YYYY-MM-DD`** for `created`, `last_updated`, `task_date`, `started`. Use full ISO 8601 (with time and tz) only for `when` on FAILED records.
-- **Relative paths** for everything inside the same `.planning/<date>-<task>/` directory (`./plan.md`, `./review/...`). Use absolute paths only for `worktree` (in meta) and `prompted_against` (in reviewer files), where absoluteness is the point.
-- **Mirror, don't compute.** `task`, `task_date`, `size` are mirrored from `meta.md` at authoring time. Do not invent a process to keep them in sync; if `meta.md` changes, fix the others by hand or accept the drift.
+- **Relative paths** for everything inside the same `.planning/<date>-<task>/` directory (`./plan.md`, `./review/...`). Use absolute paths only for `prompted_against` (in reviewer files), where absoluteness is the point.
+- **Mirror, don't compute.** `task` and `size` are mirrored from `prepare.md`, and `task_date` from the directory name's date prefix, at authoring time. Do not invent a process to keep them in sync; if `prepare.md` changes, fix the others by hand or accept the drift.
 - **`related` is for navigation, not provenance.** Each entry is `<path> (<one-line reason>)`. If a doc is the canonical anchor (parent), put it in `parent`, not `related`.
 
 ## Why

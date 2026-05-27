@@ -17,7 +17,7 @@ Orchestrate is a thin sequencer. It does not reimplement any of the individual s
 
 ```
 1. flow:prep
-   └── creates worktree, branch, .planning/, meta.md (with size estimate)
+   └── creates worktree, branch, .planning/, prepare.md (with size estimate)
 
 2. flow:research          [skip if size = S, or user opted out]
    └── writes research.md
