@@ -23,7 +23,7 @@ Atomic commits. TDD-first. `.planning/<date>-<task>/` as the working memory. Mul
 ## Conventions
 
 - LLM-facing docs (plan.md, tasks.md, research.md, prepare.md): **English**
-- User-facing summaries (plan-summary.md, code-summary.md, PR body): **Korean**
+- User-facing summaries (plan-review-summary.md, code-review-summary.md, PR body): **Korean**
 - Working dir: `.planning/<yyyy-mm-dd>-<kebab-task>/` (committed by default)
 - Branches: `<type>/<task-name>` where type ∈ `feature|fix|chore|refactor|docs`
 - Commits: Conventional Commits, atomic (one behavior per commit)

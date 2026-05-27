@@ -45,7 +45,7 @@ All written under `<worktree>/.planning/<date>-<task>/`:
 
 - **`plan.md`** — approach, scope, architecture decisions, rollout. ~500 lines max for the whole thing (including any phase sub-plans). If it grows beyond that, split into `plan-phase-1.md`, `plan-phase-2.md` and let `plan.md` become a short index.
 - **`tasks.md`** — Given-When-Then checkbox list, the single source of truth for progress during develop.
-- **`brainstorm.md`** — *conditional.* Multi-LLM brainstorming synthesis, written before `plan.md` when scope warrants (see "Multi-LLM brainstorming" below). Raw per-model outputs go under `brainstorms/`.
+- **`brainstorm.md`** — *conditional.* Multi-LLM brainstorming synthesis, written before `plan.md` when scope warrants (see "Multi-LLM brainstorming" below). Raw per-model outputs go under `artifacts/` (filenames prefixed `brainstorm-`).
 
 All authored docs are **English** (any coding agent picks them up). Korean translations are dispatched as a separate step after drafting (see "Korean translation dispatch" below).
 
@@ -86,7 +86,7 @@ if [[ -f "$BRAINSTORM" ]] && grep -q '^status: active' "$BRAINSTORM"; then
 fi
 ```
 
-If it does, **do not silently re-dispatch.** Ask the user: (a) keep the existing synthesis and skip the sub-phase, (b) regenerate (the existing `brainstorm.md` and `brainstorms/` files are moved to `brainstorm.v<N>.md` / `brainstorms.v<N>/`, mirroring the `plan.v<N>.md` versioning convention), or (c) abort. The most common path after an interrupted session is (a) — re-running the brainstorm doubles cost and clobbers the audit trail.
+If it does, **do not silently re-dispatch.** Ask the user: (a) keep the existing synthesis and skip the sub-phase, (b) regenerate (the existing `brainstorm.md` and its `artifacts/brainstorm-*` contributor files are moved aside to `artifacts/brainstorm.v<N>.md` and `artifacts/brainstorm-<lens>-<model>.v<N>.md`, mirroring the `artifacts/plan.v<N>.md` versioning convention), or (c) abort. The most common path after an interrupted session is (a) — re-running the brainstorm doubles cost and clobbers the audit trail.
 
 ### How to dispatch
 
@@ -97,10 +97,10 @@ Follow the full dispatch + verification + quorum pattern in `references/multi-ll
 - **Heartbeat.** Run `watch_review` (defined in `references/multi-llm.md`) in parallel with each dispatch so progress is visible at 1-minute resolution. A dispatch without a heartbeat is indistinguishable from a hung one for 10+ minutes.
 
 ```bash
-mkdir -p .planning/<date>-<task>/brainstorms
+mkdir -p .planning/<date>-<task>/artifacts
 
-REVIEW_ARCH=.planning/<date>-<task>/brainstorms/architecture-gemini.md
-RUNLOG_ARCH=.planning/<date>-<task>/brainstorms/_runlog-architecture-gemini.txt
+REVIEW_ARCH=.planning/<date>-<task>/artifacts/brainstorm-architecture-gemini.md
+RUNLOG_ARCH=.planning/<date>-<task>/artifacts/_runlog-architecture-gemini.txt
 
 ( timeout 600 gemini --model gemini-3.1-pro-preview --yolo --skip-trust \
     --prompt "$(cat <<PROMPT
@@ -111,7 +111,7 @@ TASK:
 2. Write your brainstorm using the Write tool to: $REVIEW_ARCH
 3. The LAST LINE of the file MUST be exactly:
      <!-- council-flow:review-complete -->
-4. Print only: "wrote architecture-gemini.md"
+4. Print only: "wrote brainstorm-architecture-gemini.md"
 
 Your lens: ARCHITECTURE & ALTERNATIVES.
 - Propose 2–3 distinct architectural shapes for this change.
@@ -134,7 +134,7 @@ PROMPT
 # Run watch_review (from multi-llm.md) in parallel so progress is visible at 1-min resolution.
 watch_review "$REVIEW_ARCH" 25 &
 
-# Same wrapping for risk lens (kimi) — file-write to brainstorms/risk-kimi.md
+# Same wrapping for risk lens (kimi) — file-write to artifacts/brainstorm-risk-kimi.md
 # Same wrapping for security lens (deepseek) — size L or security-sensitive only
 
 wait
@@ -159,8 +159,8 @@ size: <M|L>
 parent: ./prepare.md
 related:
   - ./research.md (if exists)
-  - ./brainstorms/architecture-gemini.md
-  - ./brainstorms/risk-kimi.md
+  - ./artifacts/brainstorm-architecture-gemini.md
+  - ./artifacts/brainstorm-risk-kimi.md
 contributors:
   - gemini-3.1-pro
   - opencode-go/kimi-k2.6
@@ -453,19 +453,19 @@ Hints are **advisory and human-/reviewer-readable only**. `flow:develop` does no
 5. **Draft** plan.md. Drafting order can differ from document order: it is normal to write Approach first (clarifying the shape often sharpens the Goal), then sketch the **Change map** (this surfaces missed files and forces the approach to be concrete), then Goal, Risks, Rollout, and finally Non-goals once scope boundaries are visible. The rendered document leads with Goal → Decision context → Approach → Change map (두괄식, then file surface) and pushes Non-goals near the end as boundary context. If `brainstorm.md` exists, consult it as you go — convergence informs assumptions, divergence informs explicit decisions in Alternatives considered and Approach.
 6. **Draft** tasks.md. Each task should look like something you could write a failing test for, except the explicit "non-TDD" ones. Add the commit hint(s) inline as you go — drafting the hint forces you to confirm the commit boundary fits one behavior. Cross-check that every entry in `## Change map` is touched by at least one task.
 7. **Self-review** plan.md and tasks.md using the checklist above. Fix gaps inline before presenting them.
-8. **Dispatch Korean translation.** Generate `translates/plan.ko.md` and `translates/tasks.ko.md` (see "Korean translation dispatch" below).
+8. **Dispatch Korean translation.** Generate `artifacts/plan.ko.md` and `artifacts/tasks.ko.md` (see "Korean translation dispatch" below).
 9. **Show** both files to the user for a quick review. Make any obvious edits before invoking `flow:plan-review` (if size warrants).
 
 ## Korean translation dispatch
 
-After self-review passes, generate Korean translations of `plan.md` and `tasks.md` so the user can skim the plan quickly in Korean. Translations live under `translates/` — they are user-facing reading copies, not LLM-facing artifacts.
+After self-review passes, generate Korean translations of `plan.md` and `tasks.md` so the user can skim the plan quickly in Korean. Translations live under `artifacts/` (filenames `plan.ko.md` / `tasks.ko.md`) — they are user-facing reading copies, not LLM-facing artifacts.
 
 ### Dispatch method
 
 **Primary — Sonnet subagent.** Spawn a Claude Code Task agent with `model: sonnet`. The subagent reads `plan.md` and `tasks.md` from the planning directory and writes:
 
-- `translates/plan.ko.md`
-- `translates/tasks.ko.md`
+- `artifacts/plan.ko.md`
+- `artifacts/tasks.ko.md`
 
 Prompt the subagent to preserve all structural formatting (headings, checkboxes, code blocks, Mermaid diagrams) and translate only the prose. The subagent writes the files directly via its Write tool.
 
@@ -494,10 +494,10 @@ translator: sonnet              # or glm-5.1
 
 ### Version management
 
-When `flow:plan-review` versions the plan, old versions move to `versions/`:
+When `flow:plan-review` versions the plan, old versions move into `artifacts/` with a `.v<N>` suffix:
 
-- `plan.md` → `versions/plan.v<N>.md`
-- `translates/plan.ko.md` → `versions/plan.ko.v<N>.md`
+- `plan.md` → `artifacts/plan.v<N>.md`
+- `artifacts/plan.ko.md` → `artifacts/plan.v<N>.ko.md`
 
 After writing the new `plan.md`, `flow:plan-review` re-dispatches Korean translation using the same method above. Same logic applies to `tasks.md` / `tasks.ko.md` when tasks change.
 

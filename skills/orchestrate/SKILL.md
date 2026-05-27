@@ -24,15 +24,15 @@ Orchestrate is a thin sequencer. It does not reimplement any of the individual s
 
 3. flow:plan              [always]
    └── (sub-phase) multi-LLM brainstorm if size = L, or size = M with cross-module /
-       security-sensitive / public-surface flag → writes brainstorm.md + brainstorms/
+       security-sensitive / public-surface flag → writes brainstorm.md + artifacts/brainstorm-*.md
    └── writes plan.md, tasks.md
 
 4. flow:plan-review       [run if size = L; ask user if size = M; skip if size = S]
-   └── writes review/plan-*.md and plan-summary.md
-   └── if substantive changes: bumps plan.md → plan.v1.md, writes new plan.md
+   └── writes artifacts/plan-review-*.md and artifacts/plan-review-summary.md
+   └── if substantive changes: bumps plan.md → artifacts/plan.v1.md, writes new plan.md
 
 5. — Checkpoint with user —
-   Show plan.md, tasks.md, and plan-summary.md (if exists). Wait for go/no-go.
+   Show plan.md, tasks.md, and plan-review-summary.md (if exists). Wait for go/no-go.
 
 6. flow:develop           [after user confirms]
    └── executes tasks.md, atomic commits, all checkboxes filled
@@ -60,7 +60,7 @@ Orchestrate is a thin sequencer. It does not reimplement any of the individual s
 
 This is the only mandatory pause in orchestrate. Show the user:
 
-1. The plan summary (`translates/plan.ko.md`, or `review/plan-summary.md` if plan-review ran)
+1. The plan summary (`artifacts/plan.ko.md`, or `artifacts/plan-review-summary.md` if plan-review ran)
 2. The tasks.md checkbox list
 3. Anything that came up as an open question
 

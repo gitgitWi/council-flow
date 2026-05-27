@@ -34,10 +34,10 @@ You are a non-interactive reviewer. Use Read and Write tools. Do not ask questio
 
 TASK:
 1. Read the plan at <abs-path>/plan.md and the task list at <abs-path>/tasks.md.
-2. Write your review using the Write tool to: <abs-path>/review/plan-gemini.md
+2. Write your review using the Write tool to: <abs-path>/artifacts/plan-review-gemini.md
 3. The LAST LINE of the file MUST be exactly:
      <!-- council-flow:review-complete -->
-4. Print only: "wrote plan-gemini.md"
+4. Print only: "wrote plan-review-gemini.md"
 
 Review sections (Markdown):
 - Strengths
@@ -47,8 +47,8 @@ Review sections (Markdown):
 
 Focus on correctness and missed edge cases.
 PROMPT
-)" > .planning/<task>/review/_runlog-gemini.txt \
-   2> .planning/<task>/review/_runlog-gemini.stderr
+)" > .planning/<task>/artifacts/_runlog-gemini.txt \
+   2> .planning/<task>/artifacts/_runlog-gemini.stderr
 ```
 
 Note the `> _runlog-gemini.txt` — that captures stdout as a diagnostic log, **not** as the review. The review file is what Gemini's Write tool produced.
@@ -61,10 +61,10 @@ You are a non-interactive reviewer. Use Read and Write tools. Do not ask questio
 
 TASK:
 1. Read the plan at <abs-path>/plan.md.
-2. Write your review using the Write tool to: <abs-path>/review/plan-kimi.md
+2. Write your review using the Write tool to: <abs-path>/artifacts/plan-review-kimi.md
 3. The LAST LINE of the file MUST be exactly:
      <!-- council-flow:review-complete -->
-4. Print only: "wrote plan-kimi.md"
+4. Print only: "wrote plan-review-kimi.md"
 
 (... review sections ...)
 PROMPT_BODY
@@ -72,8 +72,8 @@ PROMPT_BODY
 
 printf '%s' "$PROMPT" | \
   opencode run --dangerously-skip-permissions -m opencode-go/kimi-k2.6 \
-    > .planning/<task>/review/_runlog-kimi.txt \
-    2> .planning/<task>/review/_runlog-kimi.stderr
+    > .planning/<task>/artifacts/_runlog-kimi.txt \
+    2> .planning/<task>/artifacts/_runlog-kimi.stderr
 ```
 
 Flag notes (verified 2026-05-12 against `opencode` v1.14.x — re-test on upgrades):
@@ -105,10 +105,10 @@ You are a non-interactive reviewer. Use Read and Write tools. Do not ask questio
 
 TASK:
 1. Read the plan at <abs-path>/plan.md and the task list at <abs-path>/tasks.md.
-2. Write your review using the Write tool to: <abs-path>/review/plan-codex.md
+2. Write your review using the Write tool to: <abs-path>/artifacts/plan-review-codex.md
 3. The LAST LINE of the file MUST be exactly:
      <!-- council-flow:review-complete -->
-4. Print only: "wrote plan-codex.md"
+4. Print only: "wrote plan-review-codex.md"
 
 (... review sections; review, do not implement ...)
 PROMPT_BODY
@@ -119,8 +119,8 @@ codex exec --skip-git-repo-check \
            --sandbox workspace-write \
            --cd /abs/path/to/worktree \
            - <<<"$PROMPT" \
-    > .planning/<task>/review/_runlog-codex.txt \
-    2> .planning/<task>/review/_runlog-codex.stderr
+    > .planning/<task>/artifacts/_runlog-codex.txt \
+    2> .planning/<task>/artifacts/_runlog-codex.stderr
 ```
 
 Flag notes (verified 2026-05-12 against the installed `codex` CLI):
@@ -246,7 +246,7 @@ Heartbeat output is a stream of one-line events. It is safe to display directly 
 2. **Verify each output file has structural content** — at minimum one `## ` heading and one `- ` bullet within the first 50 lines. A non-empty file that contains only agent boilerplate ("I'll help you review...") will pass a naive size/signature check; the structural check catches it.
 3. **Read each file once** to extract structured findings — strengths, risks, suggestions, verdict. Do not dump all three into context simultaneously.
 4. **Verify file:line references** the contributors cite — when synthesizing, grep contributor outputs for path-shaped strings, check against `git ls-files`, and surface unverifiable paths under a "Paths to verify" section. Contributors hallucinate paths regularly; the synthesis should not promote them silently.
-5. Synthesize a Korean summary (`plan-summary.md` / `code-summary.md`):
+5. Synthesize a Korean summary (`plan-review-summary.md` / `code-review-summary.md`):
    - 합의된 강점
    - 합의된 위험 요소
    - 모델 간 의견이 갈리는 지점 (이 부분이 가장 중요)
@@ -265,7 +265,7 @@ Heartbeat output is a stream of one-line events. It is safe to display directly 
 - User said "just plan it" / "just ship it"
 - The reviewers would all read the same small change and produce the same review
 
-When skipping, write a `plan-summary.md` (or `code-summary.md`) explaining that multi-LLM was skipped and why, so the audit trail is complete.
+When skipping, write a `plan-review-summary.md` (or `code-review-summary.md`) explaining that multi-LLM was skipped and why, so the audit trail is complete.
 
 ## Failure handling and fallback
 
@@ -297,11 +297,11 @@ Recommended pattern — Gemini (prompt as `--prompt` flag is fine, only opencode
 
 ```bash
 # Review file (what the CLI writes via its Write tool):
-REVIEW=.planning/<task>/review/plan-gemini.md
+REVIEW=.planning/<task>/artifacts/plan-review-gemini.md
 # Diagnostic runlog files (stdout/stderr capture; not the review):
-RUNLOG=.planning/<task>/review/_runlog-gemini.txt
-RUNERR=.planning/<task>/review/_runlog-gemini.stderr
-EXIT=.planning/<task>/review/_runlog-gemini.exit
+RUNLOG=.planning/<task>/artifacts/_runlog-gemini.txt
+RUNERR=.planning/<task>/artifacts/_runlog-gemini.stderr
+EXIT=.planning/<task>/artifacts/_runlog-gemini.exit
 
 # Run with a hard timeout. Always succeed at the shell level so `wait` doesn't abort.
 ( timeout 600 gemini --model gemini-3.1-pro-preview --yolo --skip-trust \
@@ -316,10 +316,10 @@ PROMPT
 Same pattern for OpenCode — prompt via stdin pipe, `--dangerously-skip-permissions` mandatory:
 
 ```bash
-REVIEW=.planning/<task>/review/plan-kimi.md
-RUNLOG=.planning/<task>/review/_runlog-kimi.txt
-RUNERR=.planning/<task>/review/_runlog-kimi.stderr
-EXIT=.planning/<task>/review/_runlog-kimi.exit
+REVIEW=.planning/<task>/artifacts/plan-review-kimi.md
+RUNLOG=.planning/<task>/artifacts/_runlog-kimi.txt
+RUNERR=.planning/<task>/artifacts/_runlog-kimi.stderr
+EXIT=.planning/<task>/artifacts/_runlog-kimi.exit
 PROMPT="$(cat <<PROMPT_BODY
 ... reviewer prompt; MUST tell the CLI to Write its review to $REVIEW ...
 PROMPT_BODY
@@ -338,8 +338,8 @@ Repeat per reviewer in the same shell pipeline (or in parallel Bash tool calls).
 After all reviewers return, for each reviewer file run **all five** of these checks before reading the file content:
 
 1. **Exit code** — read `_runlog-*.exit`. `0` = success, `124` = timeout, anything else = CLI error.
-2. **Review file exists and is non-empty** — `[[ -s plan-gemini.md ]]`. Empty file = treat as failed.
-3. **Sentinel present** — `tail -1 plan-gemini.md` must equal `<!-- council-flow:review-complete -->`. Absent sentinel = treat as failed regardless of size (the CLI died mid-write, or never finished, or hallucinated being done).
+2. **Review file exists and is non-empty** — `[[ -s plan-review-gemini.md ]]`. Empty file = treat as failed.
+3. **Sentinel present** — `tail -1 plan-review-gemini.md` must equal `<!-- council-flow:review-complete -->`. Absent sentinel = treat as failed regardless of size (the CLI died mid-write, or never finished, or hallucinated being done).
 4. **Structural content present** — within the first 50 lines the file must contain at least one `## ` heading **and** one `- ` bullet. A non-empty file of agent boilerplate ("I'll help you review...") will pass size and signature checks but fails this.
 5. **No known failure signature in the output file** — case-insensitive grep for any of these tokens in the *first 40 lines* (don't scan the whole file — the reviewer's own analysis may legitimately mention these words):
 
@@ -357,8 +357,8 @@ After all reviewers return, for each reviewer file run **all five** of these che
 
 When a reviewer fails (any of the three checks above), do **not** delete the partial output. Instead:
 
-1. Move the partial file aside: `mv plan-gemini.md plan-gemini.partial.md` (only if it has content; if empty, delete it).
-2. Write a short failure record at `review/plan-gemini.FAILED.md` (frontmatter schema in `frontmatter.md`):
+1. Move the partial file aside: `mv plan-review-gemini.md plan-review-gemini.partial.md` (only if it has content; if empty, delete it).
+2. Write a short failure record at `artifacts/plan-review-gemini.FAILED.md` (frontmatter schema in `frontmatter.md`):
 
    ```markdown
    ---
@@ -372,18 +372,18 @@ When a reviewer fails (any of the three checks above), do **not** delete the par
    size: <S|M|L>
    parent: ../plan.md
    related:
-     - ./plan-summary.md
-     - ./plan-gemini.partial.md  # only if partial output preserved
+     - ./plan-review-summary.md
+     - ./plan-review-gemini.partial.md  # only if partial output preserved
    reviewer: gemini-3.1-pro-preview
    cli: gemini
    detected_by: failure-signature   # missing-binary | nonzero-exit | empty-output | failure-signature
    signature_matched: "rate limit"  # only when detected_by is failure-signature
    exit_code: 0
    when: 2026-05-11T15:42:00+09:00
-   partial_output: ./plan-gemini.partial.md  # omit if no partial preserved
+   partial_output: ./plan-review-gemini.partial.md  # omit if no partial preserved
    ---
 
-   # plan-gemini — FAILED
+   # plan-review-gemini — FAILED
 
    - **Reviewer**: gemini-3.1-pro-preview (CLI: gemini)
    - **When**: 2026-05-11 15:42 KST
@@ -395,7 +395,7 @@ When a reviewer fails (any of the three checks above), do **not** delete the par
      ```
    - **Action**: continued without this reviewer / aborted / user retried
 
-   See plan-gemini.partial.md for partial output (if any).
+   See plan-review-gemini.partial.md for partial output (if any).
    ```
 
 3. **Do not paste the raw stderr or partial output into the orchestrator's conversation.** Reference the file path. The point of the failure record is to keep the audit trail in the filesystem, not in chat context.
@@ -406,7 +406,7 @@ Decide based on how many reviewers produced *valid* output:
 
 | Successful reviewers | Action |
 |---|---|
-| **≥ 2** | Proceed with synthesis. In `plan-summary.md` / `code-summary.md`, add a `## 결손 리뷰어` section listing who failed and why (one line each). |
+| **≥ 2** | Proceed with synthesis. In `plan-review-summary.md` / `code-review-summary.md`, add a `## 결손 리뷰어` section listing who failed and why (one line each). |
 | **1** | Stop and ask the user: (a) retry the failed reviewers (often the user just needs to re-auth), (b) swap to a different reviewer (e.g., `gemini` failed → try `claude` as the second voice), or (c) proceed with one reviewer and label the summary as "single-reviewer" — explicitly not multi-LLM. |
 | **0** | Stop. Do not synthesize. Surface the failure records to the user and recommend `/octo:doctor`-equivalent CLI checks (auth, quota, network). |
 

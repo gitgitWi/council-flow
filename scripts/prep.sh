@@ -107,9 +107,7 @@ else
 fi
 
 # --- create planning folder + prepare.md ---
-mkdir -p "${WORKTREE_PATH}/${PLANNING_DIR}/review"
-mkdir -p "${WORKTREE_PATH}/${PLANNING_DIR}/translates"
-mkdir -p "${WORKTREE_PATH}/${PLANNING_DIR}/versions"
+mkdir -p "${WORKTREE_PATH}/${PLANNING_DIR}/artifacts"
 
 cat > "${WORKTREE_PATH}/${PLANNING_DIR}/prepare.md" <<PREPARE
 ---
