@@ -6,54 +6,58 @@ All flow skills read and write to a single per-task directory. Predictable paths
 
 ```
 <repo-root>/.planning/<yyyy-mm-dd>-<kebab-task-name>/
-├── meta.md              # task name, branch, worktree, size estimate, started-at
-├── plan.md              # current canonical plan (English, with optional Korean summary)
-├── plan.v1.md           # previous plan version, kept only if plan-review supersedes
+├── prepare.md           # task name, branch, base, size estimate, started-at
+├── plan.md              # current canonical plan (English)
 ├── tasks.md             # GWT checkbox list — single source of truth for progress
 ├── research.md          # optional, written by `flow:research`
 ├── brainstorm.md        # optional, multi-LLM brainstorming synthesis (size L always,
 │                        #   size M when cross-module / security-sensitive / public-surface)
-├── brainstorms/         # raw per-model brainstorming outputs, written by `flow:plan`
-│   ├── architecture-gemini.md
-│   ├── risk-kimi.md
-│   └── security-deepseek.md  # size L only by default
-└── code-reviews/        # written by `flow:plan-review` and `flow:deploy`
-    ├── plan-gemini.md
-    ├── plan-kimi.md
-    ├── plan-summary.md       # Claude's aggregated take, Korean
-    ├── code-gemini.md
-    ├── code-kimi.md
-    ├── code-deepseek.md
-    └── code-summary.md       # Claude's aggregated take, Korean
+└── artifacts/           # all supporting / derived / historical artifacts, one flat folder
+    ├── plan.ko.md                  # Korean reading copy of plan.md, written by `flow:plan`
+    ├── tasks.ko.md                 # Korean reading copy of tasks.md
+    ├── plan-review-summary.md      # Claude's aggregated plan-review take, Korean
+    ├── plan-review-gemini.md       # per-reviewer plan-review output
+    ├── plan-review-kimi.md
+    ├── code-review-summary.md      # Claude's aggregated code-review take, Korean
+    ├── code-review-gemini.md       # per-reviewer code-review output
+    ├── code-review-kimi.md
+    ├── code-review-deepseek.md
+    ├── brainstorm-architecture-gemini.md  # raw per-model brainstorming output, `flow:plan`
+    ├── brainstorm-risk-kimi.md
+    ├── brainstorm-security-deepseek.md     # size L only by default
+    ├── research-gemini.md          # external-LLM research output, if any
+    ├── plan.v1.md                  # superseded plan version (history)
+    ├── plan.v1.ko.md               # its Korean translation
+    ├── tasks.v1.md
+    └── tasks.v1.ko.md
 ```
+
+Canonical live documents (`prepare.md`, `plan.md`, `tasks.md`, `research.md`, `brainstorm.md`) sit at the task-directory root. Everything else — per-reviewer outputs, Korean summaries, translations, superseded versions, raw per-model brainstorming dumps, run logs — is a supporting artifact and lives in the single flat `artifacts/` folder. Flat, not nested: the filename prefix (`plan-review-`, `code-review-`, `brainstorm-`, `research-`) and suffix (`.ko.md`, `.v<N>.md`) carry the categorization that nested folders used to.
 
 ## Naming rules
 
 - **Date prefix**: `yyyy-mm-dd` reflecting when prep ran. Local timezone is fine.
 - **Task name**: kebab-case, derived from the task goal. Match the branch's name-portion (e.g. branch `feature/add-google-login` → task name `add-google-login`).
-- **Standalone PR review variant**: when `flow:code-review` runs on a PR that was not created through this workflow (no matching task directory), it creates `<repo-root>/.planning/<yyyy-mm-dd>-pr<N>-review/code-reviews/` instead. Same internal layout (reviewer files + `code-summary.md`); the directory name encodes the PR number rather than a kebab task name. No `meta.md`, `plan.md`, or `tasks.md` is required in this variant.
-- **Versioning**: `plan-review` only renames the old plan to `plan.v1.md` when it makes substantive changes. If it just confirms the plan, no version bump.
+- **Standalone PR review variant**: when `flow:code-review` runs on a PR that was not created through this workflow (no matching task directory), it creates `<repo-root>/.planning/<yyyy-mm-dd>-pr<N>-review/artifacts/` instead. Same internal layout (reviewer files + `code-review-summary.md`); the directory name encodes the PR number rather than a kebab task name. No `prepare.md`, `plan.md`, or `tasks.md` is required in this variant.
+- **Versioning**: `plan-review` moves the old plan to `artifacts/plan.v<N>.md` (and its translation to `artifacts/plan.v<N>.ko.md`) only when substantive changes apply. If it just confirms the plan, no version bump.
 
 ## Frontmatter
 
-Every document in `.planning/<date>-<task>/` carries a YAML frontmatter block — `title`, `type`, `task`, `task_date`, `created`, `last_updated`, `status`, `size`, `parent`, `related`, plus per-type fields (versioning for `plan`/`tasks`, reviewer/verdict for `code-reviews/*`, etc.). The schema is the single source of truth for agentic search across tasks; see `frontmatter.md` for the full field list and per-type extensions.
+Every document in `.planning/<date>-<task>/` carries a YAML frontmatter block — `title`, `type`, `task`, `task_date`, `created`, `last_updated`, `status`, `size`, `parent`, `related`, plus per-type fields (versioning for `plan`/`tasks`, reviewer/verdict for `artifacts/*-review-*`, etc.). The schema is the single source of truth for agentic search across tasks; see `frontmatter.md` for the full field list and per-type extensions.
 
-## meta.md format
+## prepare.md format
 
 ```markdown
 ---
-title: "Meta — Add Google login"
-type: meta
+title: "Prepare — Add Google login"
+type: prepare
 task: add-google-login
-task_date: 2026-05-11
-created: 2026-05-11
 last_updated: 2026-05-11
 status: active
 size: M
 parent: ../../  # the repo root (no further parent)
 related: []
 branch: feature/add-google-login
-worktree: /Users/.../est-works.worktrees/add-google-login
 base: main
 started: 2026-05-11
 goal: |
@@ -75,6 +79,7 @@ If a particular project does not want planning artifacts committed, add `.planni
 
 ## Language policy
 
-- `plan.md`, `tasks.md`, `research.md`, `meta.md`, `brainstorm.md`: **English** (LLM-facing). Optionally include a short Korean summary at the bottom if the user wants quick scanning.
-- `code-reviews/plan-summary.md` and `code-reviews/code-summary.md`: **Korean** (user-facing — these are read by the human alongside Claude).
-- Individual model output files (`code-reviews/*-gemini.md`, `brainstorms/*-gemini.md`, etc.): whatever the model emits, no translation.
+- `plan.md`, `tasks.md`, `research.md`, `prepare.md`, `brainstorm.md`: **English** (LLM-facing).
+- `artifacts/plan-review-summary.md` and `artifacts/code-review-summary.md`: **Korean** (user-facing — these are read by the human alongside Claude).
+- `artifacts/plan.ko.md` and `artifacts/tasks.ko.md`: **Korean** (translated copies of plan.md and tasks.md for user scanning).
+- Individual model output files (`artifacts/plan-review-gemini.md`, `artifacts/brainstorm-*-gemini.md`, etc.): whatever the model emits, no translation.

@@ -86,23 +86,40 @@ git fetch origin "${BASE}" --quiet 2>/dev/null || true
 mkdir -p "${WORKTREES_DIR}"
 git worktree add -b "${BRANCH}" "${WORKTREE_PATH}" "${BASE}"
 
-# --- create planning folder + meta.md ---
-mkdir -p "${WORKTREE_PATH}/${PLANNING_DIR}/code-reviews"
+# --- detect package manager and install dependencies ---
+if [[ -f "${WORKTREE_PATH}/pnpm-lock.yaml" ]]; then
+  echo "prep: detected pnpm, running pnpm install..." >&2
+  ( cd "${WORKTREE_PATH}" && pnpm install ) >&2 || echo "prep: WARNING — pnpm install failed (non-fatal)" >&2
+elif [[ -f "${WORKTREE_PATH}/bun.lockb" ]] || [[ -f "${WORKTREE_PATH}/bun.lock" ]]; then
+  echo "prep: detected bun, running bun install..." >&2
+  ( cd "${WORKTREE_PATH}" && bun install ) >&2 || echo "prep: WARNING — bun install failed (non-fatal)" >&2
+elif [[ -f "${WORKTREE_PATH}/package-lock.json" ]]; then
+  echo "prep: detected npm, running npm install..." >&2
+  ( cd "${WORKTREE_PATH}" && npm install ) >&2 || echo "prep: WARNING — npm install failed (non-fatal)" >&2
+elif [[ -f "${WORKTREE_PATH}/yarn.lock" ]]; then
+  echo "prep: detected yarn, running yarn install..." >&2
+  ( cd "${WORKTREE_PATH}" && yarn install ) >&2 || echo "prep: WARNING — yarn install failed (non-fatal)" >&2
+elif [[ -f "${WORKTREE_PATH}/uv.lock" ]]; then
+  echo "prep: detected uv, running uv sync..." >&2
+  ( cd "${WORKTREE_PATH}" && uv sync ) >&2 || echo "prep: WARNING — uv sync failed (non-fatal)" >&2
+else
+  echo "prep: no lockfile found, skipping dependency install" >&2
+fi
 
-cat > "${WORKTREE_PATH}/${PLANNING_DIR}/meta.md" <<META
+# --- create planning folder + prepare.md ---
+mkdir -p "${WORKTREE_PATH}/${PLANNING_DIR}/artifacts"
+
+cat > "${WORKTREE_PATH}/${PLANNING_DIR}/prepare.md" <<PREPARE
 ---
-title: "Meta — ${TASK}"
-type: meta
+title: "Prepare — ${TASK}"
+type: prepare
 task: ${TASK}
-task_date: ${DATE}
-created: ${DATE}
 last_updated: ${DATE}
 status: active
 size: ${SIZE}
 parent: ../../
 related: []
 branch: ${BRANCH}
-worktree: ${WORKTREE_PATH}
 base: ${BASE}
 started: ${DATE}
 goal: |
@@ -112,7 +129,7 @@ goal: |
 ## Notes
 
 (Free-form. Optional.)
-META
+PREPARE
 
 # --- output for caller ---
 echo "${WORKTREE_PATH}"

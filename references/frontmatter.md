@@ -8,13 +8,13 @@ Every file written by a flow skill into `.planning/<date>-<task>/` carries a YAM
 ---
 title: <human-readable title>            # "Plan — Add Google login"
 type: <doc type>                         # see "Type values" below
-task: <kebab task name>                  # matches meta.md task and branch suffix
+task: <kebab task name>                  # matches prepare.md task and branch suffix
 task_date: <YYYY-MM-DD>                  # the date prefix in the directory name
 created: <YYYY-MM-DD>                    # when this file was first written
 last_updated: <YYYY-MM-DD>               # bumped on substantive edits
 status: <status>                         # see "Status values" below
-size: <S|M|L>                            # mirrored from meta.md for single-doc lookup
-parent: <relative path>                  # usually ./meta.md or ./plan.md
+size: <S|M|L>                            # mirrored from prepare.md for single-doc lookup
+parent: <relative path>                  # usually ./prepare.md or ./plan.md
 related:                                 # one bullet per cross-link, with a short reason
   - ./plan.md (current plan)
   - ./tasks.md (GWT checklist)
@@ -29,20 +29,22 @@ One of these per document. Search-friendly — keep the spelling stable.
 
 | `type` | File |
 |---|---|
-| `meta` | `meta.md` |
+| `prepare` | `prepare.md` |
 | `research` | `research.md` |
 | `brainstorm` | `brainstorm.md` (multi-LLM brainstorming synthesis) |
-| `brainstorm-contribution` | `brainstorms/<role>-<model>.md` (per-model raw output) |
+| `brainstorm-contribution` | `artifacts/brainstorm-<role>-<model>.md` (per-model raw output) |
 | `plan` | `plan.md` |
-| `plan-version` | `plan.v<N>.md` (superseded plan) |
+| `plan-version` | `artifacts/plan.v<N>.md` (superseded plan) |
 | `tasks` | `tasks.md` |
-| `tasks-version` | `tasks.v<N>.md` (superseded tasks) |
+| `tasks-version` | `artifacts/tasks.v<N>.md` (superseded tasks) |
 | `plan-phase` | `plan-phase-<N>.md` (size-L breakouts) |
-| `plan-review` | `code-reviews/plan-<reviewer>.md` |
-| `plan-summary` | `code-reviews/plan-summary.md` |
-| `code-review` | `code-reviews/code-<reviewer>.md` |
-| `code-summary` | `code-reviews/code-summary.md` |
-| `review-failed` | `code-reviews/<reviewer>.FAILED.md` |
+| `plan-review` | `artifacts/plan-review-<reviewer>.md` |
+| `plan-summary` | `artifacts/plan-review-summary.md` |
+| `code-review` | `artifacts/code-review-<reviewer>.md` |
+| `code-summary` | `artifacts/code-review-summary.md` |
+| `review-failed` | `artifacts/<plan\|code>-review-<reviewer>.FAILED.md` |
+| `plan-translation` | `artifacts/plan.ko.md` |
+| `tasks-translation` | `artifacts/tasks.ko.md` |
 
 ## Status values
 
@@ -50,40 +52,41 @@ One of these per document. Search-friendly — keep the spelling stable.
 |---|---|
 | `draft` | Being authored right now; not stable. |
 | `active` | Current canonical document for its type. |
-| `done` | Work it described is complete (typical for `meta`/`tasks` after deploy). |
+| `done` | Work it described is complete (typical for `prepare`/`tasks` after deploy). |
 | `superseded` | A newer version exists; see `superseded_by`. Used on `plan.v<N>.md` etc. |
 | `failed` | Reviewer CLI failed to produce valid output. Used only on `review-failed`. |
 
 ## Per-type fields (in addition to common)
 
-### `meta` (written by `flow:prep`)
+### `prepare` (written by `flow:prep`)
 
 ```yaml
 branch: feature/add-google-login
-worktree: /Users/.../<repo>.worktrees/add-google-login
 base: main
 started: 2026-05-11
 goal: |
   Allow users to sign in with Google in addition to email/password.
 ```
 
+`prepare.md` is the one exception to the common-fields block: it **omits `task_date` and `created`**. Both would be identical to `started` (prep writes all three on the same day), and the directory name already carries the date — `started` is the single date that matters for the task. It also has no `worktree` field: the worktree path is an absolute, machine-specific value, and `.planning/` is committed, so recording it would bake a stale path into the repo. Find the worktree with `git rev-parse --show-toplevel` from inside it instead.
+
 ### `plan` and `plan-version`
 
 ```yaml
 version: 1                               # 1 for the first plan; bumps on plan-review revisions
-supersedes: ./plan.v1.md                 # only on plan.md when a previous version exists
-superseded_by: ./plan.md                 # only on plan.v<N>.md
+supersedes: ./artifacts/plan.v1.md       # only on plan.md when a previous version exists
+superseded_by: ../plan.md                # only on artifacts/plan.v<N>.md
 plan_review_run: true                    # set true after flow:plan-review touched it
 ```
 
-A new `plan.md` after `plan-review` produces substantive changes carries `version: <N+1>` and `supersedes: ./plan.v<N>.md`. The previous file is renamed to `plan.v<N>.md` with `status: superseded` and `superseded_by: ./plan.md`.
+A new `plan.md` after `plan-review` produces substantive changes carries `version: <N+1>` and `supersedes: ./artifacts/plan.v<N>.md`. The previous file is moved to `artifacts/plan.v<N>.md` with `status: superseded` and `superseded_by: ../plan.md`. Its Korean translation moves to `artifacts/plan.v<N>.ko.md`.
 
 ### `tasks` and `tasks-version`
 
 ```yaml
 version: 1
-supersedes: ./tasks.v1.md
-superseded_by: ./tasks.md
+supersedes: ./artifacts/tasks.v1.md
+superseded_by: ../tasks.md
 total_tasks: 12                          # optional — set at authoring time, do not maintain
 ```
 
@@ -100,9 +103,9 @@ parent: ./plan.md                        # plan.md is the index when phases exis
 
 ```yaml
 time_box: 10m                            # nominal time-box used (5m | 10m | 20m | 60m)
-used_external_llm: true                  # set when Gemini/OpenCode produced raw output under code-reviews/
+used_external_llm: true                  # set when Gemini/OpenCode produced raw output under artifacts/
 external_llm_outputs:                    # only when used_external_llm is true
-  - ./code-reviews/research-gemini.md
+  - ./artifacts/research-gemini.md
 ```
 
 ### `brainstorm` (multi-LLM brainstorming synthesis, authored by `flow:plan`)
@@ -114,14 +117,14 @@ contributors:                            # models whose raw output is folded in
 missing_contributors: []                 # models that failed (mirrors plan-summary pattern)
 ```
 
-### `brainstorm-contribution` (per-model raw output under `brainstorms/`)
+### `brainstorm-contribution` (per-model raw output under `artifacts/`)
 
 ```yaml
 contributor: gemini-3.1-pro              # CLI-facing model id
 cli: gemini                              # which CLI binary produced this
 lens: architecture                       # architecture | risk | security — the assigned role
 prompted_against:                        # absolute paths the contributor was told to read
-  - /abs/.../meta.md
+  - /abs/.../prepare.md
   - /abs/.../research.md
 ```
 
@@ -157,14 +160,22 @@ detected_by: failure-signature           # missing-binary | nonzero-exit | empty
 signature_matched: rate limit            # the matched token if detected_by is failure-signature
 exit_code: 0                             # the captured exit code (0 if signature in stdout)
 when: 2026-05-11T15:42:00+09:00          # ISO timestamp of detection
-partial_output: ./plan-gemini.partial.md # only when partial output was preserved
+partial_output: ./plan-review-gemini.partial.md # only when partial output was preserved
+```
+
+### `plan-translation` and `tasks-translation`
+
+```yaml
+source: ../plan.md                       # or ../tasks.md — the English file this translates
+language: ko
+translator: sonnet                       # or glm-5.1
 ```
 
 ## Conventions
 
 - **Dates in `YYYY-MM-DD`** for `created`, `last_updated`, `task_date`, `started`. Use full ISO 8601 (with time and tz) only for `when` on FAILED records.
-- **Relative paths** for everything inside the same `.planning/<date>-<task>/` directory (`./plan.md`, `./code-reviews/...`). Use absolute paths only for `worktree` (in meta) and `prompted_against` (in reviewer files), where absoluteness is the point.
-- **Mirror, don't compute.** `task`, `task_date`, `size` are mirrored from `meta.md` at authoring time. Do not invent a process to keep them in sync; if `meta.md` changes, fix the others by hand or accept the drift.
+- **Relative paths** for everything inside the same `.planning/<date>-<task>/` directory (`./plan.md`, `./artifacts/...`; from a file already inside `artifacts/`, use `../plan.md` for root docs and `./` for siblings). Use absolute paths only for `prompted_against` (in reviewer files), where absoluteness is the point.
+- **Mirror, don't compute.** `task` and `size` are mirrored from `prepare.md`, and `task_date` from the directory name's date prefix, at authoring time. Do not invent a process to keep them in sync; if `prepare.md` changes, fix the others by hand or accept the drift.
 - **`related` is for navigation, not provenance.** Each entry is `<path> (<one-line reason>)`. If a doc is the canonical anchor (parent), put it in `parent`, not `related`.
 
 ## Why
@@ -172,7 +183,7 @@ partial_output: ./plan-gemini.partial.md # only when partial output was preserve
 Three reasons this exists:
 
 1. **Agentic search.** A `grep -l 'type: plan' .planning/` returns every plan across every task without reading bodies. Same for `task:`, `status: superseded`, `verdict: rework-needed`, `missing_reviewers: \[].*opencode`.
-2. **Cross-doc traceability.** `parent` and `related` form a navigable graph. Future Claude sessions can walk from a `plan-summary.md` back to the exact `plan.v2.md` that was reviewed.
+2. **Cross-doc traceability.** `parent` and `related` form a navigable graph. Future Claude sessions can walk from a `plan-review-summary.md` back to the exact `artifacts/plan.v2.md` that was reviewed.
 3. **Auditability.** `created` / `last_updated` / `status` capture the artifact lifecycle without git archaeology.
 
 ## What NOT to add

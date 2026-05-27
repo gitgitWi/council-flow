@@ -88,7 +88,7 @@ This is easier to scan on a phone and survives renderer drift.
 Keep it tight: 3+ columns, identical row shape, every column used. Example of a legitimate table (the prep-precondition decision matrix from `flow:plan`):
 
 ```markdown
-| In worktree | On task branch | Has `.planning/.../meta.md` | Action |
+| In worktree | On task branch | Has `.planning/.../prepare.md` | Action |
 |---|---|---|---|
 | yes | yes | yes | Proceed. |
 | no  | no  | no  | Stop and ask the user. |
