@@ -1,6 +1,6 @@
 ---
 name: orchestrate
-description: Run the full flow workflow end-to-end — prep → optional research → plan (with optional multi-LLM brainstorming) → optional plan-review → develop → deploy — based on a single task goal from the user. Use this when the user wants to hand off a complete task and let the workflow run, rather than driving each step manually. Skips research, brainstorming, and plan-review automatically for size S tasks; runs the full pipeline for size L. Even when the user just says "build me X", consider this skill if the task warrants the full discipline.
+description: Run the full flow workflow end-to-end — kickoff → prep → optional research → plan (with optional multi-LLM brainstorming) → optional plan-review → develop → deploy — based on a single task goal from the user. Use this when the user wants to hand off a complete task and let the workflow run, rather than driving each step manually. Skips research, brainstorming, and plan-review automatically for size S tasks; runs the full pipeline for size L. Even when the user just says "build me X", consider this skill if the task warrants the full discipline.
 ---
 
 # flow:orchestrate — End-to-end workflow runner
@@ -16,6 +16,10 @@ Orchestrate is a thin sequencer. It does not reimplement any of the individual s
 ## The sequence
 
 ```
+0. flow:kickoff           [front door — frame the task before any setup]
+   └── writes brief.md (GOAL, acceptance criteria + verification, scope, hypothesis,
+       working rules), sets category + size, optionally posts a Korean GitHub Issue
+
 1. flow:prep
    └── creates worktree, branch, .planning/, prepare.md (with size estimate)
 
@@ -45,6 +49,7 @@ Orchestrate is a thin sequencer. It does not reimplement any of the individual s
 
 | Step | size = S | size = M | size = L |
 |---|---|---|---|
+| kickoff | yes | yes | yes |
 | prep | yes | yes | yes |
 | research | skip | ask | yes |
 | plan (always) | yes | yes | yes |
@@ -97,6 +102,7 @@ Do not retry silently. Orchestrate is a sequencer, not a self-healing pipeline.
 
 Each individual skill is the source of truth for its own behavior. This skill only sequences them:
 
+- `flow:kickoff`
 - `flow:prep`
 - `flow:research`
 - `flow:plan`
