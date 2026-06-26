@@ -17,7 +17,7 @@ size: <S|M|L>                            # mirrored from prepare.md for single-d
 parent: <relative path>                  # usually ./prepare.md or ./plan.md
 related:                                 # one bullet per cross-link, with a short reason
   - ./plan.md (current plan)
-  - ./tasks.md (GWT checklist)
+  - ./tasks.md (behavior checklist)
 ---
 ```
 
@@ -29,6 +29,7 @@ One of these per document. Search-friendly — keep the spelling stable.
 
 | `type` | File |
 |---|---|
+| `brief` | `brief.md` (kickoff task framing — goal, acceptance, scope, direction diagram) |
 | `prepare` | `prepare.md` |
 | `research` | `research.md` |
 | `brainstorm` | `brainstorm.md` (multi-LLM brainstorming synthesis) |

@@ -6,9 +6,10 @@ All flow skills read and write to a single per-task directory. Predictable paths
 
 ```
 <repo-root>/.planning/<yyyy-mm-dd>-<kebab-task-name>/
+├── brief.md             # kickoff framing: goal, acceptance + verification, scope, direction diagram
 ├── prepare.md           # task name, branch, base, size estimate, started-at
 ├── plan.md              # current canonical plan (English)
-├── tasks.md             # GWT checkbox list — single source of truth for progress
+├── tasks.md             # behavior checkbox list (1-line + pseudo-code test or Mermaid) — progress source of truth
 ├── research.md          # optional, written by `flow:research`
 ├── brainstorm.md        # optional, multi-LLM brainstorming synthesis (size L always,
 │                        #   size M when cross-module / security-sensitive / public-surface)
@@ -32,7 +33,7 @@ All flow skills read and write to a single per-task directory. Predictable paths
     └── tasks.v1.ko.md
 ```
 
-Canonical live documents (`prepare.md`, `plan.md`, `tasks.md`, `research.md`, `brainstorm.md`) sit at the task-directory root. Everything else — per-reviewer outputs, Korean summaries, translations, superseded versions, raw per-model brainstorming dumps, run logs — is a supporting artifact and lives in the single flat `artifacts/` folder. Flat, not nested: the filename prefix (`plan-review-`, `code-review-`, `brainstorm-`, `research-`) and suffix (`.ko.md`, `.v<N>.md`) carry the categorization that nested folders used to.
+Canonical live documents (`brief.md`, `prepare.md`, `plan.md`, `tasks.md`, `research.md`, `brainstorm.md`) sit at the task-directory root. Everything else — per-reviewer outputs, Korean summaries, translations, superseded versions, raw per-model brainstorming dumps, run logs — is a supporting artifact and lives in the single flat `artifacts/` folder. Flat, not nested: the filename prefix (`plan-review-`, `code-review-`, `brainstorm-`, `research-`) and suffix (`.ko.md`, `.v<N>.md`) carry the categorization that nested folders used to.
 
 ## Naming rules
 
@@ -79,7 +80,7 @@ If a particular project does not want planning artifacts committed, add `.planni
 
 ## Language policy
 
-- `plan.md`, `tasks.md`, `research.md`, `prepare.md`, `brainstorm.md`: **English** (LLM-facing).
+- `brief.md`, `plan.md`, `tasks.md`, `research.md`, `prepare.md`, `brainstorm.md`: **English** (LLM-facing). The GitHub Issue rendered from `brief.md` is Korean (user/team-facing).
 - `artifacts/plan-review-summary.md` and `artifacts/code-review-summary.md`: **Korean** (user-facing — these are read by the human alongside Claude).
 - `artifacts/plan.ko.md` and `artifacts/tasks.ko.md`: **Korean** (translated copies of plan.md and tasks.md for user scanning).
 - Individual model output files (`artifacts/plan-review-gemini.md`, `artifacts/brainstorm-*-gemini.md`, etc.): whatever the model emits, no translation.

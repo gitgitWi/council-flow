@@ -44,9 +44,9 @@ Special case — **uncommitted changes on a non-task branch (e.g., `main`)**: st
 
 For each unchecked item in `tasks.md`, top to bottom:
 
-1. **Read the task line.** Re-parse the Given-When-Then. If it has nested sub-tasks, handle them in order.
+1. **Read the task line.** Parse the one-line behavior and its pseudo-code test or Mermaid diagram. If it has nested sub-tasks, handle them in order.
 2. **Decide: TDD or not?** Apply the rules from `../../references/tdd-policy.md`. If unsure, default to TDD.
-3. **(TDD path) Write the failing test.** The test name should mirror the task's Given-When-Then phrasing. Run the test, confirm it fails for the right reason (not a syntax error or missing import).
+3. **(TDD path) Write the failing test.** Turn the task's pseudo-code test (or the behavior the diagram describes) into a real test; the test name should mirror the behavior statement. Run it, confirm it fails for the right reason (not a syntax error or missing import).
 4. **Implement** the minimum code to make the test pass. Resist refactoring on the same commit — that comes later if it's worth doing.
 5. **Run the test.** Confirm green. Run the broader test suite to make sure nothing else broke.
 6. **Commit** atomically with a conventional-commit message. See `../../references/commit-conventions.md`. For TDD pairs, you may either commit test and impl separately (two commits) or together (one commit). Prefer two commits when the change is non-trivial — the failing-test step is informative in history.
@@ -84,7 +84,7 @@ You are implementing a frontend task. The plan and tasks live at:
 - <abs-path>/.planning/<date>-<task>/plan.md
 - <abs-path>/.planning/<date>-<task>/tasks.md
 
-Implement only the next unchecked task: "<paste the task GWT verbatim>".
+Implement only the next unchecked task: "<paste the task behavior + pseudo-code test verbatim>".
 Follow the existing component patterns under <abs-path>/src/...
 Write the Vitest test first.
 Output the changed files as paths + full file content; I will apply them.

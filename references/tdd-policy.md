@@ -35,7 +35,7 @@ Post-implementation (after the main happy path is green):
 ## Test-writing style
 
 - **Describe by behavior**, not by function name. `it('redirects to /dashboard after Google login')` beats `it('handleAuthCallback works')`.
-- **Given / When / Then** in arrange-act-assert. Mirror the `tasks.md` checklist phrasing — the test should make the requirement obvious.
+- **Arrange-act-assert.** Mirror the `tasks.md` behavior statement and its pseudo-code test — the real test should make the same requirement obvious.
 - **One assertion per concept.** A test that asserts five unrelated things obscures what it's locking down.
 - **Don't test the framework.** Skip "renders without crashing" — it's noise.
 

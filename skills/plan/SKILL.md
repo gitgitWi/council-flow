@@ -1,11 +1,20 @@
 ---
 name: plan
-description: Produce a tight one-pager `plan.md` and a Given-When-Then checklist `tasks.md` for an upcoming task. Use this whenever the user is about to start a non-trivial change — a feature, multi-file fix, refactor — before any code is written. Even if the user just says "let's start", produce a plan first; the develop skill consumes these documents. The plan is for any coding agent (Claude, Codex, Gemini, a teammate) to pick up and execute, so it must stand on its own.
+description: Produce a short, visual `plan.md` (goal + approach + a Mermaid diagram of the direction) and a concise checklist `tasks.md` for an upcoming task. Use this whenever the user is about to start a non-trivial change — a feature, multi-file fix, refactor — before any code is written. Even if the user just says "let's start", produce a plan first; the develop skill consumes these documents. Keep it lightweight — a one-minute read and a diagram beat a long document; the goal is fast plan→implement→review→fix iteration, not exhaustive up-front detail. The plan is for any coding agent (Claude, Codex, Gemini, a teammate) to pick up and execute, so it must stand on its own.
 ---
 
 # flow:plan — Authoring plan.md and tasks.md
 
-A flow plan is **a one-pager that explains the approach, not the code**. Inspired by Amazon's one-pager / six-pager: short, explicit, and self-contained. The reader should finish in five minutes and know what is going to be built and how.
+A flow plan is **a short, visual one-pager that explains the approach, not the code**. The reader should finish in about a minute and know what is going to be built and how — mostly from a diagram.
+
+## Operating philosophy — lightweight, visual, fast iteration
+
+The point of planning is to start implementing sooner with a clear direction, **not** to specify everything up front. Heavy plans (the GSD/over-planning failure mode) make everyone lose the goal, over-invest in detail, and burn out before any real output appears.
+
+- **Bias to brevity.** Write the *least* plan that conveys goal, direction, and scope. If a section is not earning its length, cut it.
+- **Diagram over prose.** A Mermaid diagram of the flow/shape communicates direction faster than paragraphs. Reach for one before writing long prose (see `../../references/mermaid.md`).
+- **Iterate fast.** plan → implement → review → fix, repeated, beats one big plan. Get something reviewable in front of the user quickly; refine on the next loop.
+- The size ceilings below are **ceilings, not targets** — most plans should land well under them.
 
 ## Prep precondition check (run first, every invocation)
 
@@ -44,7 +53,7 @@ If the user picks "proceed in-place" without prep, write the size into the manua
 All written under `<worktree>/.planning/<date>-<task>/`:
 
 - **`plan.md`** — approach, scope, architecture decisions, rollout. ~500 lines max for the whole thing (including any phase sub-plans). If it grows beyond that, split into `plan-phase-1.md`, `plan-phase-2.md` and let `plan.md` become a short index.
-- **`tasks.md`** — Given-When-Then checkbox list, the single source of truth for progress during develop.
+- **`tasks.md`** — concise behavior checkbox list (one-line behavior + pseudo-code test or Mermaid), the single source of truth for progress during develop.
 - **`brainstorm.md`** — *conditional.* Multi-LLM brainstorming synthesis, written before `plan.md` when scope warrants (see "Multi-LLM brainstorming" below). Raw per-model outputs go under `artifacts/` (filenames prefixed `brainstorm-`).
 
 All authored docs are **English** (any coding agent picks them up). Korean translations are dispatched as a separate step after drafting (see "Korean translation dispatch" below).
@@ -219,7 +228,7 @@ status: draft         # bump to "active" once the user signs off, "done" after d
 size: <S|M|L>
 parent: ./prepare.md
 related:
-  - ./tasks.md (GWT checklist)
+  - ./tasks.md (behavior checklist)
   - ./research.md (if exists — pre-plan investigation)
 version: 1
 plan_review_run: false
@@ -269,14 +278,20 @@ The shape of the solution in 3-7 bullets. Talk about *what changes* and *why thi
 shape and not another*. Stay at the level of *direction* — the file-by-file detail
 goes in `## Change map` below; per-task implementation lives in `tasks.md`.
 
-When the change has non-trivial control flow, message passing, or state
-transitions, include **at least one Mermaid sequence (or flow) diagram** here,
-rendered as a fenced ` ```mermaid ` code block so downstream renderers (GitHub,
-PR review tools, docs sites) pick it up correctly. Multiple diagrams are fine
-when distinct flows do not fit into one — size L plans with per-phase flows
-typically need more than one. Diagrams are a faster read than prose for "who
-calls what, in what order." Skip the diagram when the shape is "edit a function,
-add a test" — diagrams for trivial flows are noise.
+**Lead with a Mermaid diagram.** A picture of the direction is the fastest read and
+the most valuable part of the plan. Pick the type by what the change is (full
+skeletons + GitHub gotchas in `../../references/mermaid.md`):
+
+- Control / logic flow → `flowchart`
+- API / message / async flow → `sequenceDiagram`
+- Data model / schema change → `erDiagram`
+- User-facing multi-step flow → `journey`
+
+Render as a fenced ` ```mermaid ` block so GitHub / PR tools / docs sites pick it up.
+Multiple diagrams are fine when distinct flows do not fit one — size L plans with
+per-phase flows typically need more than one. The only time to skip the diagram is
+the truly trivial "edit a function, add a test" shape, where a diagram is noise —
+say so explicitly rather than defaulting to prose.
 
 You may name concrete file paths and key type signatures inline when they sharpen
 the shape (e.g., "extend `BridgeRouter` to a `Record<RequestType, Handler>`
@@ -385,7 +400,15 @@ Before showing the plan to the user, review it with fresh eyes and fix gaps inli
 
 ## tasks.md structure
 
-Given-When-Then **checkbox list**. Each task is **a behavior, not a step**. The develop skill will treat each unchecked item as a TDD cycle (write test → implement → commit).
+A **concise checkbox list of behaviors**. Each task is **a behavior, not a step**. The develop skill treats each unchecked item as a TDD cycle (write test → implement → commit).
+
+**Do not use Given-When-Then prose.** GWT made tasks long and hard to scan for no benefit. Express each behavior in the shortest form that is still testable:
+
+- A **one-line behavior statement** (imperative, concrete), and
+- *for code work,* either a **pseudo-code test** snippet (the assertion you would write) **or** a small **Mermaid** `flowchart`/`journey` showing the behavior — whichever reads faster. Pick one; do not write both.
+- *for non-code work* (config, deps, docs), just the one-line statement.
+
+The pseudo-code test or diagram replaces the GWT body — it states the same "when X, expect Y" contract in a form a human scans in seconds and `flow:develop` can turn into a real test.
 
 > **Format is non-negotiable: `- [ ]` bullets, never a markdown table.**
 > "Checklist" in this plugin literally means "list of `- [ ]` items." A table cell cannot be checked off, cannot be appended to mid-task, and breaks `flow:develop`, which reads progress by scanning for `[ ]` vs `[x]`. The same rule applies to *any* file whose role is a checklist — audit checklists, status checklists, verification checklists. If you reach for a table to show "item / status / note," stop and use:
@@ -406,21 +429,27 @@ Hints are **advisory and human-/reviewer-readable only**. `flow:develop` does no
 
 ## Phase 1 (optional grouping)
 
-- [ ] **Given** a user without a Google account linked,
-      **when** they click "Sign in with Google",
-      **then** they are redirected to Google's OAuth consent screen.
+- [ ] Redirect to Google's OAuth consent screen when a user without a linked
+      account clicks "Sign in with Google".
+      ```
+      test: click sign-in → expect redirect URL host == accounts.google.com
+      ```
       → `test(auth): redirect to Google consent on sign-in click`
       → `feat(auth): wire Google OAuth redirect`
 
-- [ ] **Given** Google returns a valid auth code,
-      **when** the callback handler processes it,
-      **then** a session token is issued and the user lands on `/dashboard`.
-      → `test(auth): issue session and redirect on valid Google callback`
+- [ ] Issue a session and land on `/dashboard` on a valid Google callback.
+      ```
+      test: callback(validCode) → expect session token set && route == /dashboard
+      ```
+      → `test(auth): issue session on valid Google callback`
       → `feat(auth): implement Google callback handler`
 
-- [ ] **Given** Google returns an error or the user denies consent,
-      **when** the callback handler processes it,
-      **then** the user sees a non-technical error message and stays on `/login`.
+- [ ] Show a non-technical error and stay on `/login` when Google denies consent.
+      (diagram alternative when a flow is clearer than an assertion:)
+      ```mermaid
+      flowchart LR
+        cb[callback] -->|error/denied| err[show message] --> login["/login"]
+      ```
       → `test(auth): show error and stay on /login when Google denies`
       → `feat(auth): handle Google error/denial path`
 
@@ -435,11 +464,12 @@ Hints are **advisory and human-/reviewer-readable only**. `flow:develop` does no
 **Rules:**
 
 - **Every item is a `- [ ]` checkbox.** No markdown tables, no plain bullets, no numbered lists. If `flow:develop` can't toggle it from `[ ]` to `[x]`, it doesn't belong here.
+- **One-line behavior, then one of: pseudo-code test *or* a small Mermaid diagram** — never the verbose Given-When-Then prose, never both forms at once.
 - One behavior per checkbox. Don't bundle.
-- **Commit hint(s) on every task.** → `<type>(<scope>): <subject>` lines under the GWT body, one per planned commit (arrow outside the backticks, matching the example block above). Follow `../../references/commit-conventions.md` for type/scope vocabulary.
-- Mention "non-TDD" explicitly for config/dep/rename tasks — see `../../references/tdd-policy.md` for which tasks skip TDD.
+- **Commit hint(s) on every task.** → `<type>(<scope>): <subject>` lines, one per planned commit (arrow outside the backticks). Follow `../../references/commit-conventions.md`.
+- Mention "non-TDD" explicitly for config/dep/rename tasks — see `../../references/tdd-policy.md`.
 - The order roughly follows implementation order, but the develop skill picks the next unchecked task and decides if dependencies require reordering.
-- Sub-tasks are allowed (nested checkboxes) when a single behavior splits naturally into validation + happy-path + error-path. Keep nesting one level deep.
+- Sub-tasks are allowed (nested checkboxes) when a behavior splits naturally into validation + happy-path + error-path. Keep nesting one level deep.
 
 ## Workflow
 
