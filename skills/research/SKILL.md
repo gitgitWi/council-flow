@@ -85,6 +85,8 @@ Keep this document under ~300 lines. If you find yourself writing more, you are 
 
 ## How to research
 
+**Delegate to cost-efficient subagents, fanned out in parallel — not the frontier orchestrator model.** Spawn one subagent per relevant area (codebase, GitHub Issues/PRs, commit history, web) and have each return a tight digest; the orchestrator reads digests and decides. Pick the cheap model tier by harness (Claude Code → Sonnet, Antigravity → Gemini Flash, Codex → Codex mini) per `../../references/models.md`. Skip any area that is obviously irrelevant — research serves the plan, it is not a checklist to complete.
+
 ### Codebase exploration
 
 Use grep / find / Glob to locate related code. For broader exploration where you do not know the right keyword, spawn an `Explore` subagent — it scans without filling the orchestrator's context with raw file contents.

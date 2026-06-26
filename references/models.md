@@ -17,6 +17,21 @@ Single source of truth for model IDs and CLI invocation. Update this file when m
 
 Verification dates inline as comments — re-test when models move. Last full sweep: 2026-05-12.
 
+## Research subagent tier (cost-efficient — use before serious planning)
+
+All **research-type work** — codebase exploration, GitHub Issue/PR/commit-history search, web lookups for references / best practices — runs in **subagents on a cost-efficient model**, never the frontier orchestrator model. Frontier reasoning is reserved for synthesis, planning decisions, and final review. Pick the cheap tier by which agent harness is running:
+
+| Harness | Research subagent model |
+|---|---|
+| Claude Code | `claude-sonnet` (not Opus) |
+| Antigravity | Gemini 3.5 Flash |
+| Codex | Codex 5.5 Mini |
+
+Rules:
+- Fan research out to **parallel subagents** (one per area: code, issues/PRs, history, web) and have each return a tight digest, not raw dumps — keep the orchestrator's context lean.
+- The orchestrator (frontier model) only reads the digests and decides. It does not do the crawling itself.
+- This is distinct from the multi-LLM **review** dispatch below (that uses external CLIs for diverse perspectives on a finished plan/diff).
+
 - `gemini-3.1-pro-preview` — verified for `--prompt` dispatch with `--yolo --skip-trust`.
 - `opencode-go/kimi-k2.6`, `opencode-go/deepseek-v4-pro`, `opencode-go/deepseek-v4-flash`, `opencode-go/glm-5.1` — provider authenticated via `opencode auth list` (OpenCode Go: api). Invocation must use `-m provider/model`; **do not** pass `--format json` (emits JSONL events, not formatted completion).
 - `gpt-5.5` via `codex exec` — verified flags: `--skip-git-repo-check`, `-m`, `-s/--sandbox`, `-C/--cd`. Default sandbox blocks Write tool; pass `--sandbox workspace-write` for the file-write dispatch contract.
