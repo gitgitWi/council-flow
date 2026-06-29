@@ -35,9 +35,9 @@ Ask one question if you cannot infer; otherwise just decide:
 
 - **S** — single file edit, single component tweak, isolated bug fix, dependency bump. Usually no research needed.
 - **M** — touches one module / a few files (≤ ~5), may add a small new surface area, no schema changes. Default for most feature work.
-- **L** — crosses modules, introduces new domain concepts, database schema changes, public API changes, or replaces existing subsystems. Plan-review is strongly recommended at this size.
+- **L** — crosses modules, introduces new domain concepts, database schema changes, public API changes, or replaces existing subsystems. Prefer splitting into smaller sub-tasks over one large task at this size.
 
-Record the size in `prepare.md` (the prep script handles this). The plan and develop skills will look at `size` to decide whether to add research / plan-review steps.
+Record the size in `prepare.md` (the prep script handles this). The plan and develop skills will look at `size` to decide whether to add the research and brainstorm steps.
 
 ## Run the prep script
 
@@ -53,6 +53,8 @@ bash <plugin-dir>/scripts/prep.sh \
 ```
 
 The script prints the worktree path on stdout. Capture it — every subsequent skill operates inside that path.
+
+The script also ensures `.planning/` is in the project's `.gitignore` (idempotent). `.planning/` is **local working memory and is never committed** — the durable copy of non-code documents (briefs, plans, reviews) lives in GitHub Issues / PR bodies. See `../../references/directory-structure.md` (Git policy).
 
 The script auto-detects the project's package manager by checking for lockfiles in the new worktree (priority: pnpm > bun > npm > yarn > uv) and runs the corresponding install command. If no lockfile is found, the step is skipped. Dependency install is non-fatal — a failure prints a warning but does not abort prep.
 

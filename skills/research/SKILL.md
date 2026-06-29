@@ -16,7 +16,7 @@ Research exists to make the plan better. The output is not for shipping; it is a
   - There is an existing similar pattern elsewhere in the repo or org that should be matched
 - Task size is **S** — usually skip. The plan can be drafted directly from the file under change.
 
-If you are not sure whether to research: **time-box it.** Spend 5–10 minutes scanning the most-likely-relevant files, then write a short `research.md` and move on. The plan-review step can flag if more research is needed.
+If you are not sure whether to research: **time-box it.** Spend 5–10 minutes scanning the most-likely-relevant files, then write a short `research.md` and move on. Fast iteration means gaps surface during implementation and result review — don't over-research up front.
 
 ## What to produce
 
@@ -84,6 +84,8 @@ used_external_llm: false # set true if Gemini/OpenCode produced raw output under
 Keep this document under ~300 lines. If you find yourself writing more, you are probably over-researching — surface the key facts and let the plan or actual implementation pull in the rest.
 
 ## How to research
+
+**Delegate to cost-efficient subagents, fanned out in parallel — not the frontier orchestrator model.** Spawn one subagent per relevant area (codebase, GitHub Issues/PRs, commit history, web) and have each return a tight digest; the orchestrator reads digests and decides. Pick the cheap model tier by harness (Claude Code → Sonnet, Antigravity → Gemini Flash, Codex → Codex mini) per `../../references/models.md`. Skip any area that is obviously irrelevant — research serves the plan, it is not a checklist to complete.
 
 ### Codebase exploration
 

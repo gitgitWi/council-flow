@@ -17,7 +17,7 @@ size: <S|M|L>                            # mirrored from prepare.md for single-d
 parent: <relative path>                  # usually ./prepare.md or ./plan.md
 related:                                 # one bullet per cross-link, with a short reason
   - ./plan.md (current plan)
-  - ./tasks.md (GWT checklist)
+  - ./tasks.md (behavior checklist)
 ---
 ```
 
@@ -29,20 +29,19 @@ One of these per document. Search-friendly — keep the spelling stable.
 
 | `type` | File |
 |---|---|
+| `brief` | `brief.md` (kickoff task framing — goal, acceptance, scope, direction diagram) |
 | `prepare` | `prepare.md` |
 | `research` | `research.md` |
-| `brainstorm` | `brainstorm.md` (multi-LLM brainstorming synthesis) |
-| `brainstorm-contribution` | `artifacts/brainstorm-<role>-<model>.md` (per-model raw output) |
+| `brainstorm` | `brainstorm.md` (brainstorming synthesis) |
+| `brainstorm-brief` | `artifacts/brainstorm-brief.md` (brief for external agents) |
 | `plan` | `plan.md` |
 | `plan-version` | `artifacts/plan.v<N>.md` (superseded plan) |
 | `tasks` | `tasks.md` |
 | `tasks-version` | `artifacts/tasks.v<N>.md` (superseded tasks) |
 | `plan-phase` | `plan-phase-<N>.md` (size-L breakouts) |
-| `plan-review` | `artifacts/plan-review-<reviewer>.md` |
-| `plan-summary` | `artifacts/plan-review-summary.md` |
-| `code-review` | `artifacts/code-review-<reviewer>.md` |
-| `code-summary` | `artifacts/code-review-summary.md` |
-| `review-failed` | `artifacts/<plan\|code>-review-<reviewer>.FAILED.md` |
+| `code-review-brief` | `artifacts/code-review-brief.md` (PR review brief for user-run agents) |
+| `code-review` | `artifacts/code-review-<agent>.md` (an agent's returned review) |
+| `code-summary` | `artifacts/code-review-summary.md` (synthesis of returned reviews) |
 | `plan-translation` | `artifacts/plan.ko.md` |
 | `tasks-translation` | `artifacts/tasks.ko.md` |
 
@@ -54,7 +53,6 @@ One of these per document. Search-friendly — keep the spelling stable.
 | `active` | Current canonical document for its type. |
 | `done` | Work it described is complete (typical for `prepare`/`tasks` after deploy). |
 | `superseded` | A newer version exists; see `superseded_by`. Used on `plan.v<N>.md` etc. |
-| `failed` | Reviewer CLI failed to produce valid output. Used only on `review-failed`. |
 
 ## Per-type fields (in addition to common)
 
@@ -68,18 +66,17 @@ goal: |
   Allow users to sign in with Google in addition to email/password.
 ```
 
-`prepare.md` is the one exception to the common-fields block: it **omits `task_date` and `created`**. Both would be identical to `started` (prep writes all three on the same day), and the directory name already carries the date — `started` is the single date that matters for the task. It also has no `worktree` field: the worktree path is an absolute, machine-specific value, and `.planning/` is committed, so recording it would bake a stale path into the repo. Find the worktree with `git rev-parse --show-toplevel` from inside it instead.
+`prepare.md` is the one exception to the common-fields block: it **omits `task_date` and `created`**. Both would be identical to `started` (prep writes all three on the same day), and the directory name already carries the date — `started` is the single date that matters for the task. It also has no `worktree` field: the worktree path is an absolute, machine-specific value. Find the worktree with `git rev-parse --show-toplevel` from inside it instead.
 
 ### `plan` and `plan-version`
 
 ```yaml
-version: 1                               # 1 for the first plan; bumps on plan-review revisions
+version: 1                               # 1 for the first plan; bumps on substantive revisions
 supersedes: ./artifacts/plan.v1.md       # only on plan.md when a previous version exists
 superseded_by: ../plan.md                # only on artifacts/plan.v<N>.md
-plan_review_run: true                    # set true after flow:plan-review touched it
 ```
 
-A new `plan.md` after `plan-review` produces substantive changes carries `version: <N+1>` and `supersedes: ./artifacts/plan.v<N>.md`. The previous file is moved to `artifacts/plan.v<N>.md` with `status: superseded` and `superseded_by: ../plan.md`. Its Korean translation moves to `artifacts/plan.v<N>.ko.md`.
+A `plan.md` substantively revised after the user has seen it carries `version: <N+1>` and `supersedes: ./artifacts/plan.v<N>.md`. The previous file is moved to `artifacts/plan.v<N>.md` with `status: superseded` and `superseded_by: ../plan.md`. Its Korean translation moves to `artifacts/plan.v<N>.ko.md`.
 
 ### `tasks` and `tasks-version`
 
@@ -108,59 +105,43 @@ external_llm_outputs:                    # only when used_external_llm is true
   - ./artifacts/research-gemini.md
 ```
 
-### `brainstorm` (multi-LLM brainstorming synthesis, authored by `flow:plan`)
+### `brainstorm` (brainstorming synthesis, authored by `flow:plan`)
 
 ```yaml
-contributors:                            # models whose raw output is folded in
-  - gemini-3.1-pro
-  - opencode-go/kimi-k2.6
-missing_contributors: []                 # models that failed (mirrors plan-summary pattern)
+contributors:                            # flow-agent, plus any external agent the user ran
+  - flow-agent
+  - antigravity                          # optional, if the user ran an external agent
 ```
 
-### `brainstorm-contribution` (per-model raw output under `artifacts/`)
+### `brief` and `code-review-brief` and `brainstorm-brief`
 
 ```yaml
-contributor: gemini-3.1-pro              # CLI-facing model id
-cli: gemini                              # which CLI binary produced this
-lens: architecture                       # architecture | risk | security — the assigned role
-prompted_against:                        # absolute paths the contributor was told to read
-  - /abs/.../prepare.md
-  - /abs/.../research.md
+# brief.md (kickoff)
+category: Debug & Fix                     # Feature | Fix | Debug & Fix | Refactor | Chore | Research | UI Fix | Question
+
+# code-review-brief.md / brainstorm-brief.md
+pr: 1234                                  # code-review-brief only
+review_agents:                            # from .flow/config.yaml review.agents
+  - claude-code
+  - antigravity
+  - codex
 ```
 
-### `plan-review` and `code-review` (per-reviewer files)
+### `code-review` (an external agent's returned review, saved by the user)
 
 ```yaml
-reviewer: gemini-3.1-pro                 # CLI-facing model id
-cli: gemini                              # which CLI binary produced this
-verdict: ship-as-is                      # ship-as-is | ship-after-minor-edits | rework-needed
-                                         # for code-review: merge-as-is | merge-after-minor-edits | request-changes
-prompted_against:                        # the absolute paths the reviewer was told to read
-  - /abs/.../plan.md
-  - /abs/.../tasks.md
+agent: antigravity                        # which agent produced this
+verdict: merge-after-minor-edits          # merge-as-is | merge-after-minor-edits | request-changes
+pr: 1234
 ```
 
-### `plan-summary` and `code-summary`
+### `code-summary` (synthesis of returned reviews)
 
 ```yaml
-reviewers:                               # list of reviewers whose output is included
-  - gemini-3.1-pro
-  - opencode-go/kimi-k2.6
-  - opencode-go/deepseek-v4-pro
-missing_reviewers: []                    # list of reviewers that failed; empty when complete
-pr: 1234                                 # only on code-summary, after the PR is opened
-```
-
-### `review-failed`
-
-```yaml
-reviewer: gemini-3.1-pro
-cli: gemini
-detected_by: failure-signature           # missing-binary | nonzero-exit | empty-output | failure-signature
-signature_matched: rate limit            # the matched token if detected_by is failure-signature
-exit_code: 0                             # the captured exit code (0 if signature in stdout)
-when: 2026-05-11T15:42:00+09:00          # ISO timestamp of detection
-partial_output: ./plan-review-gemini.partial.md # only when partial output was preserved
+agents:                                   # agents whose returned output is included
+  - claude-code
+  - antigravity
+pr: 1234
 ```
 
 ### `plan-translation` and `tasks-translation`
@@ -182,12 +163,12 @@ translator: sonnet                       # or glm-5.1
 
 Three reasons this exists:
 
-1. **Agentic search.** A `grep -l 'type: plan' .planning/` returns every plan across every task without reading bodies. Same for `task:`, `status: superseded`, `verdict: rework-needed`, `missing_reviewers: \[].*opencode`.
-2. **Cross-doc traceability.** `parent` and `related` form a navigable graph. Future Claude sessions can walk from a `plan-review-summary.md` back to the exact `artifacts/plan.v2.md` that was reviewed.
+1. **Agentic search.** A `grep -l 'type: plan' .planning/` returns every plan across every task without reading bodies. Same for `task:`, `status: superseded`, `verdict: request-changes`.
+2. **Cross-doc traceability.** `parent` and `related` form a navigable graph. A fresh session can walk from a `code-review-summary.md` back to the `brief.md` and `plan.md` it relates to.
 3. **Auditability.** `created` / `last_updated` / `status` capture the artifact lifecycle without git archaeology.
 
 ## What NOT to add
 
 - **Counts that drift** (e.g., "open questions: 3") — the body has it; the frontmatter shouldn't lie.
 - **Free-form tags / categories** — keep the schema closed. New fields require updating this reference.
-- **PII / secrets** — frontmatter is committed and broadly scanned; treat it as public.
+- **PII / secrets** — briefs are published to GitHub Issues/PRs and broadly scanned; treat frontmatter as public.
