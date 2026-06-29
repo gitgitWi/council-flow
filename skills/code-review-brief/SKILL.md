@@ -85,16 +85,16 @@ Body:
 ## 사용자 주요 요청사항
 - <세션에서 사용자가 강조한 제약·선호. 리뷰어가 의도를 오해하지 않도록.>
 
-## 리뷰 관점 (작업 성격에 맞는 것만)
-아래 관점으로 다각도 분석을 요청한다. 각 발견은 `파일:라인 — [심각도] 한 줄 + 근거 + 제안` 형식.
-- **UX** — 사용자 경험/접근성/엣지 상태에 영향이 있는가? (UI 변경 시)
-- **코드 퀄리티** — 가독성, 네이밍, 응집도, 테스트 커버리지, 프로젝트 패턴 부합.
-- **불필요/과잉 구현** — 다른 곳에 이미 유사 구현이 있는데 중복했는가? 언어/프레임워크/라이브러리가 간단히 제공하는 걸 굳이 low-level로 구현했는가?
-- **보안** — 인증/인가, 입력 검증, 비밀값, 의존성 표면.
-- **안정성** — 에러/타임아웃/동시성/부분 실패 경로, 회귀 위험.
+## 리뷰 관점 (참고용 — 여기에 국한하지 말 것)
+전체 변경을 면밀히 검토하고, 발견한 모든 문제를 보고한다. 아래는 **출발점일 뿐**이니 이 항목에만 한정하지 말고, 파일·관점을 1:1로 묶지도 말 것.
+- UX, 코드 퀄리티, 불필요/과잉 구현(중복·과한 low-level), 보안, 안정성, 그 외 눈에 띄는 무엇이든.
+
+발견사항은 가능하면 `파일:라인 — [심각도] 한 줄 + 근거 + 제안`으로.
 ```
 
-The brief ends with the review lenses — it contains **only review material**. The reviewing agent is given a link to this document and reviews directly, so do **not** add orchestration content to it: no "which agents to run", no agent→lens split, no posting-mechanics pointer. Keep it tight — a brief, not a report. Tailor the "리뷰 관점" list to the change (drop UX for a pure build-script PR, emphasize 보안 for auth, etc.).
+The brief contains **only review material**. The reviewing agent is given a link to this document and reviews directly, so do **not** add orchestration content to it: no "which agents to run", no agent→lens split, no posting-mechanics pointer. Keep it tight — a brief, not a report.
+
+Keep the **리뷰 관점 section rough**: a short, non-binding list of starting points, *not* an exhaustive checklist and *never* lenses pinned to specific files/changes. The worry is a narrow brief makes the agent review only what is listed — so explicitly invite it to go beyond. Don't pre-classify each file by lens; let the reviewer decide what matters where. Drop a lens only when it is plainly irrelevant (e.g. UX for a pure build-script PR).
 
 ## Step 3 — Hand off (chat only)
 
@@ -116,7 +116,7 @@ Do **not** post anything to GitHub yourself. If the user later brings reviewer o
 - **Don't auto-merge.**
 - **Don't invent file:line references or change summaries** — read the diff.
 - **Don't put orchestration in the brief.** No "run these agents", no agent→lens split, no posting guide — those go to chat. The brief is review material only.
-- **Don't pad the brief.** Lenses irrelevant to the change are noise; cut them.
+- **Don't over-scope the review prompt.** Keep the lenses rough and non-binding; never pin a lens to a specific file/change or present them as an exhaustive checklist — that narrows the reviewer. Drop only plainly-irrelevant lenses.
 
 ## Reference
 
