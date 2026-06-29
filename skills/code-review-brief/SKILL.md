@@ -1,15 +1,15 @@
 ---
-name: code-review
-description: Produce a code-review base document (a "review brief") for a pull request that the USER feeds to their own external agent(s) to post review/comments on GitHub. The flow agent gathers the diff, the changed-file list, a summary of major changes, and the original intent/plan plus the user's key requests, then writes multi-angle review prompts (UX, code quality, redundant or over-engineered implementation, security, stability) tailored to the change. It does NOT run reviewer CLIs and does NOT post comments — the user runs whichever agent they prefer. Use for any PR review, whether just opened by flow:deploy or already on GitHub. Triggers on "review PR #N", "이 PR 리뷰", "코드리뷰 문서 만들어줘", "PR 리뷰 준비".
+name: code-review-brief
+description: Write the base material for a code review — a "review brief" for a pull request that the USER feeds to their own external agent(s) to post review/comments on GitHub. This skill does NOT perform the review itself and does NOT post comments; it prepares the document a reviewer works from. The flow agent gathers the diff, the changed-file list, a summary of major changes, and the original intent/plan plus the user's key requests, then writes multi-angle review prompts (UX, code quality, redundant or over-engineered implementation, security, stability) tailored to the change. Use to prepare a review for any PR, whether just opened by flow:deploy or already on GitHub. Triggers on "코드리뷰 준비", "리뷰 brief 만들어줘", "PR 리뷰 자료 작성", "prep a review for PR #N".
 ---
 
-# flow:code-review — Review brief for a PR
+# flow:code-review-brief — Prepare the base material for a PR review
 
-This skill writes a **review brief**: a base document that captures everything an external reviewer needs, plus the lenses to review through. The **user** then runs their preferred agent(s) (Antigravity, Codex, Claude Code, …) against the brief to post review/comments on the GitHub PR.
+This skill **prepares the base material** a reviewer needs — it does not run the review itself. It writes a **review brief**: the diff facts, change summary, original intent, and the lenses to review through. The **user** then runs their preferred agent(s) (Antigravity, Codex, Claude Code, …) against the brief to post review/comments on the GitHub PR.
 
 > **The flow agent does not run reviewer CLIs and does not post comments.** The old auto-dispatch mechanism is deprecated (Gemini CLI discontinued; Antigravity has no non-interactive mode; opencode overhead is high). Diversity comes from the user running the agents they choose. See `../../references/multi-llm.md`.
 
-`flow:deploy` calls this skill after opening a PR; you can also invoke it directly on any existing PR.
+`flow:deploy` **recommends** this skill after opening a PR (it does not auto-run it); you can also invoke it directly on any existing PR.
 
 ## Inputs
 

@@ -22,7 +22,7 @@ Each step that wants diverse perspectives produces a **brief** — a base docume
 
 The flow agent **never invokes** the external agents. It writes the brief and stops.
 
-Producers: `flow:code-review` (PR review brief) and the optional brainstorm sub-phase of `flow:plan`.
+Producers: `flow:code-review-brief` (PR review brief) and the optional brainstorm sub-phase of `flow:plan`.
 
 ## Lenses (pick what fits the work)
 

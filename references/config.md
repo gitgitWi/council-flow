@@ -40,7 +40,7 @@ Read once at the start of a flow step; treat values as defaults that the user ca
 
 - `flow:kickoff` / `flow:prep` — worktree root, base branch, issue-first toggle, assignee/milestone/labels for the brief's working rules.
 - `flow:commit-pr` / `flow:deploy` — assignee, milestone, labels, PR language.
-- `flow:code-review` — `review.agents` is listed in the brief so the user knows which agents to run; the flow agent never invokes them.
+- `flow:code-review-brief` — `review.agents` is listed in the brief so the user knows which agents to run; the flow agent never invokes them.
 
 ## Notes
 

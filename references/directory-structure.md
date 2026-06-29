@@ -16,7 +16,7 @@ All flow skills read and write to a single per-task directory. Predictable paths
 └── artifacts/           # all supporting / derived / historical artifacts, one flat folder
     ├── plan.ko.md                  # Korean reading copy of plan.md, written by `flow:plan`
     ├── tasks.ko.md                 # Korean reading copy of tasks.md
-    ├── code-review-brief.md        # PR review brief (user runs their agents on it), `flow:code-review`
+    ├── code-review-brief.md        # PR review brief (user runs their agents on it), `flow:code-review-brief`
     ├── code-review-<agent>.md      # an external agent's returned review, saved by the user
     ├── code-review-summary.md      # Claude's synthesis of returned reviews, Korean
     ├── brainstorm-brief.md         # optional brief for external brainstorm agents
@@ -34,7 +34,7 @@ Canonical live documents (`brief.md`, `prepare.md`, `plan.md`, `tasks.md`, `rese
 
 - **Date prefix**: `yyyy-mm-dd` reflecting when prep ran. Local timezone is fine.
 - **Task name**: kebab-case, derived from the task goal. Match the branch's name-portion (e.g. branch `feature/add-google-login` → task name `add-google-login`).
-- **Standalone PR review variant**: when `flow:code-review` runs on a PR that was not created through this workflow (no matching task directory), it creates `<repo-root>/.planning/<yyyy-mm-dd>-pr<N>-review/artifacts/code-review-brief.md` instead. The directory name encodes the PR number rather than a kebab task name. No `prepare.md`, `plan.md`, or `tasks.md` is required in this variant.
+- **Standalone PR review variant**: when `flow:code-review-brief` runs on a PR that was not created through this workflow (no matching task directory), it creates `<repo-root>/.planning/<yyyy-mm-dd>-pr<N>-review/artifacts/code-review-brief.md` instead. The directory name encodes the PR number rather than a kebab task name. No `prepare.md`, `plan.md`, or `tasks.md` is required in this variant.
 - **Versioning**: when `plan.md` is substantively revised, move the old plan to `artifacts/plan.v<N>.md` (and its translation to `artifacts/plan.v<N>.ko.md`) before writing the new one. Small in-place edits don't need a version bump.
 
 ## Frontmatter

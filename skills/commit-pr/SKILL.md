@@ -52,4 +52,4 @@ Tell the user: the commits made (one line each), the branch, and the PR URL. If 
 
 - Commit conventions: `../../references/commit-conventions.md`
 - TDD policy: `../../references/tdd-policy.md`
-- Full review pipeline: `flow:deploy` + `flow:code-review`
+- Full review pipeline: `flow:deploy` + `flow:code-review-brief`

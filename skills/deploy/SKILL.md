@@ -1,13 +1,13 @@
 ---
 name: deploy
-description: Push the task branch, open a Korean pull request, then hand off to flow:code-review to write a review brief the user feeds to their own reviewer agent(s). Use this whenever development for a flow task is done and the branch is ready for review. Even when the user says "just open a PR", run the full flow — producing the review brief is the point of this skill, not optional dressing. Run in its own session from develop; do not bundle.
+description: Push the task branch and open a Korean pull request, then recommend (do not auto-run) flow:code-review-brief so the user can prepare a review and run their own reviewer agent(s). Use this whenever development for a flow task is done and the branch is ready for review. Even when the user says "just open a PR", finish by pointing them at the review-brief step. Run in its own session from develop; do not bundle.
 ---
 
-# flow:deploy — Push + open Korean PR + delegate to code-review
+# flow:deploy — Push + open Korean PR
 
-Deploy is the closing skill. It is intentionally separate from develop so the PR (and the review brief built from it) reflects a clean, final diff rather than develop's intermediate state.
+Deploy is the closing skill. It is intentionally separate from develop so the PR reflects a clean, final diff rather than develop's intermediate state.
 
-The review-brief step lives in `flow:code-review`, which deploy invokes after opening the PR. Splitting the two means the review skill is reusable for arbitrary existing PRs (not just ones deploy just created). Deploy does **not** run reviewer CLIs — code-review writes a brief and the user runs their own reviewer agent(s).
+Deploy's job ends at opening the PR. The review-brief step lives in `flow:code-review-brief` — deploy **recommends** it but does not auto-run it, because multi-LLM review is something the **user** drives (they pick which agents to run). Keeping it separate also makes the review-brief skill reusable for arbitrary existing PRs. Deploy never runs reviewer CLIs.
 
 ## Preconditions
 
@@ -68,26 +68,24 @@ EOF
 
 Omit any flag with no configured value. Capture the PR number from the URL `gh pr create` prints.
 
-## Step 3 — Hand off to flow:code-review
+## Step 3 — Recommend the review brief (do not auto-run)
 
-Invoke `flow:code-review` with the PR number from Step 2. Because the current branch matches the PR's head and `.planning/<date>-<task>/` exists, code-review resolves its output to `.planning/<date>-<task>/artifacts/code-review-brief.md` automatically.
+Deploy stops at the open PR. Do **not** invoke `flow:code-review-brief` automatically — multi-LLM review is user-driven. Just point the user at the next step:
 
-Tell the user:
+> PR #<N> 열림. 코드리뷰를 받으려면 `flow:code-review-brief`로 리뷰 brief를 만든 뒤, 원하는 에이전트(들)를 직접 실행해 PR에 코멘트를 남기세요.
 
-> PR #<N> opened. Handing off to flow:code-review to write the review brief.
-
-Then invoke the skill. Code-review gathers the diff, summarizes the change against the original intent/plan and the user's requests, and writes the review brief. Deploy's job ends there — the **user** runs their reviewer agent(s) against the brief and posts to the PR.
+If the user explicitly says "just make the brief too", you may invoke `flow:code-review-brief` for PR #<N> inline — but the default is recommend-only. Either way, the **user** runs the reviewer agent(s) and posts to the PR; the flow agent never does.
 
 ## What NOT to do
 
-- **Don't run reviewer CLIs or post comments.** Code-review writes a brief; the user runs the agents.
+- **Don't auto-run the review brief.** Recommend `flow:code-review-brief`; run it only if the user asks.
+- **Don't run reviewer CLIs or post comments.** That is the user's step.
 - **Don't auto-merge.** The user merges after reviewing.
-- **Don't bundle deploy with develop in the same session.** The PR/brief should reflect a clean final diff.
-- **Don't skip opening the PR even when "just running review" was the user intent.** To get a brief for an existing PR, invoke `flow:code-review` directly — not deploy.
+- **Don't bundle deploy with develop in the same session.** The PR should reflect a clean final diff.
 
 ## Reference
 
-- Review brief skill: `../code-review/SKILL.md`
+- Review brief skill: `../code-review-brief/SKILL.md`
 - New multi-LLM model (brief → user-run agents): `../../references/multi-llm.md`
 - Project defaults (`assignee`/`milestone`/`labels`): `../../references/config.md`
 - Frontmatter schema: `../../references/frontmatter.md`
