@@ -106,6 +106,13 @@ else
   echo "prep: no lockfile found, skipping dependency install" >&2
 fi
 
+# --- ensure .planning/ is gitignored (local working memory; non-code docs live in GitHub) ---
+GITIGNORE="${WORKTREE_PATH}/.gitignore"
+if ! { [[ -f "$GITIGNORE" ]] && grep -qE '^\.planning/?$' "$GITIGNORE"; }; then
+  printf '\n# flow: per-task planning working memory — not committed (docs live in GitHub Issues/PRs)\n.planning/\n' >> "$GITIGNORE"
+  echo "prep: added .planning/ to .gitignore" >&2
+fi
+
 # --- create planning folder + prepare.md ---
 mkdir -p "${WORKTREE_PATH}/${PLANNING_DIR}/artifacts"
 
