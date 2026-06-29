@@ -43,8 +43,8 @@ Orchestrate is a thin sequencer. It does not reimplement any of the individual s
    └── executes tasks.md, atomic commits, all checkboxes filled
 
 6. flow:deploy            [as a separate session — see below]
-   └── pushes, opens Korean PR, then recommends flow:code-review-brief
-       (user-driven) — the user makes the brief and runs their own agent(s)
+   └── pushes, opens Korean PR, then asks (default yes) and on confirm runs
+       flow:code-review-brief; the user then runs their own agent(s) on the brief
 ```
 
 ## Size-based skip logic

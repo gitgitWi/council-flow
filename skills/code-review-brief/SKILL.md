@@ -9,7 +9,7 @@ This skill **prepares the base material** a reviewer needs — it does not run t
 
 > **The flow agent does not run reviewer CLIs and does not post comments.** The old auto-dispatch mechanism is deprecated (Gemini CLI discontinued; Antigravity has no non-interactive mode; opencode overhead is high). Diversity comes from the user running the agents they choose. See `../../references/multi-llm.md`.
 
-`flow:deploy` **recommends** this skill after opening a PR (it does not auto-run it); you can also invoke it directly on any existing PR.
+`flow:deploy` **asks** whether to run this skill after opening a PR and runs it on confirm; you can also invoke it directly on any existing PR.
 
 ## Inputs
 
