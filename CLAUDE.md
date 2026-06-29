@@ -42,7 +42,7 @@ When the user asks you to modify *this* repo (as opposed to running the workflow
 - **Adding a new skill** requires three coordinated edits: create `skills/<name>/SKILL.md` (with frontmatter), append its path to the `skills` array in `.claude-plugin/plugin.json`, and link it from any orchestrator/README references that should know about it.
 - **Renaming a skill** must update the directory, the frontmatter `name`, the `plugin.json` array entry, every cross-link in other skills (skills reference each other as `flow:<name>`), and any reference docs that mention the old name.
 - **Changing model IDs or CLIs** → edit only `references/models.md`. Skills consume the registry; do not hardcode model IDs in skill bodies.
-- **Version bumps** are mirrored in two files: `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` (both currently `2.0.0`). Keep them in sync.
+- **Version bumps** are mirrored in two files: `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` (both currently `2.0.1`). Keep them in sync.
 - **`scripts/prep.sh`** is invoked from `skills/prep/SKILL.md`. It's idempotent (re-running with the same `--task` prints the existing worktree path), creates worktrees at `<repo-parent>/<repo-name>.worktrees/<task>`, ensures `.planning/` is gitignored in the target repo, and seeds `prepare.md`. If you change its flag surface or output contract, update the prep skill too.
 - **No build, lint, or test commands.** Validation is reading the files. If a skill references another file, click through and confirm the path resolves.
 
