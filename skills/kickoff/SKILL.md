@@ -102,7 +102,31 @@ Set `size` (S/M/L) with the `flow:prep` heuristics. It decides the route — but
 
 - **S** → prep → develop. No research phase.
 - **M** → prep → plan → develop. (Plan stays short; diagram over prose.)
-- **L** → full pipeline, but still keep each plan doc lean and split oversized work into sub-issues.
+- **L** → full pipeline, but still keep each plan doc lean. **Strongly prefer splitting** (below) over one large task.
+
+## Right-sizing: split oversized tasks into sub-issues
+
+Fast iteration depends on tasks that fit a single focused session. Before routing, check for **oversized** signals:
+
+- The GOAL has **more than ~3 independent outcomes**.
+- The work spans clearly separable areas (e.g. "fix auth" + "redo the settings UI" + "add a deploy script").
+- It implies an open-ended build-test-diagnose loop (the kind that ran 50–100+ turns and exhausted context in past sessions).
+
+When oversized, **don't proceed as one task.** Propose a split and, on the user's OK, create the issue tree with `gh`:
+
+1. Write/keep the kickoff brief as the **parent** GitHub Issue (the umbrella goal + the split rationale).
+2. Create **one sub-issue per independent part** — each a self-contained brief (its own GOAL, acceptance, scope). Link them under the parent (a task-list in the parent body, and each sub-issue referencing the parent `#N`).
+3. Order them: which is the blocker / first reviewable slice.
+4. Run the flow on the **first** sub-issue only (hand that one to `flow:prep`). The rest wait — each becomes its own kickoff→…→deploy loop later.
+
+```bash
+PARENT=$(gh issue create --title "<umbrella>" --body-file parent-brief.md \
+  --assignee "<config>" --label "<config>" --milestone "<config>" --json number --jq .number)
+# then per part:
+gh issue create --title "<part 1>" --body "<sub-brief>\n\n부모: #$PARENT" --assignee "<config>" ...
+```
+
+A split of 3–6 sub-issues is typical for an L that was really several tasks. Prefer more, smaller sub-issues over fewer fat ones — the whole point is that each finishes fast and gets reviewed on its result.
 
 ## Reference
 
