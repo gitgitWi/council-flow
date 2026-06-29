@@ -4,9 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-`council-flow` is a Claude Code **plugin marketplace** hosting a single plugin called `flow` — an opinionated multi-step development workflow (`kickoff → prep → research → plan → develop → deploy → code-review-brief`). The plugin is consumed by other Claude Code installs via `/plugin marketplace add gitgitWi/council-flow`; this repo is the source.
+`council-flow` is a Claude Code **plugin marketplace** hosting a single plugin called `flow` — an opinionated multi-step development workflow (`kickoff → prep → research → plan → develop → deploy → code-review-brief → review-triage`). The plugin is consumed by other Claude Code installs via `/plugin marketplace add gitgitWi/council-flow`; this repo is the source.
 
 `code-review-brief` writes the **base material** for a review (it does not run the review). It is invocable standalone for any existing PR — `flow:deploy` *recommends* it after opening a PR (does not auto-run it), and the user can also invoke it directly. The user then runs their own external agent(s) against the brief to post review/comments; the flow agent never runs reviewer CLIs.
+
+`review-triage` is the counterpart: it pulls **all** feedback a PR accumulated (review summaries, inline review comments, threads/discussions, conversation comments), assesses each for validity + priority, writes a fix plan, and after user sign-off applies the fixes. It is **recommend-only** (no skill auto-invokes it) and usually run in its own session.
 
 There is no application code, no build, no test runner, no linter. The shippable surface is:
 

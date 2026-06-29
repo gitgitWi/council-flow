@@ -86,6 +86,10 @@ Do **not** auto-invoke deploy inside orchestrate. The reasons:
 - The user usually wants to look at the diff themselves before opening the PR.
 - Token cost — keeping deploy in a fresh session is cheaper than dragging develop's history along.
 
+## After the review (recommend-only, not part of the sequence)
+
+Once reviewers have left feedback on the PR, the user can run `flow:review-triage` — in its own session — to pull all the comments, triage validity + priority, plan fixes, and apply them after sign-off. Orchestrate **never auto-invokes** it; just mention it as the next step when deploy/review is done.
+
 If the user objects and explicitly says "just run deploy too", you may invoke it inline, but mention the trade-off.
 
 ## Failure handling

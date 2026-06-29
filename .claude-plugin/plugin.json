@@ -1,7 +1,7 @@
 {
   "name": "flow",
   "version": "2.0.0",
-  "description": "Opinionated multi-step development workflow: kickoff → prep → research → plan → develop → deploy → code-review-brief. Lightweight visual plans, fast iteration, atomic commits, TDD-first.",
+  "description": "Opinionated multi-step development workflow: kickoff → prep → research → plan → develop → deploy → code-review-brief → review-triage. Lightweight visual plans, fast iteration, atomic commits, TDD-first.",
   "author": {
     "name": "wjh",
     "email": "gitgitWi@gmail.com"
@@ -25,6 +25,7 @@
     "./skills/develop/",
     "./skills/deploy/",
     "./skills/code-review-brief/",
+    "./skills/review-triage/",
     "./skills/commit-pr/",
     "./skills/orchestrate/"
   ]
