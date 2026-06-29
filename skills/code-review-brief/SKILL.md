@@ -34,6 +34,7 @@ Print the resolved path before writing.
 
 ```bash
 PR=<number>
+REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)   # owner/name — fill into the brief's 작업 규칙
 BASE=$(gh pr view "$PR" --json baseRefName --jq .baseRefName)
 mkdir -p "$OUT_DIR"
 gh pr diff "$PR" > "$OUT_DIR/_pr-diff.patch"
@@ -67,7 +68,7 @@ related:
 
 Body:
 
-```markdown
+````markdown
 # 코드리뷰 brief — PR #<N>: <제목>
 
 ## 작업한 파일
@@ -89,10 +90,24 @@ Body:
 전체 변경을 면밀히 검토하고, 발견한 모든 문제를 보고한다. 아래는 **출발점일 뿐**이니 이 항목에만 한정하지 말고, 파일·관점을 1:1로 묶지도 말 것.
 - UX, 코드 퀄리티, 불필요/과잉 구현(중복·과한 low-level), 보안, 안정성, 그 외 눈에 띄는 무엇이든.
 
-발견사항은 가능하면 `파일:라인 — [심각도] 한 줄 + 근거 + 제안`으로.
-```
+## 리뷰 작업 규칙 (이 문서만 보고 따를 것 — 별도 plugin/skill 없음 가정)
+- 리뷰 결과는 **이 PR(#<N>)에 직접 등록**한다. 콘솔 출력만 하지 말 것.
+- **GitHub CLI 직접 사용**(MCP 아님). 등록 전 `gh auth status`로 이 repo(`<owner>/<repo>`) 권한 계정인지 확인.
+- 인라인 코멘트는 한 번의 review로 묶어 등록 (라인 번호는 diff의 head(new) 기준; diff 범위 밖은 총평으로):
+  ```bash
+  gh api repos/<owner>/<repo>/pulls/<N>/reviews -X POST --input review.json
+  # review.json: {"event":"COMMENT","body":"<총평 + verdict 한 줄>",
+  #   "comments":[{"path":"<file>","line":<n>,"body":"[심각도] 한 줄 + 근거 + 제안"}]}
+  ```
+  (리뷰 에이전트에 자체 PR 리뷰 기능이 있으면 그걸 써도 됨 — 결과가 PR에 남기만 하면 된다.)
+- 코멘트 형식: `[심각도] 한 줄` + 근거 + 제안. 심각도: CRITICAL / MAJOR / MINOR / NIT / QUESTION.
+- 총평(review body)에 한 줄 verdict 포함: 머지 가능 / 조건부 / 변경요청.
+- **머지하지 말 것.** 리뷰·코멘트까지만.
+````
 
-The brief contains **only review material**. The reviewing agent is given a link to this document and reviews directly, so do **not** add orchestration content to it: no "which agents to run", no agent→lens split, no posting-mechanics pointer. Keep it tight — a brief, not a report.
+The brief must be **self-contained**: the reviewing agent may not have this plugin or its references installed, so write the working rules **into** the brief (the `## 리뷰 작업 규칙` section) — substitute the real `<owner>/<repo>` and `<N>`. Source the posting recipe from `../../references/inline-review-posting.md` and inline the essentials; never leave a bare pointer the external agent can't open.
+
+What still stays **out** of the brief is **user-orchestration**: which agents the user runs, and the agent→lens split — those go to chat (Step 3), not the document. Keep it tight — a brief, not a report.
 
 Keep the **리뷰 관점 section rough**: a short, non-binding list of starting points, *not* an exhaustive checklist and *never* lenses pinned to specific files/changes. The worry is a narrow brief makes the agent review only what is listed — so explicitly invite it to go beyond. Don't pre-classify each file by lens; let the reviewer decide what matters where. Drop a lens only when it is plainly irrelevant (e.g. UX for a pure build-script PR).
 
@@ -115,12 +130,14 @@ Do **not** post anything to GitHub yourself. If the user later brings reviewer o
 - **Don't run reviewer CLIs or post PR comments.** Write the brief; the user runs the agents.
 - **Don't auto-merge.**
 - **Don't invent file:line references or change summaries** — read the diff.
-- **Don't put orchestration in the brief.** No "run these agents", no agent→lens split, no posting guide — those go to chat. The brief is review material only.
+- **Don't put user-orchestration in the brief.** Which agents the user runs and the agent→lens split go to chat — not the document. (The reviewer's *own* working rules, e.g. how to post to the PR, DO belong in the brief — it must be self-contained.)
+- **Don't leave bare references the external agent can't open.** Inline the posting rules; the reviewer may not have this plugin.
 - **Don't over-scope the review prompt.** Keep the lenses rough and non-binding; never pin a lens to a specific file/change or present them as an exhaustive checklist — that narrows the reviewer. Drop only plainly-irrelevant lenses.
 
 ## Reference
 
 - New multi-LLM model (brief → user-run agents): `../../references/multi-llm.md`
+- Inline review posting mechanics (source for the brief's 작업 규칙 — inline it, don't just link): `../../references/inline-review-posting.md`
 - Frontmatter schema: `../../references/frontmatter.md`
 - Project defaults (`review.agents`, for the chat suggestion): `../../references/config.md`
 - Mermaid: `../../references/mermaid.md`
