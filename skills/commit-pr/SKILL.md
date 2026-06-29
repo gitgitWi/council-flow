@@ -1,13 +1,13 @@
 ---
 name: commit-pr
-description: The fast commit → push → open-or-update-PR loop, with the standard rules baked in so they never need retyping. Use whenever the user says "commit", "commit and push", "push", "PR 올려", "PR 갱신", "update the PR", or wants the current changes shipped to a pull request. Splits work into atomic Conventional Commits, pushes the branch, and opens a Korean PR (or updates the existing one) with the project's assignee/labels/milestone. This is the everyday "ship what I have" command — distinct from flow:deploy, which additionally runs the multi-LLM review pipeline.
+description: The fast commit → push → open-or-update-PR loop, with the standard rules baked in so they never need retyping. Use whenever the user says "commit", "commit and push", "push", "PR 올려", "PR 갱신", "update the PR", or wants the current changes shipped to a pull request. Splits work into atomic Conventional Commits, pushes the branch, and opens a Korean PR (or updates the existing one) with the project's assignee/labels/milestone. This is the everyday "ship what I have" command — distinct from flow:deploy, which opens the PR and then offers the code-review brief step.
 ---
 
 # flow:commit-pr — Commit, push, open/update PR
 
 The everyday shipping loop. Codifies the rules the user repeats every session so a bare "commit and push" does the right thing without re-stating conventions.
 
-For the full review pipeline (multi-LLM reviewers + inline comments), use `flow:deploy` instead. This skill is the lighter "just get my changes onto the PR" path.
+For the full close-out (open the PR, then write a code-review brief for the user's reviewer agents), use `flow:deploy` instead. This skill is the lighter "just get my changes onto the PR" path.
 
 ## 1. Commit — atomic + Conventional
 
@@ -52,4 +52,4 @@ Tell the user: the commits made (one line each), the branch, and the PR URL. If 
 
 - Commit conventions: `../../references/commit-conventions.md`
 - TDD policy: `../../references/tdd-policy.md`
-- Full review pipeline: `flow:deploy` + `flow:code-review-brief`
+- Full close-out (PR + review brief): `flow:deploy` + `flow:code-review-brief`

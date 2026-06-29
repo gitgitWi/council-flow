@@ -119,13 +119,11 @@ contributors:                            # flow-agent, plus any external agent t
 # brief.md (kickoff)
 category: Debug & Fix                     # Feature | Fix | Debug & Fix | Refactor | Chore | Research | UI Fix | Question
 
-# code-review-brief.md / brainstorm-brief.md
-pr: 1234                                  # code-review-brief only
-review_agents:                            # from .flow/config.yaml review.agents
-  - claude-code
-  - antigravity
-  - codex
+# code-review-brief.md
+pr: 1234
 ```
+
+The brief body holds only review material (files, change summary, intent, lenses). Agent→lens suggestions are output to chat, not stored in the doc — so there is no `review_agents` field.
 
 ### `code-review` (an external agent's returned review, saved by the user)
 

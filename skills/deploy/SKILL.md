@@ -1,13 +1,13 @@
 ---
 name: deploy
-description: Push the task branch and open a Korean pull request, then recommend (do not auto-run) flow:code-review-brief so the user can prepare a review and run their own reviewer agent(s). Use this whenever development for a flow task is done and the branch is ready for review. Even when the user says "just open a PR", finish by pointing them at the review-brief step. Run in its own session from develop; do not bundle.
+description: Push the task branch and open a Korean pull request, then ask the user whether to run flow:code-review-brief and, on confirm, run it inline for the new PR. Use this whenever development for a flow task is done and the branch is ready for review. Even when the user says "just open a PR", finish by offering the review-brief step. Run in its own session from develop; do not bundle.
 ---
 
-# flow:deploy — Push + open Korean PR
+# flow:deploy — Push + open Korean PR + offer the review brief
 
 Deploy is the closing skill. It is intentionally separate from develop so the PR reflects a clean, final diff rather than develop's intermediate state.
 
-Deploy's job ends at opening the PR. The review-brief step lives in `flow:code-review-brief` — deploy **recommends** it but does not auto-run it, because multi-LLM review is something the **user** drives (they pick which agents to run). Keeping it separate also makes the review-brief skill reusable for arbitrary existing PRs. Deploy never runs reviewer CLIs.
+After opening the PR, deploy **asks** whether to write the code-review brief now and, on confirm, runs `flow:code-review-brief` inline for the new PR. Most of the time the next step after opening a PR is requesting a review on it, so proceeding right away (with a confirm) is the common path. The review-brief skill stays a separate skill so it is also reusable for arbitrary existing PRs. Deploy never runs reviewer CLIs or posts comments — the **user** runs their reviewer agent(s) against the brief.
 
 ## Preconditions
 
@@ -68,18 +68,21 @@ EOF
 
 Omit any flag with no configured value. Capture the PR number from the URL `gh pr create` prints.
 
-## Step 3 — Recommend the review brief (do not auto-run)
+## Step 3 — Ask, then run the review brief on confirm
 
-Deploy stops at the open PR. Do **not** invoke `flow:code-review-brief` automatically — multi-LLM review is user-driven. Just point the user at the next step:
+After the PR is open, ask the user (one `AskUserQuestion`, default = yes):
 
-> PR #<N> 열림. 코드리뷰를 받으려면 `flow:code-review-brief`로 리뷰 brief를 만든 뒤, 원하는 에이전트(들)를 직접 실행해 PR에 코멘트를 남기세요.
+> PR #<N> 열림. 이어서 `flow:code-review-brief`로 리뷰 brief를 만들까요?
 
-If the user explicitly says "just make the brief too", you may invoke `flow:code-review-brief` for PR #<N> inline — but the default is recommend-only. Either way, the **user** runs the reviewer agent(s) and posts to the PR; the flow agent never does.
+- **Yes (default)** → invoke `flow:code-review-brief` for PR #<N> inline. The current branch matches the PR head and `.planning/<date>-<task>/` exists, so it resolves its output automatically. After it writes the brief, deploy is done.
+- **No** → stop at the open PR and tell the user they can run `flow:code-review-brief` later.
+
+Either way, deploy never runs reviewer CLIs or posts comments — once the brief exists, the **user** runs their reviewer agent(s) against it and posts to the PR.
 
 ## What NOT to do
 
-- **Don't auto-run the review brief.** Recommend `flow:code-review-brief`; run it only if the user asks.
-- **Don't run reviewer CLIs or post comments.** That is the user's step.
+- **Don't run the review brief without asking.** Ask once (default yes), then run on confirm.
+- **Don't run reviewer CLIs or post comments.** That is the user's step, even after the brief is written.
 - **Don't auto-merge.** The user merges after reviewing.
 - **Don't bundle deploy with develop in the same session.** The PR should reflect a clean final diff.
 
