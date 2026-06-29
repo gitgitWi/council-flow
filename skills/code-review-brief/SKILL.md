@@ -15,7 +15,7 @@ This skill **prepares the base material** a reviewer needs — it does not run t
 
 1. **PR number** — auto-detect from the current branch (`gh pr view --json number --jq .number`); ask if there is none.
 2. **Context** — if inside a flow task worktree, read `brief.md` / `plan.md` for original intent and the user's requests. Otherwise work from the diff + PR description alone.
-3. **`.flow/config.yaml`** — read `review.agents` so the brief can tell the user which agents to run.
+3. **`.flow/config.yaml`** — read `review.agents` to suggest an agent→lens split **in chat** (this goes to the user, not into the brief).
 
 ## Preconditions
 
@@ -62,10 +62,6 @@ pr: <N>
 related:
   - ../plan.md        # omit if no plan context
   - ../brief.md       # omit if none
-review_agents:        # from .flow/config.yaml review.agents
-  - claude-code
-  - antigravity
-  - codex
 ---
 ```
 
@@ -96,18 +92,19 @@ Body:
 - **불필요/과잉 구현** — 다른 곳에 이미 유사 구현이 있는데 중복했는가? 언어/프레임워크/라이브러리가 간단히 제공하는 걸 굳이 low-level로 구현했는가?
 - **보안** — 인증/인가, 입력 검증, 비밀값, 의존성 표면.
 - **안정성** — 에러/타임아웃/동시성/부분 실패 경로, 회귀 위험.
-
-## 리뷰 실행 안내
-이 문서를 기반으로 아래 에이전트(들)를 직접 실행해 PR #<N>에 review/comments 등록:
-- <review_agents 나열 + 각자에게 맡길 관점 제안 — 예: Codex=보안/안정성, Antigravity=UX/퀄리티>
-- 인라인 코멘트 형식 가이드는 ../../references/inline-review-posting.md 참고.
 ```
 
-Keep it tight — this is a brief, not a report. Tailor the "리뷰 관점" list to the change (drop UX for a pure build-script PR, emphasize 보안 for auth, etc.).
+The brief ends with the review lenses — it contains **only review material**. The reviewing agent is given a link to this document and reviews directly, so do **not** add orchestration content to it: no "which agents to run", no agent→lens split, no posting-mechanics pointer. Keep it tight — a brief, not a report. Tailor the "리뷰 관점" list to the change (drop UX for a pure build-script PR, emphasize 보안 for auth, etc.).
 
-## Step 3 — Hand off
+## Step 3 — Hand off (chat only)
 
-Tell the user: the brief path, a one-line change summary, and the suggested agent→lens split. Do **not** post anything to GitHub yourself. If the user later brings reviewer output back, save it under `artifacts/` and help triage — but the user posts to the PR.
+In the **chat** (not the document) tell the user:
+
+- The brief path (so they can link the reviewing agent to it).
+- A one-line change summary.
+- A suggested **agent→lens split** based on `.flow/config.yaml` `review.agents` — e.g. "Codex = 보안/안정성, Antigravity = UX/퀄리티, Claude Code = 코드 퀄리티". This suggestion lives in the chat only; it is deliberately kept out of the brief.
+
+Do **not** post anything to GitHub yourself. If the user later brings reviewer output back, save it under `artifacts/` and help triage — but the user posts to the PR.
 
 ## Step 4 — Do not commit the brief
 
@@ -118,12 +115,12 @@ Tell the user: the brief path, a one-line change summary, and the suggested agen
 - **Don't run reviewer CLIs or post PR comments.** Write the brief; the user runs the agents.
 - **Don't auto-merge.**
 - **Don't invent file:line references or change summaries** — read the diff.
+- **Don't put orchestration in the brief.** No "run these agents", no agent→lens split, no posting guide — those go to chat. The brief is review material only.
 - **Don't pad the brief.** Lenses irrelevant to the change are noise; cut them.
 
 ## Reference
 
 - New multi-LLM model (brief → user-run agents): `../../references/multi-llm.md`
-- Inline review posting mechanics (for the user's agents): `../../references/inline-review-posting.md`
 - Frontmatter schema: `../../references/frontmatter.md`
-- Project defaults (`review.agents`): `../../references/config.md`
+- Project defaults (`review.agents`, for the chat suggestion): `../../references/config.md`
 - Mermaid: `../../references/mermaid.md`
