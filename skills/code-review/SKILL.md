@@ -1,304 +1,129 @@
 ---
 name: code-review
-description: Run a multi-LLM code review on a pull request — gather the diff, dispatch reviewer CLIs in parallel via the file-write contract, synthesize a Korean summary, and post inline comments tagged by severity and model signature. Use this for any PR review whether the PR was just opened by flow:deploy or already exists on GitHub. Even when the user says "review PR #N", "이 PR 리뷰해줘", "기존 PR 멀티 LLM 리뷰", or "second opinion on this PR", invoke this skill — multi-LLM diversity is the point, not optional dressing. Auto-resolves output directory: an existing flow task's `artifacts/` if available, otherwise a fresh `.planning/<date>-pr<N>-review/artifacts/`. Run in its own session so reviewer LLMs see a clean diff without orchestrator noise.
+description: Produce a code-review base document (a "review brief") for a pull request that the USER feeds to their own external agent(s) to post review/comments on GitHub. The flow agent gathers the diff, the changed-file list, a summary of major changes, and the original intent/plan plus the user's key requests, then writes multi-angle review prompts (UX, code quality, redundant or over-engineered implementation, security, stability) tailored to the change. It does NOT run reviewer CLIs and does NOT post comments — the user runs whichever agent they prefer. Use for any PR review, whether just opened by flow:deploy or already on GitHub. Triggers on "review PR #N", "이 PR 리뷰", "코드리뷰 문서 만들어줘", "PR 리뷰 준비".
 ---
 
-# flow:code-review — Multi-LLM PR review
+# flow:code-review — Review brief for a PR
 
-Code-review is the review-only half of the deploy pipeline, extracted so it can run on **any** PR — not just one this session created.
+This skill writes a **review brief**: a base document that captures everything an external reviewer needs, plus the lenses to review through. The **user** then runs their preferred agent(s) (Antigravity, Codex, Claude Code, …) against the brief to post review/comments on the GitHub PR.
 
-`flow:deploy` invokes this skill automatically after opening the PR. You can also invoke it directly on any existing PR.
+> **The flow agent does not run reviewer CLIs and does not post comments.** The old auto-dispatch mechanism is deprecated (Gemini CLI discontinued; Antigravity has no non-interactive mode; opencode overhead is high). Diversity comes from the user running the agents they choose. See `../../references/multi-llm.md`.
+
+`flow:deploy` calls this skill after opening a PR; you can also invoke it directly on any existing PR.
 
 ## Inputs
 
-1. **PR number** — required, but auto-detected from the current branch if omitted (`gh pr view --json number --jq .number`). If the current branch has no PR, ask the user for the number.
-2. **Plan context path** — optional. If invoked inside a flow task worktree, point at `.planning/<date>-<task>/plan.md`. If not available, omit; reviewers work from the diff alone.
-3. **Output directory** — auto-resolved (see "Output directory resolution" below). Override only if the user asks.
+1. **PR number** — auto-detect from the current branch (`gh pr view --json number --jq .number`); ask if there is none.
+2. **Context** — if inside a flow task worktree, read `brief.md` / `plan.md` for original intent and the user's requests. Otherwise work from the diff + PR description alone.
+3. **`.flow/config.yaml`** — read `review.agents` so the brief can tell the user which agents to run.
 
 ## Preconditions
 
-- `gh` CLI authenticated against the PR's repo (`gh auth status`).
-- PR exists and is open. Closed/merged PRs can be reviewed but warn the user.
-- `git` available; the diff is computed against the PR's base branch (`gh pr view <PR> --json baseRefName`).
-- Reviewer CLIs (`gemini`, `opencode`) — pre-flight per `../../references/multi-llm.md`. Missing CLIs are skipped, not fatal.
+- `gh` authenticated against the PR's repo; confirm the active account is correct.
+- PR exists and is open (warn if closed/merged).
+- If `gh` is unauthenticated or the PR is missing, stop and tell the user. Do not paper over it.
 
-If `gh` is unauthenticated or the PR does not exist, stop and tell the user. Do not "fix it up" silently.
+## Output location
 
-## Output directory resolution
+- **Flow task worktree** (branch matches the PR head, `.planning/<date>-<task>/` exists) → `.planning/<date>-<task>/artifacts/code-review-brief.md`.
+- **Standalone** → `.planning/<YYYY-MM-DD>-pr<N>-review/artifacts/code-review-brief.md` in the current worktree.
 
-Resolve in this order; first match wins:
+Print the resolved path before writing.
 
-1. **Flow task worktree** — if the current working directory is inside a worktree whose branch matches the PR's `headRefName`, and `.planning/<date>-<task>/` exists, use `.planning/<date>-<task>/artifacts/`. This is the deploy auto-invoke case.
-2. **Standalone PR review** — otherwise create `.planning/<YYYY-MM-DD>-pr<N>-review/artifacts/` in the **current worktree**. The date is today (local timezone). Example: `.planning/2026-05-12-pr42-review/artifacts/`.
-
-Print the resolved path before starting so the user knows where artifacts will land.
-
-## Step 1 — Resolve PR + gather the diff
+## Step 1 — Gather the diff and facts
 
 ```bash
-PR=<number>                     # from input or auto-detected
+PR=<number>
 BASE=$(gh pr view "$PR" --json baseRefName --jq .baseRefName)
-HEAD=$(gh pr view "$PR" --json headRefName --jq .headRefName)
-
 mkdir -p "$OUT_DIR"
 gh pr diff "$PR" > "$OUT_DIR/_pr-diff.patch"
-gh pr view "$PR" --json files --jq '.files[].path' > "$OUT_DIR/_pr-files.txt"
+gh pr view "$PR" --json files  --jq '.files[].path'                      > "$OUT_DIR/_pr-files.txt"
+gh pr view "$PR" --json additions,deletions,title,body --jq '.'          > "$OUT_DIR/_pr-meta.json"
 ```
 
-Use `gh pr diff` (not `git diff origin/main...HEAD`) — it works even when the PR's base is not `main` and even when the local branch is out of sync.
+Use `gh pr diff` (handles non-`main` bases and out-of-sync local branches). Empty diff → stop, nothing to review.
 
-If the diff is empty, stop. Tell the user the PR has no changes to review.
+Read the diff and changed files yourself (or via a Sonnet subagent for a large diff — return a digest) to write an accurate change summary. Do not guess from filenames.
 
-## Step 2 — Run multi-LLM code review in parallel
+## Step 2 — Write the review brief (Korean)
 
-Three reviewers by default; ask the user before dispatching whether to add optional reviewers (see "Pre-flight + reviewer selection" below). Model IDs come from `../../references/models.md` — do not hardcode here. Default output paths:
-
-- `code-review-codex.md` — `gpt-5.5` via `codex`
-- `code-review-gemini.md` — `gemini-3.1-pro-preview` via `gemini`
-- `code-review-kimi.md` — `opencode-go/kimi-k2.6` via `opencode run`
-
-Optional (if user opts in):
-
-- `code-review-deepseek.md` — `opencode-go/deepseek-v4-pro` via `opencode run` (deepest analysis, +10-15 min)
-- `code-review-glm.md` — `opencode-go/glm-5.1` via `opencode run` (fast extra opinion, +5-7 min)
-
-The dispatch contract (file-write, sentinel, runlog capture, heartbeat watcher, exit-code handling, failure signature grep, quorum policy) lives in `../../references/multi-llm.md`. Apply it verbatim — do not paraphrase or shortcut.
-
-### Pre-flight + reviewer selection
-
-Before dispatching any reviewer, do two things in sequence:
-
-**1. Pre-flight** — check which CLIs are installed:
-
-```bash
-command -v codex    >/dev/null 2>&1 && echo "codex: ok"    || echo "codex: MISSING"
-command -v gemini   >/dev/null 2>&1 && echo "gemini: ok"   || echo "gemini: MISSING"
-command -v opencode >/dev/null 2>&1 && echo "opencode: ok" || echo "opencode: MISSING"
-```
-
-A missing default-trio CLI is skipped (quorum policy in `../../references/multi-llm.md` still applies — need ≥ 2 valid reviews to synthesize).
-
-**2. Optional reviewer selection** — ask the user:
-
-> Optional reviewers available — add any to the dispatch batch?
-> - **DeepSeek v4 Pro** (`opencode-go/deepseek-v4-pro`) — deepest analysis, adds ~10-15 min
-> - **GLM 5.1** (`opencode-go/glm-5.1`) — fast extra opinion, adds ~5-7 min
-
-Wait for the user's response before dispatching. If the user says skip (or no response), proceed with the default trio only. Opted-in reviewers join the same parallel batch.
-
-### Frontmatter (every generated document)
-
-Each reviewer file and the synthesized `code-review-summary.md` carry frontmatter. Schema in `../../references/frontmatter.md`. Instruct each reviewer to lead with this block; if the CLI strips it, prepend after the call returns.
-
-Per-reviewer (`artifacts/code-review-<reviewer>.md`):
+Write `code-review-brief.md`. It is user/team-facing and fed to the agents the user runs, so write it in **Korean**. Frontmatter first (schema in `../../references/frontmatter.md`):
 
 ```yaml
 ---
-title: "Code review — PR #<N> — <reviewer>"
-type: code-review
-task: <kebab task name OR pr<N>-review>
-task_date: <YYYY-MM-DD>           # task date if flow task; today otherwise
-created: <today>
-last_updated: <today>
-status: active
-size: <S|M|L>                     # from prepare.md if available; M otherwise
-parent: ../plan.md                # omit if no plan context
-related:
-  - ./code-review-summary.md
-reviewer: gemini-3.1-pro-preview
-cli: gemini
-verdict: merge-as-is              # filled by Claude after reading reviewer output
-pr: <N>
-prompted_against:
-  - ./_pr-diff.patch
-  - <abs plan path or "(none)">
----
-```
-
-Synthesized summary (`artifacts/code-review-summary.md`):
-
-```yaml
----
-title: "Code review summary — PR #<N>"
-type: code-summary
-task: <kebab task name OR pr<N>-review>
+title: "코드리뷰 brief — PR #<N>"
+type: code-review-brief
+task: <kebab task OR pr<N>-review>
 task_date: <YYYY-MM-DD>
 created: <today>
 last_updated: <today>
 status: active
-size: <S|M|L>
-parent: ../plan.md                # omit if no plan context
-related:
-  - ./code-review-gemini.md
-  - ./code-review-kimi.md
-  - ./code-review-deepseek.md
-reviewers:
-  - gpt-5.5
-  - gemini-3.1-pro-preview
-  - opencode-go/kimi-k2.6
-  # append optional reviewers if user opted in:
-  # - opencode-go/deepseek-v4-pro
-  # - opencode-go/glm-5.1
-missing_reviewers: []
 pr: <N>
+related:
+  - ../plan.md        # omit if no plan context
+  - ../brief.md       # omit if none
+review_agents:        # from .flow/config.yaml review.agents
+  - claude-code
+  - antigravity
+  - codex
 ---
 ```
 
-### Reviewer prompt (shared shape)
-
-Reuse this skeleton; each call differs only in model + output path. Substitute absolute paths.
-
-```
-You are a non-interactive PR reviewer. Use Read and Write tools. Do not ask questions.
-
-TASK:
-1. Read the diff at <abs>/_pr-diff.patch and the file list at <abs>/_pr-files.txt.
-   [If plan context exists] Also read the plan at <abs plan path>.
-2. Write your review using the Write tool to: <abs>/code-review-<reviewer>.md
-3. The LAST LINE of the file MUST be exactly:
-     <!-- council-flow:review-complete -->
-4. Print only: "wrote code-review-<reviewer>.md"
-
-Focus on: correctness, security, missed edge cases, test coverage, maintainability.
-
-Output format — Markdown with these sections:
-
-## Top-level summary
-2-3 sentences. Overall quality, any release-blocker concerns.
-
-## Inline findings
-For each issue, exactly this format:
-
-### <file path>:<line number>
-**Severity:** CRITICAL | MAJOR | MINOR | NIT | QUESTION
-**Headline:** <one line>
-
-<body — what is wrong, why, and what to change>
-
-Use line numbers from the head (new) version. If a finding spans a range,
-note it as "L<start>-L<end>" and use the starting line.
-
-## Verdict
-"merge as-is" | "merge after minor edits" | "request changes".
-```
-
-Issue all reviewer Bash calls (default trio + any opted-in) in the **same message** so they run in parallel; run the heartbeat watcher (`watch_review` from `../../references/multi-llm.md`) alongside.
-
-### Quick recap of failure handling
-
-Full policy in `../../references/multi-llm.md`. Apply it verbatim. The short version:
-
-- Pre-flight (`command -v gemini` / `command -v opencode`); skip a missing CLI without aborting.
-- Wrap each call with `timeout 600`; capture exit code to `_runlog-<reviewer>.exit`; never let one failure kill the parallel batch.
-- Verify each output: exit code 0, file non-empty, sentinel present as last line, structural content (≥1 `## ` heading + ≥1 `- ` bullet in first 50 lines), no failure signature in first 40 lines. Failures get `code-review-<reviewer>.FAILED.md`.
-- **≥ 2 valid reviews** → synthesize as normal; list missing reviewer under `## 결손 리뷰어` in `code-review-summary.md`; inline comments only attribute models that produced output.
-- **1 valid review** → stop and ask the user (retry / swap reviewer / proceed as single-reviewer with explicit labelling). Do **not** post a single-reviewer review pretending it was multi-LLM.
-- **0 valid reviews** → stop. Surface failure records.
-
-Posting a review with fewer than the original reviewer count is allowed; pretending the missing reviewer agreed is not.
-
-## Step 3 — Synthesize code-review-summary.md (Korean)
-
-Read each reviewer file once, extract findings, and write `artifacts/code-review-summary.md` in Korean:
+Body:
 
 ```markdown
-# 코드 리뷰 요약 — PR #<N>
+# 코드리뷰 brief — PR #<N>: <제목>
 
-## 전체 평가
-<verdict 종합>
+## 작업한 파일
+- `path/a.ts` — <한 줄 변경 요지>
+- `path/b.ts` — <…>
+(추가/삭제 라인 수 요약)
 
-## 합의된 주요 이슈
-- [CRITICAL] ... — Gemini, Kimi
-- [MAJOR] ... — Kimi, DeepSeek
-- ...
+## 주요 변경사항 요약
+- <핵심 변경 3~7개 bullet. 무엇을, 왜.>
+- 흐름이 비자명하면 Mermaid 다이어그램 1개 첨부 (../../references/mermaid.md).
 
-## 모델 간 의견이 갈리는 지점
-이 부분이 가장 중요. 사용자가 판단해야 할 것.
+## 원래 의도 / 플랜
+- <brief.md / plan.md / 이슈에서: 이 작업의 목표와 수용 기준>
 
-## 인라인 코멘트 개수
-- CRITICAL: N개
-- MAJOR: N개
-- MINOR: N개
-- NIT: N개
-- QUESTION: N개
+## 사용자 주요 요청사항
+- <세션에서 사용자가 강조한 제약·선호. 리뷰어가 의도를 오해하지 않도록.>
 
-## 머지 권장
-- [ ] 권장 / 조건부 권장 / 비권장 + 이유
+## 리뷰 관점 (작업 성격에 맞는 것만)
+아래 관점으로 다각도 분석을 요청한다. 각 발견은 `파일:라인 — [심각도] 한 줄 + 근거 + 제안` 형식.
+- **UX** — 사용자 경험/접근성/엣지 상태에 영향이 있는가? (UI 변경 시)
+- **코드 퀄리티** — 가독성, 네이밍, 응집도, 테스트 커버리지, 프로젝트 패턴 부합.
+- **불필요/과잉 구현** — 다른 곳에 이미 유사 구현이 있는데 중복했는가? 언어/프레임워크/라이브러리가 간단히 제공하는 걸 굳이 low-level로 구현했는가?
+- **보안** — 인증/인가, 입력 검증, 비밀값, 의존성 표면.
+- **안정성** — 에러/타임아웃/동시성/부분 실패 경로, 회귀 위험.
 
-## 결손 리뷰어
-(있을 때만 추가. 없으면 이 섹션 생략.)
-- gemini-3.1-pro-preview: rate limit (자세한 내용은 `code-review-gemini.FAILED.md`)
-
-## 모델별 리뷰 원본
-- [Codex gpt-5.5](./code-review-codex.md)
-- [Gemini 3.1 Pro](./code-review-gemini.md)
-- [Kimi K2.6](./code-review-kimi.md)
-<!-- 아래는 사용자가 optional 리뷰어를 선택한 경우에만 포함 -->
-- [DeepSeek v4 Pro](./code-review-deepseek.md)
-- [GLM 5.1](./code-review-glm.md)
+## 리뷰 실행 안내
+이 문서를 기반으로 아래 에이전트(들)를 직접 실행해 PR #<N>에 review/comments 등록:
+- <review_agents 나열 + 각자에게 맡길 관점 제안 — 예: Codex=보안/안정성, Antigravity=UX/퀄리티>
+- 인라인 코멘트 형식 가이드는 ../../references/inline-review-posting.md 참고.
 ```
 
-Verify file:line references reviewers cite — grep their outputs for path-shaped strings, check against `git ls-files`, and surface unverifiable paths in a "Paths to verify" section. Contributors hallucinate paths regularly; do not promote them silently.
+Keep it tight — this is a brief, not a report. Tailor the "리뷰 관점" list to the change (drop UX for a pure build-script PR, emphasize 보안 for auth, etc.).
 
-## Step 4 — Build the GitHub review payload
+## Step 3 — Hand off
 
-Aggregate inline findings across all reviewers:
+Tell the user: the brief path, a one-line change summary, and the suggested agent→lens split. Do **not** post anything to GitHub yourself. If the user later brings reviewer output back, save it under `artifacts/` and help triage — but the user posts to the PR.
 
-- **Dedupe** when multiple reviewers flagged the same `file:line` with the same concern. Sign the merged comment with all contributing models (`— signed: gemini-3.1-pro-preview, kimi-k2.6`).
-- **Keep separate** when reviewers flagged the same line with different concerns. Two distinct comments are fine.
-- **Filter** NIT comments if the count is overwhelming (>10). Keep them in the per-model files; only post the most important ones inline.
+## Step 4 — Do not commit the brief
 
-Each inline comment body **must** follow the format from `../../references/inline-review-posting.md`:
-
-```
-**[<SEVERITY>]** <headline>
-
-<body in Korean>
-
-— signed: <model-id>[, <model-id>]
-```
-
-Top-level review body is the contents of `code-review-summary.md`.
-
-## Step 5 — Post the review
-
-POST to `/repos/<owner>/<repo>/pulls/<PR>/reviews` with `event: "COMMENT"` and the inline comments array. Full payload shape and line-number gotchas in `../../references/inline-review-posting.md`.
-
-After posting, verify:
-
-```bash
-gh pr view "$PR" --json reviews --jq '.reviews[-1] | {state, comments: .comments | length}'
-```
-
-If the comment count is off (GitHub silently drops comments whose line numbers fall outside the diff), reconcile by re-running the dropped lines or posting them as a follow-up review.
-
-## Step 6 — Commit the review artifacts
-
-The `artifacts/` review files are part of the audit trail. Commit policy depends on where the artifacts landed and which branch is currently checked out:
-
-- **Same branch as the PR head** (deploy auto-invoke, or user reviewing their own branch's PR):
-  ```bash
-  git add .planning/<resolved-task-or-pr-dir>/artifacts/
-  git commit -m "docs(review): add multi-LLM PR review artifacts for PR #<N>"
-  git push
-  ```
-- **Different branch** (user is on `main` reviewing someone else's PR):
-  Do **not** auto-checkout. Tell the user where the artifacts live and let them decide whether to commit them anywhere. The review is already posted to GitHub — the local files are for the audit trail.
+`.planning/` is gitignored — the brief is local working memory, not a repo artifact. **Never `git add` it.** If the brief should be shared, post it (or its key points) to the PR as a comment or to a GitHub Issue — that is the durable copy. See `../../references/directory-structure.md` (Git policy).
 
 ## What NOT to do
 
-- **Don't auto-merge.** Code-review stops at "review posted". The user merges.
-- **Don't post raw model output as the PR review.** Always go through `code-review-summary.md` synthesis.
-- **Don't skip the Korean summary.** Even if all reviewers said "merge as-is", write a one-line summary in Korean. Audit trail.
-- **Don't post inline comments without the severity tag and model signature.** Downstream filtering depends on the fixed format.
-- **Don't pipe reviewer stdout into the orchestrator's context.** Read the file once during synthesis. Stdout is a runlog; the file at the agreed path is the review.
-- **Don't checkout a different branch silently** to commit review artifacts. Surface the choice to the user.
+- **Don't run reviewer CLIs or post PR comments.** Write the brief; the user runs the agents.
+- **Don't auto-merge.**
+- **Don't invent file:line references or change summaries** — read the diff.
+- **Don't pad the brief.** Lenses irrelevant to the change are noise; cut them.
 
 ## Reference
 
-- Multi-LLM invocation, sentinel, heartbeat, failure handling, quorum policy: `../../references/multi-llm.md`
-- Inline review posting mechanics: `../../references/inline-review-posting.md`
+- New multi-LLM model (brief → user-run agents): `../../references/multi-llm.md`
+- Inline review posting mechanics (for the user's agents): `../../references/inline-review-posting.md`
 - Frontmatter schema: `../../references/frontmatter.md`
-- Model registry: `../../references/models.md`
-- Directory layout: `../../references/directory-structure.md`
-- Doc style (prefer lists over tables): `../../references/doc-style.md`
+- Project defaults (`review.agents`): `../../references/config.md`
+- Mermaid: `../../references/mermaid.md`

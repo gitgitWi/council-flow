@@ -1,6 +1,6 @@
 ---
 name: orchestrate
-description: Run the full flow workflow end-to-end — kickoff → prep → optional research → plan (with optional multi-LLM brainstorming) → optional plan-review → develop → deploy — based on a single task goal from the user. Use this when the user wants to hand off a complete task and let the workflow run, rather than driving each step manually. Skips research, brainstorming, and plan-review automatically for size S tasks; runs the full pipeline for size L. Even when the user just says "build me X", consider this skill if the task warrants the full discipline.
+description: Run the full flow workflow end-to-end — kickoff → prep → optional research → plan (with optional multi-LLM brainstorming) → develop → deploy — based on a single task goal from the user. Use this when the user wants to hand off a complete task and let the workflow run, rather than driving each step manually. Skips research and brainstorming automatically for size S tasks; runs the full pipeline for size L. Even when the user just says "build me X", consider this skill if the task warrants the full discipline.
 ---
 
 # flow:orchestrate — End-to-end workflow runner
@@ -11,7 +11,7 @@ Orchestrate is a thin sequencer. It does not reimplement any of the individual s
 
 1. **Task goal** — what the user wants built, in their words.
 2. **Type hint** (optional) — feature / fix / chore / refactor / docs. Inferred from the goal if not given.
-3. **Explicit skips** (optional) — e.g., "skip research", "skip plan-review", "don't multi-LLM the code review at the end". Honor without arguing.
+3. **Explicit skips** (optional) — e.g., "skip research", "skip the code-review brief at the end". Honor without arguing.
 
 ## The sequence
 
@@ -31,18 +31,17 @@ Orchestrate is a thin sequencer. It does not reimplement any of the individual s
        security-sensitive / public-surface flag → writes brainstorm.md + artifacts/brainstorm-*.md
    └── writes plan.md, tasks.md
 
-4. flow:plan-review       [run if size = L; ask user if size = M; skip if size = S]
-   └── writes artifacts/plan-review-*.md and artifacts/plan-review-summary.md
-   └── if substantive changes: bumps plan.md → artifacts/plan.v1.md, writes new plan.md
+4. — Checkpoint with user —
+   Show plan.md (or artifacts/plan.ko.md) and tasks.md. The user reads the
+   lightweight plan quickly and gives go/no-go. (No plan-review step — review
+   concentrates on the result, not the plan.)
 
-5. — Checkpoint with user —
-   Show plan.md, tasks.md, and plan-review-summary.md (if exists). Wait for go/no-go.
-
-6. flow:develop           [after user confirms]
+5. flow:develop           [after user confirms]
    └── executes tasks.md, atomic commits, all checkboxes filled
 
-7. flow:deploy            [as a separate session — see below]
-   └── pushes, opens Korean PR, runs multi-LLM review, posts inline comments
+6. flow:deploy            [as a separate session — see below]
+   └── pushes, opens Korean PR, then flow:code-review writes a review brief
+       the user runs their own agent(s) against
 ```
 
 ## Size-based skip logic
@@ -54,7 +53,6 @@ Orchestrate is a thin sequencer. It does not reimplement any of the individual s
 | research | skip | ask | yes |
 | plan (always) | yes | yes | yes |
 | ↳ brainstorm sub-phase | skip | ask (default yes if cross-module / security / public-surface) | yes |
-| plan-review | skip | ask | yes |
 | user checkpoint | skip | yes | yes |
 | develop | yes | yes | yes |
 | deploy | yes | yes | yes |
@@ -65,7 +63,7 @@ Orchestrate is a thin sequencer. It does not reimplement any of the individual s
 
 This is the only mandatory pause in orchestrate. Show the user:
 
-1. The plan summary (`artifacts/plan.ko.md`, or `artifacts/plan-review-summary.md` if plan-review ran)
+1. The plan (`plan.md`, or `artifacts/plan.ko.md` for a Korean read)
 2. The tasks.md checkbox list
 3. Anything that came up as an open question
 
@@ -77,12 +75,12 @@ Deploy intentionally runs as its own session. Orchestrate's job at the end of de
 
 1. Confirm `tasks.md` is fully checked.
 2. Confirm tests pass.
-3. Tell the user: "Develop complete. Start a new session and invoke `flow:deploy` to open the PR and run the multi-LLM review."
+3. Tell the user: "Develop complete. Start a new session and invoke `flow:deploy` to open the PR and write the code-review brief."
 
 Do **not** auto-invoke deploy inside orchestrate. The reasons:
 
-- Develop's session has the implementation context loaded; deploy benefits from a fresh context where the reviewer LLMs are not influenced by Claude's own implementation decisions.
-- The user usually wants to look at the diff themselves before kicking off review.
+- Develop's session has the implementation context loaded; deploy benefits from a fresh context so the PR and the review brief reflect a clean final diff.
+- The user usually wants to look at the diff themselves before opening the PR.
 - Token cost — keeping deploy in a fresh session is cheaper than dragging develop's history along.
 
 If the user objects and explicitly says "just run deploy too", you may invoke it inline, but mention the trade-off.
@@ -92,8 +90,7 @@ If the user objects and explicitly says "just run deploy too", you may invoke it
 Each sub-skill should report its outcome. If any step fails:
 
 - **prep fails** (branch exists, dirty tree, etc.) — surface the error, ask the user.
-- **research / plan / plan-review fail** — usually recoverable, show what went wrong and offer to retry.
-- **plan-review reviewer CLI(s) fail** (auth, rate limit, network, etc.) — the per-skill quorum policy applies (see `../../references/multi-llm.md`): ≥2 valid reviews → continue with synthesis and a `## 결손 리뷰어` note; 1 valid → ask user; 0 valid → stop. Orchestrate does not override these decisions.
+- **research / plan fail** — usually recoverable, show what went wrong and offer to retry.
 - **develop fails mid-implementation** — stop. The tasks.md state shows progress; the user can resume by invoking `flow:develop` directly when they want to continue.
 
 Do not retry silently. Orchestrate is a sequencer, not a self-healing pipeline.
@@ -106,6 +103,5 @@ Each individual skill is the source of truth for its own behavior. This skill on
 - `flow:prep`
 - `flow:research`
 - `flow:plan`
-- `flow:plan-review`
 - `flow:develop`
 - `flow:deploy`

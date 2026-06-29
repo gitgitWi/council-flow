@@ -100,7 +100,7 @@ Emit these automatically; surface only to override. Project-specific values (ass
 
 Set `size` (S/M/L) with the `flow:prep` heuristics. It decides the route — but bias toward the *shortest* route that ships something reviewable:
 
-- **S** → prep → develop. No research phase, no plan-review.
+- **S** → prep → develop. No research phase.
 - **M** → prep → plan → develop. (Plan stays short; diagram over prose.)
 - **L** → full pipeline, but still keep each plan doc lean and split oversized work into sub-issues.
 

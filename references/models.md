@@ -1,107 +1,49 @@
-# Multi-LLM Model Registry
+# Model Registry
 
-Single source of truth for model IDs and CLI invocation. Update this file when models change — skills read identifiers from here, do not hardcode.
+How `flow` uses models, and the model IDs per harness. The plugin uses models **two** ways:
 
-## Coding agents available
+1. **Research subagents** — cheap, in-harness subagents the flow agent spawns to gather context.
+2. **External review agents** — diverse models the **user runs themselves** against a brief the flow agent writes.
 
-| Role | CLI | Model ID | Use for |
-|---|---|---|---|
-| Orchestrator | (this session) | claude-opus-4-7 | Workflow control, output aggregation, final synthesis |
-| Frontend / Heavy review | `gemini` | `gemini-3.1-pro-preview` | Frontend implementation, code review, plan review, brainstorming (architecture lens) |
-| Fast research | `gemini` | `gemini-3-flash-preview` | Web research, quick lookups |
-| Reasoning review | `opencode` | `opencode-go/kimi-k2.6` | Plan review, code review (alternative perspective). See "agent-mode cost" below. |
-| Deep review | `opencode` | `opencode-go/deepseek-v4-pro` | Code review (deepest analysis, slowest). See "agent-mode cost" below. |
-| Cost-efficient review | `opencode` | `opencode-go/deepseek-v4-flash` | Faster DeepSeek variant — good signal/latency tradeoff. See "agent-mode cost" below. |
-| Fast review | `opencode` | `opencode-go/glm-5.1` | Quickest second opinion. See "agent-mode cost" below. |
-| Codex-side review | `codex` | `gpt-5.5` | Plan/code review from the codex stack — default third reviewer alongside gemini + kimi. See "Codex sandbox" below. |
-
-Verification dates inline as comments — re-test when models move. Last full sweep: 2026-05-12.
+> **The flow agent does not dispatch external review/brainstorm CLIs anymore.** The old "agent runs `gemini`/`opencode`/`codex` with a file-write contract" mechanism is **deprecated**: the Gemini CLI was discontinued and its Antigravity replacement has no non-interactive mode yet, and opencode agent sessions carry ~30k-token startup overhead. Instead the flow agent writes a **brief** (base document) and the user runs whichever agent(s) they prefer. See `multi-llm.md`.
 
 ## Research subagent tier (cost-efficient — use before serious planning)
 
-All **research-type work** — codebase exploration, GitHub Issue/PR/commit-history search, web lookups for references / best practices — runs in **subagents on a cost-efficient model**, never the frontier orchestrator model. Frontier reasoning is reserved for synthesis, planning decisions, and final review. Pick the cheap tier by which agent harness is running:
+All **research-type work** — codebase exploration, GitHub Issue/PR/commit-history search, web lookups for references / best practices — runs in **subagents on a cost-efficient model**, never the frontier orchestrator. Frontier reasoning is reserved for synthesis, planning decisions, and the final brief. Pick the cheap tier by which harness is running:
 
 | Harness | Research subagent model |
 |---|---|
-| Claude Code | `claude-sonnet` (not Opus) |
+| Claude Code | `claude-sonnet-4-6` (Sonnet, not Opus) |
 | Antigravity | Gemini 3.5 Flash |
 | Codex | Codex 5.5 Mini |
 
 Rules:
-- Fan research out to **parallel subagents** (one per area: code, issues/PRs, history, web) and have each return a tight digest, not raw dumps — keep the orchestrator's context lean.
-- The orchestrator (frontier model) only reads the digests and decides. It does not do the crawling itself.
-- This is distinct from the multi-LLM **review** dispatch below (that uses external CLIs for diverse perspectives on a finished plan/diff).
+- Fan research out to **parallel subagents** (one per area: code, issues/PRs, history, web); each returns a tight digest, not raw dumps — keep the orchestrator's context lean.
+- The orchestrator (frontier model) reads digests and decides; it does not crawl itself.
+- These are **in-harness** subagents (e.g. a Claude Code Task agent on Sonnet), not external CLIs.
 
-- `gemini-3.1-pro-preview` — verified for `--prompt` dispatch with `--yolo --skip-trust`.
-- `opencode-go/kimi-k2.6`, `opencode-go/deepseek-v4-pro`, `opencode-go/deepseek-v4-flash`, `opencode-go/glm-5.1` — provider authenticated via `opencode auth list` (OpenCode Go: api). Invocation must use `-m provider/model`; **do not** pass `--format json` (emits JSONL events, not formatted completion).
-- `gpt-5.5` via `codex exec` — verified flags: `--skip-git-repo-check`, `-m`, `-s/--sandbox`, `-C/--cd`. Default sandbox blocks Write tool; pass `--sandbox workspace-write` for the file-write dispatch contract.
+## External review agents (user-run)
 
-## Agent-mode cost (opencode)
+These are the agents the **user** runs against a review/brainstorm brief — the flow agent never invokes them. Which ones to use is project config (`.flow/config.yaml` → `review.agents`). Common choices:
 
-`opencode run` is a full agent session, not a stateless completion. Every call loads ~30k tokens of agent context (verified — a one-word reply costs 30,165 input tokens before the model emits anything). For latency-sensitive or token-sensitive dispatch (e.g., brainstorming with parallel lenses), this overhead compounds. Prefer Gemini for those steps; reserve opencode for review steps where the agent loop is wanted (e.g., reviewing a real diff with tool access).
+| Agent | Model | Notes |
+|---|---|---|
+| Claude Code | Sonnet | Same harness; good default reviewer. |
+| Antigravity | Gemini 3.5 Flash | Replaces the discontinued Gemini CLI; interactive only for now. |
+| Codex | Codex 5.5 Mini | Codex stack second opinion. |
+| opencode | kimi / deepseek / glm | Still scriptable, but heavy per-call overhead; optional. |
 
-## CLI invocation
-
-### Gemini CLI
-
-```bash
-gemini --model <model-id> --yolo --skip-trust --prompt "<prompt>"
-```
-
-- `--yolo`: bypass interactive confirmations
-- `--skip-trust`: skip workspace-trust prompt
-- Output goes to stdout. Capture with `> file.md` or `$(...)`.
-
-### OpenCode
-
-```bash
-opencode run -m <provider/model> "<prompt>"
-```
-
-- `-m, --model` — use the `provider/model` form (e.g., `opencode-go/kimi-k2.6`).
-- Prompt is the positional `[message..]` argument; can also be piped via stdin.
-- **Do not pass `--format json`** unless you intend to parse the JSONL event stream; default formatted output is what runlog wrappers expect.
-- Output (formatted) goes to stdout; if the prompt uses the file-write contract, the review lands at the path the model wrote to, and stdout is just a diagnostic runlog.
-
-### Codex CLI
-
-```bash
-codex exec --skip-git-repo-check \
-           --model <model-id> \
-           --sandbox workspace-write \
-           --cd <abs-path> \
-           "<prompt>"
-```
-
-- `--skip-git-repo-check` — required when CWD is not a git repo or codex's repo detection is conservative.
-- `--sandbox workspace-write` — required for the file-write contract; the default sandbox blocks the Write tool. Other values: `read-only`, `danger-full-access`.
-- `--cd <abs-path>` — pin the working directory; codex otherwise inherits the orchestrator's CWD.
-- Prompt is the positional `[PROMPT]` argument or `-` to read from stdin.
-- **Reviewer framing matters** — codex defaults to "implement" intent; spell out "review, do not implement" in the prompt.
-- For fully unattended dispatch on a trusted machine: `--dangerously-bypass-approvals-and-sandbox` (use sparingly; opt-in per skill).
-
-#### Codex sandbox
-
-Codex's `--sandbox` controls what the model's generated shell/tool calls can do, not what the wrapper does. The three useful values:
-
-- `read-only` — cannot write files. Use for "just analyze, never modify" jobs.
-- `workspace-write` — can write only inside the CWD subtree. The right default for reviewers writing into `.planning/<task>/artifacts/`.
-- `danger-full-access` — unrestricted; reserve for explicit user opt-in.
+The brief tells the user which lenses to ask for (architecture, risk, security, UX, etc.) so different agents produce differentiated, non-duplicated feedback.
 
 ## Output handling rule
 
-**Do not pipe other-LLM output back into the Claude conversation as raw text.** Always save to a file under `.planning/<task>/artifacts/<reviewer>.md` (or wherever the calling skill specifies) and read only the summary or relevant parts. This keeps Claude's context lean.
+**Do not pipe raw other-LLM output back into the flow agent's conversation.** When the user brings reviewer output back, save it to a file under `.planning/<task>/artifacts/` and read only the parts that matter. Keeps context lean.
 
-## When to use multi-LLM
+## When multi-LLM is worth it
 
-Multi-LLM adds value when the task benefits from diverse perspectives:
+Worth a brief + external review when the work benefits from diverse perspectives:
 
-- **plan-review** — different models catch different gaps in design
-- **deploy/code-review** — three reviewers triangulate quality issues
-- **research** (optional) — fast model crawls broadly while Claude focuses
+- **code-review** — multiple lenses (UX, quality, security, stability) triangulate issues on the result.
+- **brainstorm** — option generation across angles before the plan commits.
 
-Multi-LLM is overkill for:
-
-- Atomic edits, renames, dependency bumps
-- Simple research questions Claude can answer from context
-- Anything where the user just wants speed
+Skip it for atomic edits, renames, dependency bumps, or anything where the user just wants speed.

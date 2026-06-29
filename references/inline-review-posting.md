@@ -1,5 +1,7 @@
 # Posting Inline Code Review Comments on a PR
 
+A mechanics reference for whoever posts the review — in the current flow that is the **user's own review agent(s)** acting on a `code-review-brief.md`, not the flow agent. The flow agent writes the brief; it does not post.
+
 GitHub draws a hard line between **issue comments** (general top-level PR comments) and **review comments** (anchored to a specific file:line). `gh pr review --comment` only does the former. To post inline comments programmatically you need the **REST review API**, which `gh api` can drive.
 
 ## High-level mechanism
