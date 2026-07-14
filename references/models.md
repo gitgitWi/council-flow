@@ -6,7 +6,7 @@ How `flow` uses models, and the model IDs per harness. The plugin uses models **
 2. **Research subagents** — the `flow:researcher` tier above (and ad-hoc `Explore`/`Task` subagents), spawned cheap to gather context.
 3. **External review agents** — diverse models the **user runs themselves** against a brief the flow agent writes.
 
-> **The flow agent does not dispatch external review/brainstorm CLIs anymore.** The old "agent runs `gemini`/`opencode`/`codex` with a file-write contract" mechanism is **deprecated**: the Gemini CLI was discontinued and its Antigravity replacement has no non-interactive mode yet, and opencode agent sessions carry ~30k-token startup overhead. Instead the flow agent writes a **brief** (base document) and the user runs whichever agent(s) they prefer. See `multi-llm.md`.
+> **The flow agent does not dispatch external review/brainstorm CLIs anymore.** The old "agent runs `opencode`/`codex` with a file-write contract" mechanism is **deprecated**: non-interactive CLI modes are inconsistent across tools, and opencode agent sessions carry ~30k-token startup overhead. Instead the flow agent writes a **brief** (base document) and the user runs whichever agent(s) they prefer. See `multi-llm.md`.
 
 ## Bundled agent tiers (Claude Code)
 
@@ -47,7 +47,7 @@ These are the agents the **user** runs against a review/brainstorm brief — the
 | Agent | Model | Notes |
 |---|---|---|
 | Claude Code | Sonnet | Same harness; good default reviewer. |
-| Antigravity | Gemini 3.5 Flash | Replaces the discontinued Gemini CLI; interactive only for now. |
+| Antigravity | Gemini 3.5 Flash | Interactive only for now. |
 | Codex | Codex 5.6 Sol | Codex stack second opinion. |
 | opencode | kimi / deepseek / glm | Still scriptable, but heavy per-call overhead; optional. |
 

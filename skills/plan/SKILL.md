@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Produce a short, visual `plan.md` (goal + approach + a Mermaid diagram of the direction) and a concise checklist `tasks.md` for an upcoming task. Use this whenever the user is about to start a non-trivial change — a feature, multi-file fix, refactor — before any code is written. Even if the user just says "let's start", produce a plan first; the develop skill consumes these documents. Keep it lightweight — a one-minute read and a diagram beat a long document; the goal is fast plan→implement→review→fix iteration, not exhaustive up-front detail. The plan is for any coding agent (Claude, Codex, Gemini, a teammate) to pick up and execute, so it must stand on its own.
+description: Produce a short, visual `plan.md` (goal + approach + a Mermaid diagram of the direction) and a concise checklist `tasks.md` for an upcoming task. Use this whenever the user is about to start a non-trivial change — a feature, multi-file fix, refactor — before any code is written. Even if the user just says "let's start", produce a plan first; the develop skill consumes these documents. Keep it lightweight — a one-minute read and a diagram beat a long document; the goal is fast plan→implement→review→fix iteration, not exhaustive up-front detail. The plan is for any coding agent (Claude, Codex, a teammate) to pick up and execute, so it must stand on its own.
 ---
 
 # flow:plan — Authoring plan.md and tasks.md
