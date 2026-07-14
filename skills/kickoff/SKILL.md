@@ -35,7 +35,7 @@ Before framing, gather context — but **delegate it to cost-efficient subagents
 - **History** — recent commits in the touched area.
 - **Web** — references / best practices, only when the task depends on external API/library shape.
 
-Each subagent returns a **tight digest**, not raw dumps. The orchestrator reads digests and decides. Model tier per harness (Claude Code → Sonnet, Antigravity → Gemini Flash, Codex → Codex mini) is in `../../references/models.md`. Skip an area that is obviously irrelevant — research is a means to a good brief, not a phase to complete.
+Each subagent returns a **tight digest**, not raw dumps. The orchestrator reads digests and decides. Model tier per harness (Claude Code → Sonnet, Antigravity → Gemini Flash, Codex → Codex 5.6 Terra) is in `../../references/models.md`. Skip an area that is obviously irrelevant — research is a means to a good brief, not a phase to complete.
 
 ## Step 3 — Write the brief (short + visual)
 

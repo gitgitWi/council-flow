@@ -47,6 +47,17 @@ Orchestrate is a thin sequencer. It does not reimplement any of the individual s
        flow:code-review-brief; the user then runs their own agent(s) on the brief
 ```
 
+## Delegating to bundled agent tiers (Claude Code)
+
+Each phase has a matching bundled subagent tier (see `../../references/models.md` → *Bundled agent tiers*). Running in Claude Code, the orchestrator (frontier model) delegates rather than doing everything itself:
+
+- **research** → fan out `flow:researcher` (Sonnet), one per area.
+- **plan** → optionally hand off to `flow:planner` (Opus) for a fresh planning context; small tasks can be planned inline.
+- **develop** → delegate the TDD build to `flow:developer` (Sonnet) to keep the frontier context lean.
+- **review** (after deploy, optional) → `flow:reviewer` (Fable) for a fast local pass. This complements — does not replace — the `flow:code-review-brief` → user-run external agents flow.
+
+Delegation is a cost/context optimization, not a rule: for size S tasks, running inline is fine. The user checkpoint before develop and the separate deploy session are unchanged regardless of delegation.
+
 ## Size-based skip logic
 
 | Step | size = S | size = M | size = L |

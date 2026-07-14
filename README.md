@@ -20,6 +20,17 @@ Atomic commits. TDD-first. `.planning/<date>-<task>/` as the working memory. Mul
 | `flow:deploy` | Push, Korean PR, multi-LLM code review, inline comments with model signatures |
 | `flow:orchestrate` | Run the whole sequence end-to-end with size-based skip logic |
 
+## Agents
+
+Bundled subagents (Claude Code) the orchestrator delegates phases to, each pinned to a cost-appropriate model tier. Invoke scoped, e.g. `flow:researcher`. Model IDs live in `references/models.md`.
+
+| Agent | Model | Role |
+|---|---|---|
+| `flow:planner` | Opus | Turn a framed task into a visual `plan.md` + `tasks.md`; plans, does not implement |
+| `flow:developer` | Sonnet | Execute `tasks.md` via TDD + atomic conventional commits |
+| `flow:researcher` | Sonnet | Cost-efficient pre-plan investigation; fan out in parallel, returns a tight digest |
+| `flow:reviewer` | Fable | Fast in-harness fresh-eyes review; complements the external-agent code-review path |
+
 ## Conventions
 
 - LLM-facing docs (plan.md, tasks.md, research.md, prepare.md): **English**

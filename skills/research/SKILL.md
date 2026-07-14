@@ -85,7 +85,7 @@ Keep this document under ~300 lines. If you find yourself writing more, you are 
 
 ## How to research
 
-**Delegate to cost-efficient subagents, fanned out in parallel — not the frontier orchestrator model.** Spawn one subagent per relevant area (codebase, GitHub Issues/PRs, commit history, web) and have each return a tight digest; the orchestrator reads digests and decides. Pick the cheap model tier by harness (Claude Code → Sonnet, Antigravity → Gemini Flash, Codex → Codex mini) per `../../references/models.md`. Skip any area that is obviously irrelevant — research serves the plan, it is not a checklist to complete.
+**Delegate to cost-efficient subagents, fanned out in parallel — not the frontier orchestrator model.** Spawn one subagent per relevant area (codebase, GitHub Issues/PRs, commit history, web) and have each return a tight digest; the orchestrator reads digests and decides. Pick the cheap model tier by harness (Claude Code → Sonnet, Antigravity → Gemini Flash, Codex → Codex 5.6 Terra) per `../../references/models.md`. In Claude Code, delegate to the bundled `flow:researcher` agent (Sonnet) — fan out one per area. Skip any area that is obviously irrelevant — research serves the plan, it is not a checklist to complete.
 
 ### Codebase exploration
 
