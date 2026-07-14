@@ -36,7 +36,7 @@ parent: ./prepare.md
 related:
   - ./plan.md (will consume these findings)
 time_box: 10m            # 5m | 10m | 20m | 60m
-used_external_llm: false # set true if Gemini/OpenCode produced raw output under artifacts/
+used_external_llm: false # set true if an external agent produced raw output under artifacts/
 ---
 
 # Research — <task>
@@ -100,23 +100,13 @@ When exploring, explicitly look for leverage before inventing structure:
 
 ### Web research (optional, fast path)
 
-When the user OK's it and the task involves a less-familiar library or API, delegate web research to Gemini's fast model. The Gemini output is verbose; save it to a file and summarize.
+When the task involves a less-familiar library or API, do web research **in-harness** via the `flow:researcher` subagent (WebFetch / WebSearch) — do not shell out to an external CLI.
 
 If the task is about a library, framework, SDK, API, CLI tool, or cloud service,
 follow the current project's documented source-of-truth lookup first (for example,
 `ctx7` where configured) before relying on general web search or model memory.
 
-```bash
-gemini --model gemini-3-flash-preview --yolo --skip-trust --prompt "$(cat <<'PROMPT'
-Research the current shape of the <topic> API in <library@version>.
-Cover: authentication flow, required scopes, callback behavior, error responses,
-and any breaking changes in the last 12 months.
-Cite source URLs.
-PROMPT
-)" > .planning/<date>-<task>/artifacts/research-gemini.md
-```
-
-Then read that file once, distill the load-bearing facts into `research.md` under **External references**, and discard the rest from your active context.
+Point the subagent at a specific question — e.g. the current shape of the `<topic>` API in `<library@version>`: auth flow, required scopes, callback behavior, error responses, and breaking changes in the last 12 months, with source URLs cited. It returns a tight digest; distill the load-bearing facts into `research.md` under **External references** and keep the rest out of your active context.
 
 ### Past project memory
 
