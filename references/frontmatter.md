@@ -100,9 +100,9 @@ parent: ./plan.md                        # plan.md is the index when phases exis
 
 ```yaml
 time_box: 10m                            # nominal time-box used (5m | 10m | 20m | 60m)
-used_external_llm: true                  # set when Gemini/OpenCode produced raw output under artifacts/
+used_external_llm: true                  # set when an external agent produced raw output under artifacts/
 external_llm_outputs:                    # only when used_external_llm is true
-  - ./artifacts/research-gemini.md
+  - ./artifacts/research-external.md
 ```
 
 ### `brainstorm` (brainstorming synthesis, authored by `flow:plan`)

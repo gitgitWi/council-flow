@@ -69,30 +69,12 @@ Never auto-discard uncommitted changes. Always ask first.
 
 ## Frontend delegation (optional)
 
-For pure frontend implementation tasks — building a component, applying styling, wiring up a form — the user may prefer to delegate to Gemini. Defaults:
+For pure frontend implementation tasks — building a component, applying styling, wiring up a form — you can delegate to the bundled `flow:developer` (Sonnet) instead of building on the frontier orchestrator. For a genuinely different model family, hand the task to an external agent (e.g. Antigravity, or codex-plugin-cc's `codex:codex-rescue`) — the flow agent does not shell out to model CLIs itself.
 
-- **Delegate to Gemini** when: simple component, styling-heavy, follows existing patterns, no complex state or integration logic.
-- **Keep on Claude** when: state machines, data fetching, error handling, accessibility, integration with backend, anything cross-cutting.
+- **Delegate** when: simple component, styling-heavy, follows existing patterns, no complex state or integration logic.
+- **Keep on the frontier orchestrator** when: state machines, data fetching, error handling, accessibility, backend integration, anything cross-cutting.
 
-When in doubt, ask the user once at the start of develop ("Frontend portion — Claude or Gemini?") and remember the answer for this session. Do not ask before every task.
-
-Gemini invocation:
-
-```bash
-gemini --model gemini-3.1-pro --yolo --skip-trust --prompt "$(cat <<'PROMPT'
-You are implementing a frontend task. The plan and tasks live at:
-- <abs-path>/.planning/<date>-<task>/plan.md
-- <abs-path>/.planning/<date>-<task>/tasks.md
-
-Implement only the next unchecked task: "<paste the task behavior + pseudo-code test verbatim>".
-Follow the existing component patterns under <abs-path>/src/...
-Write the Vitest test first.
-Output the changed files as paths + full file content; I will apply them.
-PROMPT
-)" > /tmp/gemini-impl.txt
-```
-
-Then read the output, apply the changes via Edit/Write, run the test yourself, and commit. The Claude session retains responsibility for the test passing and the commit.
+Whichever runs it, the flow session keeps responsibility: write the Vitest test first, apply/verify the changes, run the test yourself, and make the atomic commit.
 
 ## Web Frontend test stack (default)
 

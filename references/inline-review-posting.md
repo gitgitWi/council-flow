@@ -55,12 +55,12 @@ Each inline comment body **MUST** start with a severity tag and end with a model
 
 <detailed body in Korean>
 
-— signed: gemini-3.1-pro
+— signed: codex-5.6-sol
 ```
 
 Severity tag values: `[CRITICAL]` (must fix before merge), `[MAJOR]` (should fix), `[MINOR]` (nice to have), `[NIT]` (style/preference), `[QUESTION]` (asking for clarification).
 
-The signature line (`— signed: <model-id>`) tells the human which model raised the point. When multiple models flagged the same line, list them comma-separated: `— signed: gemini-3.1-pro, kimi-k2.6`.
+The signature line (`— signed: <model-id>`) tells the human which model raised the point. When multiple models flagged the same line, list them comma-separated: `— signed: codex-5.6-sol, kimi-k2.6`.
 
 ## Top-level review body
 

@@ -4,9 +4,9 @@ How `flow` gets diverse-model perspectives now that the agent **no longer runs r
 
 ## Why no agent-run CLI dispatch
 
-The old mechanism (the flow agent runs `gemini`/`opencode`/`codex` with a file-write contract, quorum, sentinels, heartbeats) is **deprecated**:
+The old mechanism (the flow agent runs `opencode`/`codex` with a file-write contract, quorum, sentinels, heartbeats) is **deprecated**:
 
-- The Gemini CLI was discontinued; its Antigravity replacement has no non-interactive mode yet.
+- Some agents are interactive-only, with no scriptable non-interactive mode.
 - opencode agent sessions cost ~30k tokens of startup overhead per call.
 - Driving external CLIs from the agent was fragile (auth, timeouts, hallucinated paths) and slowed the iteration loop.
 

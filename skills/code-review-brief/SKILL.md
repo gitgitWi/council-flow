@@ -7,7 +7,7 @@ description: Write the base material for a code review — a "review brief" for 
 
 This skill **prepares the base material** a reviewer needs — it does not run the review itself. It writes a **review brief**: the diff facts, change summary, original intent, and the lenses to review through. The **user** then runs their preferred agent(s) (Antigravity, Codex, Claude Code, …) against the brief to post review/comments on the GitHub PR.
 
-> **The flow agent does not run reviewer CLIs and does not post comments.** The old auto-dispatch mechanism is deprecated (Gemini CLI discontinued; Antigravity has no non-interactive mode; opencode overhead is high). Diversity comes from the user running the agents they choose. See `../../references/multi-llm.md`.
+> **The flow agent does not run reviewer CLIs and does not post comments.** The old auto-dispatch mechanism is deprecated (interactive-only tools, high per-call overhead, fragile automation). Diversity comes from the user running the agents they choose. See `../../references/multi-llm.md`.
 
 `flow:deploy` **asks** whether to run this skill after opening a PR and runs it on confirm; you can also invoke it directly on any existing PR.
 

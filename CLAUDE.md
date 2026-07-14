@@ -13,14 +13,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 There is no application code, no build, no test runner, no linter. The shippable surface is:
 
 - `.claude-plugin/marketplace.json` — marketplace manifest (one plugin entry: `flow`)
-- `.claude-plugin/plugin.json` — plugin manifest; registers each `SKILL.md` path
+- `.claude-plugin/plugin.json` — plugin manifest; registers each `SKILL.md` path and each bundled agent path
 - `skills/<name>/SKILL.md` — the skills themselves (frontmatter + Markdown body)
+- `agents/<name>.md` — bundled subagent tiers (`planner`/`developer`/`researcher`/`reviewer`); invoked scoped as `flow:<name>`, each pinned to a model tier by alias
 - `references/*.md` — shared docs linked from skills (model registry, dir layout, TDD policy, commit/PR conventions, inline-review API mechanics)
 - `scripts/prep.sh` — the only executable; called by the `prep` skill
 
 ## Architecture: skills + references, not code
 
 Skills are read by the orchestrating Claude session at runtime. They are prose with a YAML frontmatter `name` and `description`. The frontmatter `description` is load-bearing — Claude Code uses it for skill auto-invocation, so wording determines when a skill fires. Don't bury triggering keywords.
+
+Bundled **agents** (`agents/*.md`) are subagent tiers the orchestrator delegates phases to (research / plan / develop / review). Like skills they are frontmatter + prose, but they also pin a `model` tier by alias (`opus` / `sonnet` / `fable`); the alias→full-ID mapping lives only in `references/models.md`. Bundled agents run in the consumer's project, not the plugin dir, so their bodies must be **self-contained** — do not rely on `../references/*` links resolving at runtime. The `flow:reviewer` (Fable) tier is an *additive* in-harness review option; it does not replace the deliberate brief → user-run-external-agents review path.
 
 The flow is sequenced by `skills/orchestrate/SKILL.md`, which is a thin wrapper that invokes the step-skills in order with **size-based skip logic** (S/M/L from `prepare.md`). The mandatory pause is the user checkpoint between `plan` and `develop` — the user reads the lightweight plan and gives go/no-go. `deploy` is intentionally run in a fresh session so the PR and the code-review brief reflect a clean final diff. The design bias is **lightweight, visual, fast iteration** (plan→implement→review→fix, repeated) over heavy up-front planning — there is no separate plan-review step; review concentrates on the result.
 
@@ -41,8 +44,9 @@ When the user asks you to modify *this* repo (as opposed to running the workflow
 
 - **Adding a new skill** requires three coordinated edits: create `skills/<name>/SKILL.md` (with frontmatter), append its path to the `skills` array in `.claude-plugin/plugin.json`, and link it from any orchestrator/README references that should know about it.
 - **Renaming a skill** must update the directory, the frontmatter `name`, the `plugin.json` array entry, every cross-link in other skills (skills reference each other as `flow:<name>`), and any reference docs that mention the old name.
+- **Adding or renaming an agent** mirrors skills: create/rename `agents/<name>.md` (frontmatter `name` / `description` / `model` / `tools`), update the `agents` array in `.claude-plugin/plugin.json`, and cross-link the tier table in `references/models.md` and the README Agents section. Agents are invoked scoped as `flow:<name>`; keep their bodies self-contained (they run in the consumer's tree, not the plugin dir).
 - **Changing model IDs or CLIs** → edit only `references/models.md`. Skills consume the registry; do not hardcode model IDs in skill bodies.
-- **Version bumps** are mirrored in two files: `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` (both currently `2.0.1`). Keep them in sync.
+- **Version bumps** are mirrored in two files: `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` (both currently `2.1.0`). Keep them in sync. (`.codex-plugin/plugin.json` tracks its own version independently.)
 - **`scripts/prep.sh`** is invoked from `skills/prep/SKILL.md`. It's idempotent (re-running with the same `--task` prints the existing worktree path), creates worktrees at `<repo-parent>/<repo-name>.worktrees/<task>`, ensures `.planning/` is gitignored in the target repo, and seeds `prepare.md`. If you change its flag surface or output contract, update the prep skill too.
 - **No build, lint, or test commands.** Validation is reading the files. If a skill references another file, click through and confirm the path resolves.
 

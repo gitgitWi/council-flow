@@ -29,7 +29,7 @@ review:
   agents:
     - claude-code   # Sonnet
     - antigravity   # Gemini 3.5 Flash
-    - codex         # Codex 5.5 Mini
+    - codex         # Codex 5.6 Sol
 ```
 
 All keys are optional. Omit a section to fall back to ask/infer.
