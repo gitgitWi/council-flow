@@ -1,6 +1,6 @@
 {
   "name": "flow",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Opinionated multi-step development workflow: kickoff → prep → research → plan → develop → deploy → code-review-brief → review-triage. Lightweight visual plans, fast iteration, atomic commits, TDD-first.",
   "author": {
     "name": "wjh",
@@ -28,5 +28,11 @@
     "./skills/review-triage/",
     "./skills/commit-pr/",
     "./skills/orchestrate/"
+  ],
+  "agents": [
+    "./agents/planner.md",
+    "./agents/developer.md",
+    "./agents/researcher.md",
+    "./agents/reviewer.md"
   ]
 }
