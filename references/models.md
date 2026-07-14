@@ -48,7 +48,7 @@ These are the agents the **user** runs against a review/brainstorm brief — the
 |---|---|---|
 | Claude Code | Sonnet | Same harness; good default reviewer. |
 | Antigravity | Gemini 3.5 Flash | Replaces the discontinued Gemini CLI; interactive only for now. |
-| Codex | Codex 5.5 Mini | Codex stack second opinion. |
+| Codex | Codex 5.6 Sol | Codex stack second opinion. |
 | opencode | kimi / deepseek / glm | Still scriptable, but heavy per-call overhead; optional. |
 
 The brief tells the user which lenses to ask for (architecture, risk, security, UX, etc.) so different agents produce differentiated, non-duplicated feedback.
