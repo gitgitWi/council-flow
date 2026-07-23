@@ -13,7 +13,9 @@ Develop turns `tasks.md` into code, one checkbox at a time. Each unchecked behav
 - `<worktree>/.planning/<date>-<task>/tasks.md` exists.
 - (Recommended) `plan.md` also exists. Develop can run without a plan if the user explicitly chose to skip planning, but only for size S.
 
-If `tasks.md` does not exist and the user is asking for an implementation, run `flow:plan` first — even a 5-line `tasks.md` is better than freestyling.
+If `tasks.md` does not exist and the user is asking for an implementation, get one first — even a 5-line `tasks.md` is better than freestyling. For a **fast-lane / size-S entry** (`flow:quick` green route, or a size-S `flow:kickoff`), that minimal `tasks.md` is written by the entry skill before it hands off here — so a 3-line checklist with no `plan.md` is a valid state to run in, not a reason to stop. Only bounce to `flow:plan` when there is genuinely nothing to execute and no entry skill produced a list.
+
+> Trigger note: develop's description says "even when the user says 'just implement this', invoke develop" — but when the user is **asserting the task is trivial** and no `tasks.md` exists yet, `flow:quick` is the entry point. It classifies green/yellow/red, writes the minimal `tasks.md` on green, and then calls develop. Don't skip that guardrail for a "just do it / quick fix" phrasing.
 
 ### Prep precondition check (run first, every invocation)
 

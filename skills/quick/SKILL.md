@@ -36,7 +36,7 @@ Examples: a copy/typo fix, a style tweak, a dependency bump, a one-line bug fix 
 
 ## Step 2 — Route
 
-- **🟢 Green** → confirm a **one-line goal + done-check** to the user (e.g. "Goal: 헤더 오타 수정 → done when the header reads X"), ensure a task branch exists (never work on `main` — if on `main`, create/switch to a typed branch first), then hand to **`flow:develop`**. No research, no plan doc.
+- **🟢 Green** → confirm a **one-line goal + done-check** to the user (e.g. "Goal: 헤더 오타 수정 → done when the header reads X"), ensure a task branch exists (never work on `main` — if on `main`, create/switch to a typed branch first), then write a **minimal `.planning/<date>-<task>/tasks.md`** — 1–3 checkboxes derived from the goal. `flow:develop`'s precondition requires a `tasks.md` to execute (it will otherwise stop and bounce to `flow:plan`, defeating the fast lane); a 3-line checklist is enough — no `plan.md`, no research. Then hand to **`flow:develop`**.
 - **🟡 Yellow** → use `AskUserQuestion`: "This is a bit more than a one-liner — quick 3-line plan first (`flow:plan`), or straight to develop?" Default to a quick plan for anything touching multiple files. Route per the answer.
 - **🔴 Red** → tell the user plainly: "This is bigger than a quick fix — it touches <reason>. I'd start from `flow:kickoff` (framing + a short plan) so we lock the goal and don't rework later." Recommend `flow:kickoff`; proceed the fast way only if the user overrides after hearing the risk.
 
@@ -45,6 +45,7 @@ Even on green, do not silently expand scope: if you discover mid-change that the
 ## Non-negotiables (even on the fast lane)
 
 - **Never commit on `main`/default.** Quick still works on a task branch; if setup was skipped, create the branch (or run `flow:kickoff` setup) before the first commit.
+- **A minimal `tasks.md` is required, not optional.** `flow:develop` refuses to run without one. Writing the 1–3 line checklist is what lets the green path reach develop instead of bouncing back to plan.
 - **Atomic Conventional Commits.** Speed doesn't excuse bundling unrelated changes — `flow:develop` discipline still applies.
 - **State the goal in one line.** The one thing quick refuses to skip is naming what "done" means — that single line prevents the most common fast-lane failure (drift on a fuzzy goal).
 

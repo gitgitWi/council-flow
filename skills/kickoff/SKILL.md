@@ -146,7 +146,7 @@ Emit these automatically; surface only to override. Project-specific values (ass
 
 Set `size` (S/M/L) with the heuristics above. It decides the route — but bias toward the *shortest* route that ships something reviewable:
 
-- **S** → develop directly. No research, no plan.
+- **S** → develop directly. No research, no `plan.md` — but still write a **minimal `tasks.md`** (a few checkboxes), because `flow:develop` requires one to execute. (`flow:plan` can produce just `tasks.md` for an S task; or write the short list by hand.)
 - **M** → plan → develop. (Plan stays short; diagram over prose.)
 - **L** → full pipeline, but still keep each plan doc lean. **Strongly prefer splitting** (below) over one large task.
 

@@ -96,13 +96,15 @@ Long parallel runs hit model rate limits (weekly / session / external-CLI quota)
 |---|---|---|---|
 | kickoff (framing + setup) | yes | yes | yes |
 | research | skip | ask | yes |
-| plan (always) | yes | yes | yes |
+| plan | minimal `tasks.md` only | yes | yes |
 | ↳ brainstorm sub-phase | skip | ask (default yes if cross-module / security / public-surface) | yes |
 | user checkpoint | skip | yes | yes |
 | develop | yes | yes | yes |
 | deploy | yes | yes | yes |
 
 "Ask" means: surface the decision to the user with the size-based default pre-selected. Don't bounce every step.
+
+For **size S**, "plan" collapses to writing a **minimal `tasks.md`** (a few checkboxes, no `plan.md`, no brainstorm, no checkpoint) — `flow:develop` needs a `tasks.md` to execute, so this is the one plan artifact S still produces. This matches `flow:kickoff`'s S route and the `flow:quick` green path.
 
 ## The user checkpoint before develop
 
