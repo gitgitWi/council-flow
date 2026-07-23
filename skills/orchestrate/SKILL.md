@@ -48,16 +48,47 @@ Orchestrate is a thin sequencer. It does not reimplement any of the individual s
        flow:code-review-brief; the user then runs their own agent(s) on the brief
 ```
 
-## Delegating to bundled agent tiers (Claude Code)
+## Default tier map — apply it, don't ask for it
 
-Each phase has a matching bundled subagent tier (see `../../references/models.md` → *Bundled agent tiers*). Running in Claude Code, the orchestrator (frontier model) delegates rather than doing everything itself:
+The orchestrator (frontier model, e.g. Opus) is the **team lead**: it analyzes the task, decomposes large work into phases, delegates each phase to a cost-appropriate subagent, and reviews what comes back. Apply this tier map **by default, every session** — the user should never have to restate it (see `../../references/models.md`):
 
-- **research** → fan out `flow:researcher` (Sonnet), one per area.
-- **plan** → optionally hand off to `flow:planner` (Opus) for a fresh planning context; small tasks can be planned inline.
-- **develop** → delegate the TDD build to `flow:developer` (Sonnet) to keep the frontier context lean.
-- **review** (after deploy, optional) → `flow:reviewer` (Fable) for a fast local pass. This complements — does not replace — the `flow:code-review-brief` → user-run external agents flow.
+- **orchestrate / plan** → **Opus** (this session, or `flow:planner` in a fresh context). Synthesis and trade-offs stay on the frontier.
+- **research** → **Sonnet** (`flow:researcher`), or **Haiku** for a trivial single-fact lookup. Fanned out, one per area.
+- **develop** → **Sonnet** (`flow:developer`). Mechanical TDD build off the frontier.
+- **code review** → **Fable** (`flow:reviewer`), **Opus** for high-stakes/cross-repo, or hand to an external agent (`codex:codex-rescue` / `codex:review`).
+- **browser QA** *(frontend only)* → **Sonnet** (`flow:browser-tester`).
+- **React quality** *(frontend only)* → **Fable / Opus** (`flow:react-reviewer`).
 
-Delegation is a cost/context optimization, not a rule: for size S tasks, running inline is fine. The user checkpoint before develop and the separate deploy session are unchanged regardless of delegation.
+Delegation is a cost/context optimization, not a hard rule: for size S tasks, running a phase inline is fine. The user checkpoint before develop and the separate deploy session are unchanged regardless of delegation.
+
+## Run non-overlapping work in parallel
+
+The orchestrator is not just a sequencer — it runs independent work **concurrently**. Two rules:
+
+1. **Independent tasks/issues run in parallel.** When sub-issues or tasks touch **non-overlapping files**, dispatch their subagents at the same time rather than one after another. If two would edit the same files, serialize them (or isolate each in its own worktree). When unsure whether they overlap, check the change map before parallelizing.
+2. **The review lane is parallel.** After deploy opens the PR, the review is a **lane, not a step**: run **code review** (`flow:reviewer` / external agent), **browser QA** (`flow:browser-tester`, frontend only), and **React quality** (`flow:react-reviewer`, frontend only) **at the same time**. They inspect the same diff from different angles and don't depend on each other.
+
+While a subagent runs, keep the orchestrator busy with the next independent piece (e.g. plan the next phase while the current one builds) instead of blocking.
+
+## Supervise and rework — the orchestrator owns quality
+
+The orchestrator does not blindly accept subagent output. Every delegated phase runs a supervision loop:
+
+1. **Instruct** — give the subagent a scoped task and the acceptance signal.
+2. **Review the result** — read the returned digest/diff/report against the brief's acceptance criteria and the plan. Did it do what was asked? Any gap, drift, or unverified claim?
+3. **Decide**:
+   - **Accept** → move on.
+   - **Rework** → send it back with specific corrections (this is normal, not failure).
+   - **Escalate** → if it's blocked or the approach is wrong, stop and bring it to the user.
+
+For review-lane findings: **small issues → fix in place** before merge; **large issues → a follow-up PR/issue** rather than blocking the current one. Keep off-critical-path investigations in their own subagent so the orchestrator's context stays clean — pull back only the conclusion.
+
+## Rate-limit / tier fallback
+
+Long parallel runs hit model rate limits (weekly / session / external-CLI quota). Decide the fallback **before** dispatching a big batch, so a mid-run cutoff doesn't strand the work:
+
+- If a tier is exhausted, fall back to the next available one (e.g. external `codex:*` review → `flow:reviewer` on Fable/Sonnet; Opus plan → Sonnet) and note the downgrade to the user.
+- For a long queue, prefer resumable checkpoints (tasks.md progress, an issue comment handoff) over one unbroken run, so a new session can pick up.
 
 ## Size-based skip logic
 

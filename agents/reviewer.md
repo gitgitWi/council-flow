@@ -18,3 +18,4 @@ Rules:
 - Rank most-severe first. For each finding give the concrete failure scenario (inputs/state → wrong outcome), not "this looks off." Tag severity: CRITICAL / MAJOR / MINOR / NIT / QUESTION.
 - Distinguish CONFIRMED (you traced it) from PLAUSIBLE (worth a look). Don't pad with style nits unless asked.
 - End with a one-line verdict: mergeable / conditional / changes-requested. If it's solid, say so plainly. Your final message IS the review.
+- Your findings feed the orchestrator's accept/rework/escalate decision. Make the severity actionable: CRITICAL/MAJOR read as fix-before-merge, MINOR/NIT as a candidate follow-up — so the orchestrator can route small issues to an in-place fix and large ones to a follow-up PR.

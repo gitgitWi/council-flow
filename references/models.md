@@ -39,6 +39,8 @@ All **research-type work** — codebase exploration, GitHub Issue/PR/commit-hist
 | Antigravity | Gemini 3.5 Flash |
 | Codex | Codex 5.6 Terra |
 
+Parallelism is **not limited to research.** Independent tasks/sub-issues (non-overlapping files) and the review lane (code review + browser QA + React quality) also run concurrently — the orchestrator delegates and supervises rather than working serially. See `flow:orchestrate` → *Run non-overlapping work in parallel* and *Supervise and rework*.
+
 Rules:
 - Fan research out to **parallel subagents** (one per area: code, issues/PRs, history, web); each returns a tight digest, not raw dumps — keep the orchestrator's context lean.
 - The orchestrator (frontier model) reads digests and decides; it does not crawl itself.
