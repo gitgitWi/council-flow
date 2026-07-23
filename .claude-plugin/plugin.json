@@ -1,6 +1,6 @@
 {
   "name": "flow",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Opinionated multi-step development workflow: kickoff → research → plan → develop → deploy → code-review-brief → review-triage → cleanup. Lightweight visual plans, fast iteration, atomic commits, TDD-first.",
   "author": {
     "name": "wjh",
