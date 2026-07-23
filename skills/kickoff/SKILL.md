@@ -41,7 +41,7 @@ Each subagent returns a **tight digest**, not raw dumps. The orchestrator reads 
 
 ## Step 3 — Write the brief (short + visual)
 
-Write `brief.md` to the task directory root (English — LLM-facing). Keep it tight. The non-negotiable fields — the ones the review showed are usually missing — are **MUST**.
+Compose `brief.md` (English — LLM-facing). Keep it tight. The non-negotiable fields — the ones the review showed are usually missing — are **MUST**. Note the task directory does not exist until Step 4 creates it: draft the brief now and **write it into `.planning/<date>-<task>/` (root) right after setup**, or if setup already ran, write it there directly. Do not scatter a `brief.md` at the repo root.
 
 ```markdown
 ---
@@ -115,7 +115,7 @@ bash <plugin-dir>/scripts/prep.sh \
 
 The script is idempotent. It creates the worktree at `<repo-parent>/<repo-name>.worktrees/<task>`, the branch, and `.planning/<date>-<task>/` with a seeded `prepare.md`; ensures `.planning/` is gitignored; and auto-installs dependencies (detects pnpm > bun > npm > yarn > uv; non-fatal on failure). It prints the worktree path on stdout — **capture it; every subsequent skill operates inside that path.**
 
-`.planning/` is **local working memory and is never committed** — the durable copy of briefs/plans/reviews lives in GitHub Issues / PR bodies. Move `brief.md` into `.planning/<date>-<task>/` (root). Store any secrets/tokens the task needs under `.planning/<date>-<task>/artifacts/secret.*` and reference them **by path** — never paste raw tokens into chat. See `../../references/directory-structure.md`.
+`.planning/` is **local working memory and is never committed** — the durable copy of briefs/plans/reviews lives in GitHub Issues / PR bodies. Write (or move) `brief.md` into `.planning/<date>-<task>/` (root) now that the directory exists. Store any secrets/tokens the task needs under `.planning/<date>-<task>/artifacts/secret.*` and reference them **by path** — never paste raw tokens into chat. (`prep.sh` gitignores `.planning/` here; on the skip-setup / in-place path, **verify `.planning/` is gitignored before writing any secret** so a later `git add` can't commit it.) See `../../references/directory-structure.md`.
 
 ### 4c — Land in the worktree
 

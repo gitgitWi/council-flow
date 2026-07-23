@@ -154,7 +154,9 @@ Do not retry silently. Orchestrate is a sequencer, not a self-healing pipeline.
 Each individual skill is the source of truth for its own behavior. This skill only sequences them:
 
 - `flow:kickoff`
+- `flow:quick` (fast-lane alternate entry)
 - `flow:research`
 - `flow:plan`
 - `flow:develop`
 - `flow:deploy`
+- `flow:cleanup` (recommend-only, post-merge)

@@ -3,7 +3,7 @@
 An opinionated multi-step development workflow for Claude Code. Claude is the **orchestrator** (team lead): it frames the task, delegates each phase to a cost-appropriate bundled subagent tier, runs non-overlapping work in parallel, reviews what comes back, and prepares a **review brief** the user runs their own external agent(s) against. Lightweight, visual, fast iteration over heavy up-front planning.
 
 ```
-kickoff → (research) → plan → develop → deploy → (code-review-brief) → (cleanup)
+kickoff → (research) → plan → develop → deploy → (code-review-brief) → (review-triage) → (cleanup)
 ```
 
 `flow:quick` is the fast lane for a trivial task (jumps toward develop after a green/yellow/red safety check). Atomic commits. TDD-first. `.planning/<date>-<task>/` as local working memory (gitignored — the durable copy of non-code docs lives in GitHub Issues / PR bodies).

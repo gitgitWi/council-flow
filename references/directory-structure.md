@@ -30,6 +30,8 @@ All flow skills read and write to a single per-task directory. Predictable paths
 
 Canonical live documents (`brief.md`, `prepare.md`, `plan.md`, `tasks.md`, `research.md`, `brainstorm.md`) sit at the task-directory root. Everything else — briefs, returned reviews, Korean summaries, translations, superseded versions — is a supporting artifact and lives in the single flat `artifacts/` folder. Flat, not nested: the filename prefix (`code-review-`, `brainstorm-`, `research-`) and suffix (`.ko.md`, `.v<N>.md`) carry the categorization that nested folders used to.
 
+**Secrets** a task needs (tokens for a logged-in browser session, etc.) go in `artifacts/secret.*` and are referenced **by path** — never pasted into chat or committed. This is safe only because `.planning/` is gitignored; kickoff setup ensures that, so verify it before writing a secret on an in-place task.
+
 ## Naming rules
 
 - **Date prefix**: `yyyy-mm-dd` reflecting when prep ran. Local timezone is fine.

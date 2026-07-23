@@ -15,7 +15,7 @@ There is no application code, no build, no test runner, no linter. The shippable
 - `.claude-plugin/marketplace.json` — marketplace manifest (one plugin entry: `flow`)
 - `.claude-plugin/plugin.json` — plugin manifest; registers each `SKILL.md` path and each bundled agent path
 - `skills/<name>/SKILL.md` — the skills themselves (frontmatter + Markdown body)
-- `agents/<name>.md` — bundled subagent tiers (`planner`/`developer`/`researcher`/`reviewer`); invoked scoped as `flow:<name>`, each pinned to a model tier by alias
+- `agents/<name>.md` — bundled subagent tiers (`planner`/`developer`/`researcher`/`reviewer`, plus the frontend-only `browser-tester`/`react-reviewer`); invoked scoped as `flow:<name>`, each pinned to a model tier by alias
 - `references/*.md` — shared docs linked from skills (model registry, dir layout, TDD policy, commit/PR conventions, inline-review API mechanics)
 - `scripts/prep.sh` — the only executable; called by the `prep` skill
 

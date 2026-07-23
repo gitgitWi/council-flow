@@ -22,7 +22,7 @@ For each affected screen/flow, verify all three and back each with evidence:
 - **Prefer `agent-browser`** (or an equivalent CDP-driven browser tool) — lighter and scriptable.
 - **Fall back to Playwright** when agent-browser is unavailable or the flow needs its selectors/waits.
 - Reuse an **already-logged-in browser session** when the task needs auth, rather than scripting a fresh login each run — it is faster and avoids re-auth friction.
-- **Auth/secrets:** never paste tokens into chat. Read them from the task's secret file (e.g. `.planning/<date>-<task>/artifacts/secret.*`) and reference by path. Note common gotchas to check for: refresh tokens sometimes live in `localStorage`, not cookies; guest/anonymous sessions may not persist history or shareable state, so flows that require a real account must use a logged-in one.
+- **Auth/secrets:** never paste tokens into chat. Read them from the task's secret file (e.g. `.planning/<date>-<task>/artifacts/secret.*`) and reference by path. Before **writing** a secret there, verify `.planning/` is gitignored (it is when kickoff setup ran; on an in-place task confirm first) so a later `git add` can't commit it. Note common gotchas to check for: refresh tokens sometimes live in `localStorage`, not cookies; guest/anonymous sessions may not persist history or shareable state, so flows that require a real account must use a logged-in one.
 
 ## Leave a reusable artifact
 
