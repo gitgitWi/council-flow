@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #
-# flow:prep — create worktree + branch + .planning folder for a new task.
+# flow:kickoff (Step 4, setup) — create worktree + branch + .planning folder for a new task.
+# (Formerly the standalone flow:prep skill, now folded into kickoff. Filename kept for stability.)
 #
 # Usage:
 #   prep.sh --task <kebab-name> --type <feature|fix|chore|refactor|docs> [--base <branch>] [--size S|M|L] [--goal "<goal>"] [--force]

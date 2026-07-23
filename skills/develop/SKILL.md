@@ -35,10 +35,10 @@ Decision matrix:
 |---|---|---|---|
 | yes | yes | yes | Proceed with the core loop. |
 | any | any | no | **Stop.** Run `flow:plan` first — develop has nothing to execute without `tasks.md`. |
-| no | no | yes | Suspicious: there is a tasks file but no isolated worktree/branch. Tell the user, then ask: (a) run `flow:prep` to move the work into a worktree (preferred — preserves the in-progress branch by `--force` only with explicit consent), (b) continue in-place on the current branch (commits land here — confirm the user accepts that). Do not auto-decide. |
+| no | no | yes | Suspicious: there is a tasks file but no isolated worktree/branch. Tell the user, then ask: (a) run `flow:kickoff` setup to move the work into a worktree (preferred — preserves the in-progress branch by `--force` only with explicit consent), (b) continue in-place on the current branch (commits land here — confirm the user accepts that). Do not auto-decide. |
 | no | yes | yes | On a task branch but not in a worktree. Usually fine (the user just opened the branch directly without prep). Confirm with the user once at the start of the session, then continue. Future commits land on this branch. |
 
-Special case — **uncommitted changes on a non-task branch (e.g., `main`)**: stop immediately. Do not commit on `main`. Offer to stash + run `flow:prep` to move the work into a fresh worktree.
+Special case — **uncommitted changes on a non-task branch (e.g., `main`)**: stop immediately. Do not commit on `main`. Offer to stash + run `flow:kickoff` setup to move the work into a fresh worktree.
 
 ## The core loop
 

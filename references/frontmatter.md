@@ -56,7 +56,7 @@ One of these per document. Search-friendly — keep the spelling stable.
 
 ## Per-type fields (in addition to common)
 
-### `prepare` (written by `flow:prep`)
+### `prepare` (written by `flow:kickoff` setup)
 
 ```yaml
 branch: feature/add-google-login

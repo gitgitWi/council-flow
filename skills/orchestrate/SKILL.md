@@ -1,6 +1,6 @@
 ---
 name: orchestrate
-description: Run the full flow workflow end-to-end — kickoff → prep → optional research → plan (with optional multi-LLM brainstorming) → develop → deploy — based on a single task goal from the user. Use this when the user wants to hand off a complete task and let the workflow run, rather than driving each step manually. Skips research and brainstorming automatically for size S tasks; runs the full pipeline for size L. Even when the user just says "build me X", consider this skill if the task warrants the full discipline.
+description: Run the full flow workflow end-to-end — kickoff (framing + setup) → optional research → plan (with optional multi-LLM brainstorming) → develop → deploy → optional cleanup — based on a single task goal from the user. Use this when the user wants to hand off a complete task and let the workflow run, rather than driving each step manually. Skips research and brainstorming automatically for size S tasks; runs the full pipeline for size L. Even when the user just says "build me X", consider this skill if the task warrants the full discipline.
 ---
 
 # flow:orchestrate — End-to-end workflow runner
@@ -16,33 +16,34 @@ Orchestrate is a thin sequencer. It does not reimplement any of the individual s
 ## The sequence
 
 ```
-0. flow:kickoff           [front door — frame the task before any setup]
+0. flow:kickoff           [front door — framing AND setup in one step]
    └── writes brief.md (GOAL, acceptance criteria + verification, scope, hypothesis,
        working rules), sets category + size, optionally posts a Korean GitHub Issue
+   └── then scaffolds: worktree, branch, .planning/, prepare.md (with size estimate)
    └── if oversized (GOAL with >3 independent parts / separable areas): splits into a
        parent + sub-issues. Then orchestrate runs the loop below on the FIRST sub-issue
        only; each remaining sub-issue is its own kickoff→…→deploy run later.
 
-1. flow:prep
-   └── creates worktree, branch, .planning/, prepare.md (with size estimate)
+   (Fast lane: flow:quick is the alternate entry for a user-asserted trivial task — it
+    classifies green/yellow/red and, on green, jumps straight to develop. See flow:quick.)
 
-2. flow:research          [skip if size = S, or user opted out]
+1. flow:research          [skip if size = S, or user opted out]
    └── writes research.md
 
-3. flow:plan              [always]
+2. flow:plan              [always]
    └── (sub-phase) multi-LLM brainstorm if size = L, or size = M with cross-module /
        security-sensitive / public-surface flag → writes brainstorm.md + artifacts/brainstorm-*.md
    └── writes plan.md, tasks.md
 
-4. — Checkpoint with user —
+3. — Checkpoint with user —
    Show plan.md (or artifacts/plan.ko.md) and tasks.md. The user reads the
    lightweight plan quickly and gives go/no-go. (No plan-review step — review
    concentrates on the result, not the plan.)
 
-5. flow:develop           [after user confirms]
+4. flow:develop           [after user confirms]
    └── executes tasks.md, atomic commits, all checkboxes filled
 
-6. flow:deploy            [as a separate session — see below]
+5. flow:deploy            [as a separate session — see below]
    └── pushes, opens Korean PR, then asks (default yes) and on confirm runs
        flow:code-review-brief; the user then runs their own agent(s) on the brief
 ```
@@ -62,8 +63,7 @@ Delegation is a cost/context optimization, not a rule: for size S tasks, running
 
 | Step | size = S | size = M | size = L |
 |---|---|---|---|
-| kickoff | yes | yes | yes |
-| prep | yes | yes | yes |
+| kickoff (framing + setup) | yes | yes | yes |
 | research | skip | ask | yes |
 | plan (always) | yes | yes | yes |
 | ↳ brainstorm sub-phase | skip | ask (default yes if cross-module / security / public-surface) | yes |
@@ -107,7 +107,7 @@ If the user objects and explicitly says "just run deploy too", you may invoke it
 
 Each sub-skill should report its outcome. If any step fails:
 
-- **prep fails** (branch exists, dirty tree, etc.) — surface the error, ask the user.
+- **kickoff setup fails** (branch exists, dirty tree, etc.) — surface the error, ask the user.
 - **research / plan fail** — usually recoverable, show what went wrong and offer to retry.
 - **develop fails mid-implementation** — stop. The tasks.md state shows progress; the user can resume by invoking `flow:develop` directly when they want to continue.
 
@@ -118,7 +118,6 @@ Do not retry silently. Orchestrate is a sequencer, not a self-healing pipeline.
 Each individual skill is the source of truth for its own behavior. This skill only sequences them:
 
 - `flow:kickoff`
-- `flow:prep`
 - `flow:research`
 - `flow:plan`
 - `flow:develop`

@@ -18,7 +18,7 @@ The point of planning is to start implementing sooner with a clear direction, **
 
 ## Prep precondition check (run first, every invocation)
 
-Before writing anything, verify the worktree + branch + planning directory exist. If not, the user has skipped `flow:prep` and `plan.md` would land in the wrong place.
+Before writing anything, verify the worktree + branch + planning directory exist. If not, the user has skipped `flow:kickoff` setup and `plan.md` would land in the wrong place.
 
 ```bash
 # 1. Are we in a flow worktree? (heuristic: parent dir name ends in .worktrees)
@@ -40,7 +40,7 @@ Decision matrix:
 | In worktree | On task branch | Has `.planning/.../prepare.md` | Action |
 |---|---|---|---|
 | yes | yes | yes | Proceed. This is the normal post-prep state. |
-| no | no | no | **Stop.** Tell the user prep was skipped and ask: (a) run `flow:prep` now (recommended), (b) proceed in-place on the current branch (only sensible for size S, and you must still create `.planning/<date>-<task>/prepare.md` manually before writing the plan), (c) abort. |
+| no | no | no | **Stop.** Tell the user setup was skipped and ask: (a) run `flow:kickoff` setup now (recommended), (b) proceed in-place on the current branch (only sensible for size S, and you must still create `.planning/<date>-<task>/prepare.md` manually before writing the plan), (c) abort. |
 | any | yes | no | Branch exists but planning dir is missing. Ask the user whether the prior planning was cleaned up (rare) or this is a new task on a reused branch (more common). Create `.planning/<date>-<task>/prepare.md` before writing the plan either way. |
 | any | any | yes | Planning dir exists. Proceed and write into the existing dir — do not create a second one for the same date+task. |
 
