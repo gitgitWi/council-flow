@@ -1,7 +1,7 @@
 {
   "name": "flow",
   "version": "0.7.0",
-  "description": "Opinionated multi-step development workflow: prep -> research -> plan -> plan-review -> develop -> deploy -> code-review. Atomic commits, TDD-first, multi-LLM review.",
+  "description": "Opinionated multi-step development workflow: kickoff -> research -> plan -> develop -> deploy -> code-review-brief -> review-triage -> cleanup. Atomic commits, TDD-first, brief-based review.",
   "author": {
     "name": "wjh",
     "email": "gitgitWi@gmail.com",
@@ -22,7 +22,7 @@
   "interface": {
     "displayName": "Council Flow",
     "shortDescription": "Multi-step development workflow with planning, TDD, deploy, and review.",
-    "longDescription": "Council Flow provides an opinionated development workflow: prep, research, plan, plan-review, develop, deploy, and code-review. It emphasizes isolated worktrees, atomic conventional commits, TDD where practical, Korean user-facing summaries, and multi-LLM review loops.",
+    "longDescription": "Council Flow provides an opinionated development workflow: kickoff, research, plan, develop, deploy, code-review-brief, review-triage, and cleanup. It emphasizes isolated worktrees, atomic conventional commits, TDD where practical, Korean user-facing summaries, parallel subagent tiers, and a brief-based review the user runs their own agents against.",
     "developerName": "wjh",
     "category": "Coding",
     "capabilities": [

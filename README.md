@@ -1,41 +1,43 @@
 # council-flow
 
-An opinionated multi-step development workflow for Claude Code — a small "council" of LLMs (Claude as orchestrator + Gemini + OpenCode/Kimi + OpenCode/DeepSeek) plans, reviews, and ships your changes together.
+An opinionated multi-step development workflow for Claude Code. Claude is the **orchestrator** (team lead): it frames the task, delegates each phase to a cost-appropriate bundled subagent tier, runs non-overlapping work in parallel, reviews what comes back, and prepares a **review brief** the user runs their own external agent(s) against. Lightweight, visual, fast iteration over heavy up-front planning.
 
 ```
-prep → (research) → plan → (plan-review) → develop → deploy
+kickoff → (research) → plan → develop → deploy → (code-review-brief) → (cleanup)
 ```
 
-Atomic commits. TDD-first. `.planning/<date>-<task>/` as the working memory. Multi-LLM review (Gemini, OpenCode/Kimi, OpenCode/DeepSeek) at plan time and review time.
+`flow:quick` is the fast lane for a trivial task (jumps toward develop after a green/yellow/red safety check). Atomic commits. TDD-first. `.planning/<date>-<task>/` as local working memory (gitignored — the durable copy of non-code docs lives in GitHub Issues / PR bodies).
 
 ## Skills
 
-| Skill | What it does |
-|---|---|
-| `flow:prep` | Create worktree, branch, `.planning/<date>-<task>/` folder, size estimate |
-| `flow:research` | Optional pre-plan investigation, writes `research.md` |
-| `flow:plan` | One-pager `plan.md` + GWT `tasks.md` |
-| `flow:plan-review` | Multi-LLM critique of the plan, Korean summary, version bump on changes |
-| `flow:develop` | TDD cycle per `tasks.md` checkbox, atomic conventional commits |
-| `flow:deploy` | Push, Korean PR, multi-LLM code review, inline comments with model signatures |
-| `flow:orchestrate` | Run the whole sequence end-to-end with size-based skip logic |
+- **`flow:kickoff`** — the single front door: frame the task (goal + acceptance + scope + Mermaid direction) **and** set up the worktree, branch, and `.planning/<date>-<task>/`.
+- **`flow:quick`** — fast lane for a user-asserted trivial task; classifies green/yellow/red and routes to develop / ask / escalate.
+- **`flow:research`** — optional pre-plan investigation, fanned out to parallel subagents, writes `research.md`.
+- **`flow:plan`** — a short visual `plan.md` (goal + spec + user flow + Mermaid) and a checklist `tasks.md`.
+- **`flow:develop`** — TDD cycle per `tasks.md` checkbox, atomic Conventional Commits.
+- **`flow:deploy`** — push, open a Korean PR, then offer the code-review brief.
+- **`flow:code-review-brief`** — prepare the base material for a review (the user runs their own agents against it); does not post comments.
+- **`flow:review-triage`** — pull all PR feedback, triage validity + priority, plan and apply fixes. Recommend-only.
+- **`flow:cleanup`** — post-merge teardown: kill dev-server / e2e processes, remove the worktree, prune stale previews. Recommend-only.
+- **`flow:commit-pr`** — the everyday commit → push → open/update-PR loop.
+- **`flow:orchestrate`** — run the whole sequence end-to-end with size-based skip logic.
 
 ## Agents
 
 Bundled subagents (Claude Code) the orchestrator delegates phases to, each pinned to a cost-appropriate model tier. Invoke scoped, e.g. `flow:researcher`. Model IDs live in `references/models.md`.
 
-| Agent | Model | Role |
-|---|---|---|
-| `flow:planner` | Opus | Turn a framed task into a visual `plan.md` + `tasks.md`; plans, does not implement |
-| `flow:developer` | Sonnet | Execute `tasks.md` via TDD + atomic conventional commits |
-| `flow:researcher` | Sonnet | Cost-efficient pre-plan investigation; fan out in parallel, returns a tight digest |
-| `flow:reviewer` | Fable | Fast in-harness fresh-eyes review; complements the external-agent code-review path |
+- **`flow:planner`** (Opus) — turn a framed task into a visual `plan.md` + `tasks.md`; plans, does not implement.
+- **`flow:developer`** (Sonnet) — execute `tasks.md` via TDD + atomic Conventional Commits.
+- **`flow:researcher`** (Sonnet) — cost-efficient pre-plan investigation; fan out in parallel, returns a tight digest.
+- **`flow:reviewer`** (Fable) — fast in-harness fresh-eyes review; complements the external-agent code-review path.
+- **`flow:browser-tester`** (Sonnet, frontend only) — real-browser QA: rendering, event handling, CDP-observed API calls; runs in parallel with review.
+- **`flow:react-reviewer`** (Fable / Opus, frontend only) — React composition & reuse audit; runs in parallel with review.
 
 ## Conventions
 
-- LLM-facing docs (plan.md, tasks.md, research.md, prepare.md): **English**
-- User-facing summaries (plan-review-summary.md, code-review-summary.md, PR body): **Korean**
-- Working dir: `.planning/<yyyy-mm-dd>-<kebab-task>/` (committed by default)
+- LLM-facing docs (brief.md, plan.md, tasks.md, research.md, prepare.md): **English**
+- User-facing docs (kickoff/review briefs as GitHub Issues, `artifacts/code-review-summary.md`, PR body, `artifacts/*.ko.md`): **Korean**
+- Working dir: `.planning/<yyyy-mm-dd>-<kebab-task>/` (**gitignored** — never committed; durable copy lives in GitHub Issues / PR bodies)
 - Branches: `<type>/<task-name>` where type ∈ `feature|fix|chore|refactor|docs`
 - Commits: Conventional Commits, atomic (one behavior per commit)
 
@@ -95,22 +97,26 @@ codex plugin marketplace add --help
 
 Shared reference docs live at the plugin root and are linked from each SKILL.md:
 
-- `references/models.md` — model registry (swap IDs here, not in skills)
-- `references/multi-llm.md` — how to call other coding agents
-- `references/directory-structure.md` — `.planning/` layout
-- `references/commit-conventions.md` — atomic + conventional commits
+- `references/models.md` — model registry & bundled agent tiers (swap IDs here, not in skills)
+- `references/multi-llm.md` — the brief → user-run-agents model (why the flow doesn't dispatch reviewer CLIs)
+- `references/config.md` — the consumer repo's `.flow/config.yaml` (assignee/labels/worktree root/review agents)
+- `references/directory-structure.md` — `.planning/` layout & git policy
+- `references/frontmatter.md` — YAML frontmatter schema for `.planning/` docs
+- `references/mermaid.md` — diagram types GitHub renders + skeletons
+- `references/doc-style.md` — prefer lists over tables; GitHub-body gotchas
+- `references/commit-conventions.md` — atomic + conventional commits, Issue/PR conventions
 - `references/tdd-policy.md` — when TDD applies, when it doesn't
 - `references/inline-review-posting.md` — gh API mechanics for inline PR comments
 
 ## Scripts
 
-- `scripts/prep.sh` — worktree + branch + `.planning/` scaffolding (idempotent)
+- `scripts/prep.sh` — worktree + branch + `.planning/` scaffolding (idempotent); invoked by `flow:kickoff`'s setup step
 
 ## Acknowledgements
 
-Inspired by [claude-octopus](https://github.com/nyldn/claude-octopus) — many of the design decisions here (multi-LLM orchestration, phase-based workflow, skill-per-step structure, plan/review separation) draw directly from patterns nyldn established there. `council-flow` is a smaller, opinionated subset focused on a single bilingual TDD-first development loop, but the foundations are theirs.
+Inspired by [claude-octopus](https://github.com/nyldn/claude-octopus) — many of the design decisions here (multi-agent orchestration, phase-based workflow, skill-per-step structure) draw directly from patterns nyldn established there. `council-flow` is a smaller, opinionated subset focused on a single bilingual TDD-first development loop, but the foundations are theirs.
 
-The planning and research skills also borrow from [Superpowers](https://github.com/obra/superpowers) and [gstack](https://github.com/garrytan/gstack): Superpowers' emphasis on design-before-implementation, explicit alternatives, and self-review; and gstack's stronger problem framing, premise challenge, existing-code leverage, and plan-review rigor.
+The planning and research skills also borrow from [Superpowers](https://github.com/obra/superpowers) and [gstack](https://github.com/garrytan/gstack): Superpowers' emphasis on design-before-implementation, explicit alternatives, and self-review; and gstack's stronger problem framing, premise challenge, and existing-code leverage.
 
 ## License
 
