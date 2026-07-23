@@ -2,7 +2,7 @@
 
 How `flow` uses models, and the model IDs per harness. The plugin uses models **three** ways:
 
-1. **Bundled agent tiers** — in-harness subagents shipped with the plugin (`flow:planner`, `flow:developer`, `flow:researcher`, `flow:reviewer`) that the orchestrator delegates phases to, each pinned to a cost-appropriate tier.
+1. **Bundled agent tiers** — in-harness subagents shipped with the plugin (`flow:planner`, `flow:developer`, `flow:researcher`, `flow:reviewer`, plus the frontend-only `flow:browser-tester` and `flow:react-reviewer`) that the orchestrator delegates phases to, each pinned to a cost-appropriate tier.
 2. **Research subagents** — the `flow:researcher` tier above (and ad-hoc `Explore`/`Task` subagents), spawned cheap to gather context.
 3. **External review agents** — diverse models the **user runs themselves** against a brief the flow agent writes.
 
@@ -10,7 +10,7 @@ How `flow` uses models, and the model IDs per harness. The plugin uses models **
 
 ## Bundled agent tiers (Claude Code)
 
-The plugin bundles four subagents (registered in `.claude-plugin/plugin.json` → `agents`). The orchestrator delegates each phase to the matching tier instead of running everything on the frontier model. Invoke them scoped: `flow:planner`, `flow:developer`, `flow:researcher`, `flow:reviewer`.
+The plugin bundles six subagents (registered in `.claude-plugin/plugin.json` → `agents`). The orchestrator delegates each phase to the matching tier instead of running everything on the frontier model. Invoke them scoped: `flow:planner`, `flow:developer`, `flow:researcher`, `flow:reviewer`, `flow:browser-tester`, `flow:react-reviewer`.
 
 | Agent | Tier (alias) | Phase | Why this tier |
 |---|---|---|---|
@@ -18,6 +18,10 @@ The plugin bundles four subagents (registered in `.claude-plugin/plugin.json` �
 | `flow:developer` | `sonnet` | develop | Mechanical TDD build is cost-sensitive; delegate off the frontier. |
 | `flow:researcher` | `sonnet` | research | Context-gathering, fanned out in parallel; cheap and disposable. |
 | `flow:reviewer` | `fable` | review (in-harness, optional) | Fast local fresh-eyes pass; complements the external-agent review. |
+| `flow:browser-tester` | `sonnet` | review — frontend only | Real-browser QA (rendering / events / CDP-observed API); runs in parallel with review. |
+| `flow:react-reviewer` | `fable` (opus for high-stakes) | review — frontend only | Composition/reuse audit of React code; runs in parallel with review. |
+
+The last two are **frontend-only** and run **in parallel with `flow:reviewer` / the code-review brief** — a review *lane*, not a sequential step. They no-op on non-frontend changes. See `flow:code-review-brief` and `flow:orchestrate` for how the lane is dispatched.
 
 Agent frontmatter pins the **alias** (`opus` / `sonnet` / `fable`) — stable across model versions — so this registry stays the single place mapping aliases to full per-harness IDs. Delegation is optional: the orchestrator may still run plan/develop inline when a task is small. The `flow:reviewer` in-harness pass does **not** replace the brief → user-run-external-agents flow below; it is the no-setup option.
 

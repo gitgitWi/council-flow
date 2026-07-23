@@ -32,6 +32,8 @@
     "./agents/planner.md",
     "./agents/developer.md",
     "./agents/researcher.md",
-    "./agents/reviewer.md"
+    "./agents/reviewer.md",
+    "./agents/browser-tester.md",
+    "./agents/react-reviewer.md"
   ]
 }
