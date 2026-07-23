@@ -20,7 +20,7 @@ Do **not** run cleanup on a task still in progress, or on a PR awaiting review w
 ## Preconditions (check first)
 
 1. **Confirm the work is durable.** The PR is merged, or the user confirms the branch is being abandoned. If unmerged commits exist that aren't on any remote, **stop and surface them** — do not remove a worktree that would lose work.
-2. **Confirm the worktree is clean** (`git -C <worktree> status --porcelain`). Uncommitted changes → show them and ask before removing.
+2. **Confirm the worktree is clean** (`git -C <worktree> status --porcelain`). Uncommitted changes → show them and ask before removing. **Note:** `.planning/` is gitignored, so its contents do **not** appear in porcelain — a "clean" result does not mean the worktree holds nothing you care about. Explicitly check `.planning/<date>-<task>/artifacts/` for anything unpublished (secrets, reusable e2e scripts a browser-tester left, Korean summaries) before Step 2 deletes it with the worktree.
 3. **Identify what the task started.** Look for the dev server / e2e / Playwright processes and preview deployments tied to this task before killing anything broad.
 
 ## Steps
@@ -32,16 +32,18 @@ Kill only what this task started; don't sweep unrelated processes.
 - Dev servers / watchers (the task's port) and e2e/Playwright/agent-browser runners.
 - Prefer the tool's own stop path (e.g. stop a `run_in_background` task) over a blind `pkill`. If you must match by pattern, scope it tightly (port, project path) and show what will be killed first.
 
-### 2 — Remove the worktree
+### 2 — Salvage, then remove the worktree
+
+`.planning/<date>-<task>/` lives **inside** the worktree, so `git worktree remove` deletes it — including gitignored artifacts. **Salvage first:** if `artifacts/` holds anything worth keeping (a reusable e2e script, a review summary), copy it out or post it to the PR/issue before removing. The durable record of non-code docs is meant to be on GitHub, not the worktree.
 
 ```bash
 # from the canonical repo (not inside the worktree being removed)
 git worktree remove <repo-parent>/<repo>.worktrees/<task>   # add --force only with explicit consent for a dirty tree
 git worktree prune
-git branch -d <branch>     # -D only if the branch was intentionally abandoned unmerged, with consent
+git branch -d <branch>     # merge-detected branches only
 ```
 
-Never remove a worktree you are currently `cd`'d into — move to the canonical repo first (`git rev-parse --show-toplevel` from a normal checkout).
+Branch deletion: `git branch -d` only succeeds when git can see the branch was merged. A **squash-merged** branch looks unmerged to git, so `-d` fails — after confirming the PR is actually merged, use `git branch -D <branch>` with the user's consent. Never remove a worktree you are currently `cd`'d into — move to the canonical repo first (`git rev-parse --show-toplevel` from a normal checkout).
 
 ### 3 — Prune preview deployments (deployable projects only)
 
@@ -49,7 +51,7 @@ If the project auto-deploys previews per branch/PR (Cloudflare Worker, ACA, Verc
 
 ### 4 — Record the teardown
 
-If the task tracked work under a parent GitHub Issue, add a short Korean comment noting what was cleaned (worktree removed, resources stopped, previews pruned) so the issue reflects the closed-out state. Keep `.planning/<date>-<task>/` local (it is gitignored working memory) — remove it only if the user asks; the durable record is the PR/issue.
+If the task tracked work under a parent GitHub Issue, add a short Korean comment noting what was cleaned (worktree removed, resources stopped, previews pruned) so the issue reflects the closed-out state. Note that removing the worktree in Step 2 already deleted `.planning/<date>-<task>/` along with it — that is expected (it was gitignored local scratch, and the durable copy lives in the PR/issue). If the task worked **in-place** (no worktree), `.planning/` is still on disk — remove it only if the user asks.
 
 ## What NOT to do
 

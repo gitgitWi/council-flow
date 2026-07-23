@@ -23,6 +23,9 @@ flow:
   issue_first: true             # research/plan → GitHub Issue, user approves before code
   pr_language: ko               # language for PR/Issue bodies (user/team-facing)
 
+cleanup:
+  preview_retention: 10         # flow:cleanup keeps the last N preview deployments, prunes older
+
 review:
   # External agents the USER runs against a review/brainstorm brief.
   # The flow agent does NOT execute these — it writes the brief; the user runs them.
@@ -41,6 +44,7 @@ Read once at the start of a flow step; treat values as defaults that the user ca
 - `flow:kickoff` — worktree root, base branch, issue-first toggle, assignee/milestone/labels for the brief's working rules.
 - `flow:commit-pr` / `flow:deploy` — assignee, milestone, labels, PR language.
 - `flow:code-review-brief` — `review.agents` is listed in the brief so the user knows which agents to run; the flow agent never invokes them.
+- `flow:cleanup` — `worktree.root` to locate the worktree; `cleanup.preview_retention` for how many preview deployments to keep.
 
 ## Notes
 
