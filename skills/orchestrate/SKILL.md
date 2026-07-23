@@ -130,7 +130,10 @@ Do **not** auto-invoke deploy inside orchestrate. The reasons:
 
 ## After the review (recommend-only, not part of the sequence)
 
-Once reviewers have left feedback on the PR, the user can run `flow:review-triage` — in its own session — to pull all the comments, triage validity + priority, plan fixes, and apply them after sign-off. Orchestrate **never auto-invokes** it; just mention it as the next step when deploy/review is done.
+Two recommend-only steps follow the sequence. Orchestrate **never auto-invokes** either — mention them as next steps, each usually run in its own session:
+
+- **`flow:review-triage`** — once reviewers have left feedback on the PR, pull all the comments, triage validity + priority, plan fixes, and apply them after sign-off.
+- **`flow:cleanup`** — once the PR is merged, tear down the task's transient resources: kill the dev server / e2e / Playwright processes, remove the worktree, prune stale preview deployments.
 
 If the user objects and explicitly says "just run deploy too", you may invoke it inline, but mention the trade-off.
 

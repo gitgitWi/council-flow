@@ -86,9 +86,14 @@ Either way, deploy never runs reviewer CLIs or posts comments — once the brief
 - **Don't auto-merge.** The user merges after reviewing.
 - **Don't bundle deploy with develop in the same session.** The PR should reflect a clean final diff.
 
+## After merge — mention cleanup (don't run it)
+
+Once the PR is merged, the task's worktree and any dev-server / e2e / preview-deployment resources are still around. Tell the user they can run `flow:cleanup` (in its own session) to tear them down — kill the processes, remove the worktree, prune stale previews. Like `flow:review-triage`, cleanup is **recommend-only**: mention it, never auto-invoke it.
+
 ## Reference
 
 - Review brief skill: `../code-review-brief/SKILL.md`
+- Post-task teardown: `../cleanup/SKILL.md`
 - New multi-LLM model (brief → user-run agents): `../../references/multi-llm.md`
 - Project defaults (`assignee`/`milestone`/`labels`): `../../references/config.md`
 - Frontmatter schema: `../../references/frontmatter.md`
