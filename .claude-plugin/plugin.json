@@ -19,6 +19,7 @@
   ],
   "skills": [
     "./skills/kickoff/",
+    "./skills/quick/",
     "./skills/research/",
     "./skills/plan/",
     "./skills/develop/",
