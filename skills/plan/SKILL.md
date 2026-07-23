@@ -16,6 +16,17 @@ The point of planning is to start implementing sooner with a clear direction, **
 - **Iterate fast.** plan → implement → review → fix, repeated, beats one big plan. Get something reviewable in front of the user quickly; refine on the next loop.
 - The size ceilings below are **ceilings, not targets** — most plans should land well under them.
 
+## Lock the goal, spec, and user flow before you plan
+
+Brevity does **not** mean skipping the goal. The single most expensive failure mode is a plan that starts from an ambiguous goal: scope corrections then arrive piecemeal *after* implementation has begun ("actually mobile is out", "it must match prod pixel-for-pixel", "that field shouldn't exist"). Lock these three **before** drafting the approach — this is where clarity is cheap:
+
+1. **Goal must be unambiguous.** If any part of what "done" means is unclear, **ask with `AskUserQuestion`** — offer concrete options so the user picks the direction, don't guess. Confirm the goal at the level of *the big direction*, not every detail.
+2. **Write the spec + user flow explicitly.** State the behavioral contract (what the system does, for whom, in what order) and the **user flow** as a Mermaid `journey`/`sequenceDiagram`. A plan the user can't trace as a flow isn't specified yet.
+3. **Decide the shape/schema *with* the user.** Any non-trivial data schema, API contract, or interface decision goes through `AskUserQuestion` before it's baked into the plan — a wrong schema is the most expensive thing to unwind later.
+4. **Enumerate out-of-scope up front**, not just in-scope. The `## Non-goals` section is mandatory (not "near the end if you get to it") — list what you are deliberately *not* doing so it can't creep in during develop.
+
+This is a few minutes at plan time that saves the piecemeal-correction spiral during develop. Keep it tight — options and a diagram, not prose.
+
 ## Prep precondition check (run first, every invocation)
 
 Before writing anything, verify the worktree + branch + planning directory exist. If not, the user has skipped `flow:kickoff` setup and `plan.md` would land in the wrong place.
@@ -205,6 +216,16 @@ For size-L plans broken into phase files (`plan-phase-1.md`, …): each phase fi
 
 ## Goal
 One paragraph. What does success look like for the user? Avoid mentioning files.
+Must be unambiguous — if it wasn't, you resolved it with the user (AskUser) before writing this.
+
+## Spec & user flow
+- The behavioral contract: what the system does, for whom, and in what order. Include any
+  data schema / API shape that was decided (with the user) — enough that develop can build to it.
+- A **user flow** as a Mermaid `journey` or `sequenceDiagram` — the path the user takes end to end.
+
+## Scope
+- **In:** the outcomes this task delivers.
+- **Out:** what is deliberately excluded (also restated in `## Non-goals`). Fill this now, not later.
 
 ## Decision context
 - Problem framing: who is affected, what outcome matters, and what constraints
@@ -318,6 +339,8 @@ prevents scope creep during develop, so don't omit it.
 
 Before showing the plan to the user, review it with fresh eyes and fix gaps inline:
 
+- **Goal locked:** Goal is unambiguous, the spec + user flow are written, and any
+  schema/contract was decided with the user (AskUser) — not left implicit.
 - **Coverage:** Every stated success criterion maps to at least one task.
 - **Placeholders:** No TBD/TODO/fill-in-later language remains.
 - **Change map present:** For size M/L, every file the plan implies touching

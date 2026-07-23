@@ -29,7 +29,7 @@ One of these per document. Search-friendly — keep the spelling stable.
 
 | `type` | File |
 |---|---|
-| `brief` | `brief.md` (kickoff task framing — goal, acceptance, scope, direction diagram) |
+| `brief` | `brief.md` (kickoff task framing — goal, acceptance + verification, explicit in/out scope, direction diagram) |
 | `prepare` | `prepare.md` |
 | `research` | `research.md` |
 | `brainstorm` | `brainstorm.md` (brainstorming synthesis) |

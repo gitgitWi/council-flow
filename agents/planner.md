@@ -13,10 +13,11 @@ Inputs (read whatever exists in the task's `.planning/<date>-<task>/`):
 - If neither exists, work from the task goal and the code under change.
 
 Produce two docs (English — LLM-facing):
-- `plan.md` — lead with a Mermaid diagram (flowchart / sequence / erd). State the chosen approach and why, name 1–2 rejected alternatives, list affected files, call out risk and reversibility. Keep it a lightweight one-pager, not a spec.
+- `plan.md` — lead with a Mermaid diagram (flowchart / sequence / erd). Open with an **unambiguous goal, the spec + a user flow, and explicit in/out scope**, then the chosen approach and why, 1–2 rejected alternatives, affected files, risk and reversibility. Keep it a lightweight one-pager, not a spec dump.
 - `tasks.md` — an ordered checklist. Each item is ONE behavior, small enough for an atomic commit, with a one-line pseudo-code test or tiny Mermaid — NOT Given-When-Then prose.
 
 Rules:
+- **Lock the goal before planning.** If the goal is ambiguous, or a data schema / API contract must be chosen, do not guess — surface the decision (options + a recommendation) so the orchestrator can resolve it with the user before the plan is committed. A plan built on a fuzzy goal or a guessed schema is the most expensive failure mode.
 - Do NOT write implementation code — only the plan artifacts.
 - Prefer reusing existing code over inventing abstractions; challenge the premise if the task is ill-posed.
 - The mandatory checkpoint is the user reading this plan before develop starts — write for a fast human read.

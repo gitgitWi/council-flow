@@ -62,7 +62,8 @@ One or two outcome bullets ("X가 정상 동작한다"), not a task list.
 - <measurable signal> — verified by <simulator / real device / test / script exit / screenshot>
 
 ## Scope (MUST)
-- In: <…>   Out: <…>
+- **In:** <the outcomes this task delivers>
+- **Out:** <what is explicitly excluded — fill this now, don't let it arrive piecemeal later>
 
 ## Direction
 <a Mermaid diagram showing the intended flow/shape — flowchart, sequence, or user
@@ -76,8 +77,10 @@ journey. A picture of the approach the user can scan in seconds. See ../../refer
 ```
 
 Rules learned from the session review:
+- **Ambiguous goal → AskUser, don't guess.** If any part of what "done" means could be read more than one way, resolve it with `AskUserQuestion` (concrete options) *before* writing the brief. Confirm the big direction, not every detail.
 - **Always resolve acceptance + verification.** A goal with no "done" signal is the #1 cause of drift. If the user did not state it, ask.
-- **Always set a scope boundary.** "점검 / 파악 / 검토" without an In/Out line is the highest-risk prompt shape.
+- **Always set both scope boundaries.** In *and* Out. "점검 / 파악 / 검토" without an In/Out line is the highest-risk prompt shape; a missing Out line is why exclusions arrive piecemeal mid-build.
+- **Decide schema/contract with the user.** Any non-trivial data schema or API shape the task hinges on goes through `AskUserQuestion` before it's committed — the most expensive thing to unwind later. (Plan re-confirms this; see `flow:plan`.)
 - **Bugs need repro + payload.** Symptom alone forces a clarification round.
 - **Multi-goal → prioritize or split.** If the goal has more than ~3 independent parts, propose splitting into sub-tasks/sub-issues. The longest, most painful sessions were under-scoped single briefs.
 
