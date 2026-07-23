@@ -83,6 +83,10 @@ If you have a "Category × items" table, split it into sub-headers:
 
 This is easier to scan on a phone and survives renderer drift.
 
+## GitHub body gotcha — ordered lists
+
+In GitHub Issue / PR / comment bodies, **do not prefix a list number with `#`.** GitHub auto-links `#N` as an issue/PR reference, so `#1.` turns into a link to issue 1 instead of a list marker. Write plain `1.` `2.` `3.`. (This is a rendering gotcha, not a style preference — it produces wrong links, not just ugly ones.) Cross-referenced from `commit-conventions.md`.
+
 ## When a table really is the right call
 
 Keep it tight: 3+ columns, identical row shape, every column used. Example of a legitimate table (the prep-precondition decision matrix from `flow:plan`):
