@@ -66,7 +66,7 @@ Delegation is a cost/context optimization, not a hard rule: for size S tasks, ru
 The orchestrator is not just a sequencer — it runs independent work **concurrently**. Two rules:
 
 1. **Independent tasks/issues run in parallel.** When sub-issues or tasks touch **non-overlapping files**, dispatch their subagents at the same time rather than one after another. If two would edit the same files, serialize them (or isolate each in its own worktree). When unsure whether they overlap, check the change map before parallelizing.
-2. **The review lane is parallel.** After deploy opens the PR, the review is a **lane, not a step**: run **code review** (`flow:reviewer` / external agent), **browser QA** (`flow:browser-tester`, frontend only), and **React quality** (`flow:react-reviewer`, frontend only) **at the same time**. They inspect the same diff from different angles and don't depend on each other.
+2. **The review lane is parallel.** After deploy opens the PR, the review is a **lane, not a step**: run **code review** (`flow:reviewer`), **browser QA** (`flow:browser-tester`, frontend only), and **React quality** (`flow:react-reviewer`, frontend only) **at the same time**. They inspect the same diff from different angles and don't depend on each other. Because orchestrate ends before deploy (deploy is a separate session), the lane is actually **dispatched by `flow:deploy` Step 4** — this section defines the model; deploy executes it.
 
 While a subagent runs, keep the orchestrator busy with the next independent piece (e.g. plan the next phase while the current one builds) instead of blocking.
 

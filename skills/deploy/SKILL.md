@@ -79,6 +79,18 @@ After the PR is open, ask the user (one `AskUserQuestion`, default = yes):
 
 Either way, deploy never runs reviewer CLIs or posts comments — once the brief exists, the **user** runs their reviewer agent(s) against it and posts to the PR.
 
+## Step 4 — Dispatch the in-harness review lane (in parallel)
+
+Deploy runs in the session where the PR now exists, so it — not `flow:orchestrate` (which has already ended by this point) — is what actually **dispatches the bundled in-harness review lane**. This is an *additive* fast pass that complements the user-run external review the brief sets up; it does not post anything.
+
+Run these bundled tiers **concurrently** (a lane, not a sequence) against the PR diff:
+
+- **`flow:reviewer`** (Fable) — general fresh-eyes review. Always applicable.
+- **`flow:browser-tester`** (Sonnet) — real-browser QA. **Frontend changes only** — it no-ops otherwise.
+- **`flow:react-reviewer`** (Fable/Opus) — composition/reuse audit. **React changes only** — it no-ops otherwise.
+
+Each returns findings (it does **not** post). Collect them, and per the supervision model (`flow:orchestrate`) route small issues to an in-place fix and large ones to a follow-up. Skip the whole lane if the user only wanted the brief, or for a trivial diff. The frontend tiers self-gate, so dispatching all three on a non-frontend PR is harmless — the two frontend ones report "nothing to do."
+
 ## What NOT to do
 
 - **Don't run the review brief without asking.** Ask once (default yes), then run on confirm.

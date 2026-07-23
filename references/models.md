@@ -21,7 +21,7 @@ The plugin bundles six subagents (registered in `.claude-plugin/plugin.json` →
 | `flow:browser-tester` | `sonnet` | review — frontend only | Real-browser QA (rendering / events / CDP-observed API); runs in parallel with review. |
 | `flow:react-reviewer` | `fable` (opus for high-stakes) | review — frontend only | Composition/reuse audit of React code; runs in parallel with review. |
 
-The last two are **frontend-only** and run **in parallel with `flow:reviewer` / the code-review brief** — a review *lane*, not a sequential step. They no-op on non-frontend changes. See `flow:code-review-brief` and `flow:orchestrate` for how the lane is dispatched.
+The last two are **frontend-only** and run **in parallel with `flow:reviewer`** — a review *lane*, not a sequential step. They no-op on non-frontend changes. The lane is **dispatched by `flow:deploy`** (Step 4), because deploy runs in the session where the PR exists; `flow:orchestrate` describes the parallel/supervision model but has already ended before deploy. See `flow:deploy` and `flow:orchestrate`.
 
 Agent frontmatter pins the **alias** (`opus` / `sonnet` / `fable`) — stable across model versions — so this registry stays the single place mapping aliases to full per-harness IDs. Delegation is optional: the orchestrator may still run plan/develop inline when a task is small. The `flow:reviewer` in-harness pass does **not** replace the brief → user-run-external-agents flow below; it is the no-setup option.
 
