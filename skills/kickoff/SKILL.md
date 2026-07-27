@@ -128,6 +128,15 @@ The script is idempotent. It creates the worktree at `<repo-parent>/<repo-name>.
 ## Step 5 — Publish & hand off
 
 - **Non-code docs live in GitHub**, not the repo. By default (Fix/Debug/Research/Feature) **post the brief as a GitHub Issue** — render the Issue body in **Korean** (user/team-facing), keep `brief.md` in English. Use the `gh` CLI. Apply assignee/labels/milestone per the working rules below. (In ordered lists inside GitHub bodies, do **not** prefix numbers with `#` — GitHub auto-links `#N` as an issue reference.)
+- **Record the Issue URL in `brief.md` frontmatter** — `issue: <full URL>` plus `issue_role: leaf` (or `parent` for an umbrella issue from a split). This is the handoff to `flow:deploy`, which links the Issue from the PR body. `gh issue create` prints the URL on stdout, so capture it:
+
+  ```bash
+  ISSUE_URL=$(gh issue create --title "<title>" --body-file <(…) \
+    --assignee "<config>" --label "<config>" --milestone "<config>")
+  echo "$ISSUE_URL"   # https://github.com/<org>/<repo>/issues/41
+  ```
+
+  Then write `issue: $ISSUE_URL` into the frontmatter. Skip it only when no Issue was created — and say so, because deploy will then have to ask the user for the link.
 - **Hand off by size** (see routing): **S** → `flow:develop`; **M/L** → `flow:plan`. Do not code from this skill.
 
 ## Working rules (auto-filled — don't make the user retype)
@@ -166,11 +175,17 @@ When oversized, **don't proceed as one task.** Propose a split and, on the user'
 4. Run the flow on the **first** sub-issue only (scaffold that one via Step 4). The rest wait — each becomes its own kickoff→…→deploy loop later.
 
 ```bash
-PARENT=$(gh issue create --title "<umbrella>" --body-file parent-brief.md \
-  --assignee "<config>" --label "<config>" --milestone "<config>" --json number --jq .number)
+# gh issue create prints the new issue's URL on stdout — capture it, derive the number.
+PARENT_URL=$(gh issue create --title "<umbrella>" --body-file parent-brief.md \
+  --assignee "<config>" --label "<config>" --milestone "<config>")
+PARENT="${PARENT_URL##*/}"
 # then per part:
-gh issue create --title "<part 1>" --body "<sub-brief>\n\n부모: #$PARENT" --assignee "<config>" ...
+gh issue create --title "<part 1>" --body "<sub-brief>
+
+부모: #${PARENT}" --assignee "<config>" ...
 ```
+
+Record the **sub-issue** URL as `issue:` in the brief of the part you actually scaffold (with `issue_role: leaf`), and the parent URL in that brief's `related:`. The parent issue gets `issue_role: parent` — deploy must not `Closes` it, or the remaining sub-issues are orphaned.
 
 A split of 3–6 sub-issues is typical for an L that was really several tasks. Prefer more, smaller sub-issues over fewer fat ones — the whole point is that each finishes fast and gets reviewed on its result.
 

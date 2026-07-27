@@ -30,8 +30,9 @@ Check first whether a PR already exists for the branch (`gh pr view --json numbe
 **If none exists — open one:**
 - Title + body in **Korean** (user/team-facing).
 - Body: short summary of what changed and why, plan-vs-implementation deltas if any, verification done. Lists over prose.
-- assignee + labels (reuse existing, create only if needed) + milestone per the project's rules (from `flow.config` or the brief's working rules).
+- assignee + labels (reuse existing, create only if needed) + milestone per the project's rules (from `.flow/config.yaml` or the brief's working rules).
 - Use the `gh` CLI directly (not MCP).
+- **Link the task's GitHub Issue, not local docs.** Read `issue:` / `issue_role:` from the task's `brief.md` frontmatter and write `Closes #<N>` (leaf) or a bare `#<N>` (parent/umbrella). Never link a `.flow/tasks/...` path — it is gitignored and dead for reviewers. No screenshots section: `gh` cannot attach images. Same rules as `flow:deploy` Step 2.
 - End the PR body with the Claude Code footer.
 
 **If one exists — update it:**

@@ -120,12 +120,16 @@ contributors:                            # flow-agent, plus any external agent t
 ```yaml
 # brief.md (kickoff)
 category: Debug & Fix                     # Feature | Fix | Debug & Fix | Refactor | Chore | Research | UI Fix | Question
+issue: https://github.com/<org>/<repo>/issues/41   # set by kickoff Step 5 after posting the brief
+issue_role: leaf                          # leaf | parent — leaf closes on merge, parent does not
 
 # code-review-brief.md
 pr: 1234
 ```
 
 The brief body holds only review material (files, change summary, intent, lenses). Agent→lens suggestions are output to chat, not stored in the doc — so there is no `review_agents` field.
+
+`issue` is the one field that must survive the task folder being deleted, because it is what `flow:deploy` reads to build the PR's 관련 링크 section — the task folder is gitignored local memory, so the GitHub Issue is the only shareable anchor. Write the **full URL**, not `#41`: the URL is unambiguous across repos. `issue_role` tells deploy whether to write `Closes #N` (leaf) or a bare `#N` reference (parent/umbrella — closing it would orphan its remaining sub-issues). Omit both when the task never got an Issue.
 
 ### `code-review` (an external agent's returned review, saved by the user)
 

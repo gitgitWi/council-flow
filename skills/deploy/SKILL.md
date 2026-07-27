@@ -45,13 +45,29 @@ PR body in Korean, using this template:
 - [ ] Playwright E2E (해당 시)
 - [ ] 수동 확인: <어떤 시나리오를 어떻게 확인했는지>
 
-## 스크린샷 / 영상
-(UI 변경이 있는 경우)
-
 ## 관련 링크
-- 플랜: `.flow/tasks/<date>-<task>/plan.md`
-- 리뷰 brief: `.flow/tasks/<date>-<task>/artifacts/code-review-brief.md` (자동 생성 예정)
+- 작업 Issue: Closes #<N>
 ```
+
+### 관련 링크 — resolve the Issue, never link a local path
+
+The plan and brief are **not** shareable as files: `.flow/tasks/` is gitignored local working memory, so a reviewer clicking `.flow/tasks/<date>-<task>/plan.md` gets nothing. The GitHub **Issue** that `flow:kickoff` posted is the durable, linkable copy of the framing and plan — link that.
+
+Resolve it in this order:
+
+1. **`issue:` in `brief.md` frontmatter** of the task folder — kickoff Step 5 writes the full URL there. This is the normal path.
+2. **Search GitHub** if the field is missing: `gh issue list --search "<task-name>" --state all --limit 5` and confirm the match with the user before using it.
+3. **Ask the user** for the Issue number if neither resolves. If the task genuinely has no Issue (a `flow:quick` fast-lane fix, a standalone PR), **drop the `## 관련 링크` section entirely** rather than shipping a dead or empty link.
+
+Write the reference according to `issue_role` in the same frontmatter:
+
+- **`leaf`** (the common case — the Issue is this task) → `Closes #<N>`, so merging closes it.
+- **`parent`** (an umbrella Issue from a kickoff split) → a bare `#<N>` reference and a line naming which sub-issue this PR covers. **Never `Closes` a parent** — it would close the umbrella while sibling sub-issues are still open.
+
+Add other links only when they exist and are on GitHub: the base PR for a stacked PR, a preview-deployment URL, a related Issue. Rules that apply to every entry:
+
+- **GitHub/HTTP URLs and `#N` references only.** No `.flow/tasks/...`, no absolute local paths, no worktree paths.
+- `gh` cannot attach images or files to a PR — there is no screenshots/video section. If a UI change needs visual evidence, the user drags the image into the PR on the web UI themselves, or the `flow:browser-tester` findings go in as a comment. Do not add a placeholder section for something this skill cannot fill.
 
 Apply PR metadata from `.flow/config.yaml` (`github.assignee`, `github.milestone`, `github.labels` — reuse existing repo labels, create only if needed). Create with HEREDOC for correct formatting:
 
@@ -97,6 +113,9 @@ Each returns findings (it does **not** post). Collect them, and per the supervis
 - **Don't run reviewer CLIs or post comments.** That is the user's step, even after the brief is written.
 - **Don't auto-merge.** The user merges after reviewing.
 - **Don't bundle deploy with develop in the same session.** The PR should reflect a clean final diff.
+- **Don't link `.flow/tasks/` paths from the PR body.** It is gitignored local memory — the link is dead for every reviewer. Link the GitHub Issue instead.
+- **Don't add a screenshots/video section.** `gh` cannot attach images or files to a PR, so the section can only ever ship empty. The user adds visuals via the web UI if they want them.
+- **Don't `Closes` a parent/umbrella Issue.** Check `issue_role` first; closing a parent orphans its open sub-issues.
 
 ## After merge — mention cleanup (don't run it)
 
@@ -108,5 +127,6 @@ Once the PR is merged, the task's worktree and any dev-server / e2e / preview-de
 - Post-task teardown: `../cleanup/SKILL.md`
 - New multi-LLM model (brief → user-run agents): `../../references/multi-llm.md`
 - Project defaults (`assignee`/`milestone`/`labels`): `../../references/config.md`
-- Frontmatter schema: `../../references/frontmatter.md`
+- Frontmatter schema (`issue` / `issue_role` on `brief.md`): `../../references/frontmatter.md`
+- Why `.flow/tasks/` is never linked from GitHub: `../../references/directory-structure.md` (Git policy)
 - Doc style (prefer lists over tables): `../../references/doc-style.md`
