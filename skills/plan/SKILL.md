@@ -16,9 +16,20 @@ The point of planning is to start implementing sooner with a clear direction, **
 - **Iterate fast.** plan → implement → review → fix, repeated, beats one big plan. Get something reviewable in front of the user quickly; refine on the next loop.
 - The size ceilings below are **ceilings, not targets** — most plans should land well under them.
 
+## Lock the goal, spec, and user flow before you plan
+
+Brevity does **not** mean skipping the goal. The single most expensive failure mode is a plan that starts from an ambiguous goal: scope corrections then arrive piecemeal *after* implementation has begun ("actually mobile is out", "it must match prod pixel-for-pixel", "that field shouldn't exist"). Lock these three **before** drafting the approach — this is where clarity is cheap:
+
+1. **Goal must be unambiguous.** If any part of what "done" means is unclear, **ask with `AskUserQuestion`** — offer concrete options so the user picks the direction, don't guess. Confirm the goal at the level of *the big direction*, not every detail.
+2. **Write the spec + user flow explicitly.** State the behavioral contract (what the system does, for whom, in what order) and the **user flow** as a Mermaid `journey`/`sequenceDiagram`. A plan the user can't trace as a flow isn't specified yet.
+3. **Decide the shape/schema *with* the user.** Any non-trivial data schema, API contract, or interface decision goes through `AskUserQuestion` before it's baked into the plan — a wrong schema is the most expensive thing to unwind later.
+4. **Enumerate out-of-scope up front**, not just in-scope. The `## Non-goals` section is mandatory (not "near the end if you get to it") — list what you are deliberately *not* doing so it can't creep in during develop.
+
+This is a few minutes at plan time that saves the piecemeal-correction spiral during develop. Keep it tight — options and a diagram, not prose.
+
 ## Prep precondition check (run first, every invocation)
 
-Before writing anything, verify the worktree + branch + planning directory exist. If not, the user has skipped `flow:prep` and `plan.md` would land in the wrong place.
+Before writing anything, verify the worktree + branch + task directory exist. If not, the user has skipped `flow:kickoff` setup and `plan.md` would land in the wrong place.
 
 ```bash
 # 1. Are we in a flow worktree? (heuristic: parent dir name ends in .worktrees)
@@ -30,19 +41,19 @@ case "$WT_PARENT" in *.worktrees) IN_WORKTREE=1;; *) IN_WORKTREE=0;; esac
 BRANCH="$(git branch --show-current)"
 case "$BRANCH" in feature/*|fix/*|chore/*|refactor/*|docs/*) ON_TASK_BRANCH=1;; *) ON_TASK_BRANCH=0;; esac
 
-# 3. Is there a .planning/<date>-<task>/prepare.md to write into?
-PREPARE="$(ls -1 .planning/*/prepare.md 2>/dev/null | head -n1)"
-[[ -n "$PREPARE" ]] && HAS_PLANNING=1 || HAS_PLANNING=0
+# 3. Is there a .flow/tasks/<date>-<task>/prepare.md to write into?
+PREPARE="$(ls -1 .flow/tasks/*/prepare.md 2>/dev/null | head -n1)"
+[[ -n "$PREPARE" ]] && HAS_TASK_DIR=1 || HAS_TASK_DIR=0
 ```
 
 Decision matrix:
 
-| In worktree | On task branch | Has `.planning/.../prepare.md` | Action |
+| In worktree | On task branch | Has `.flow/tasks/.../prepare.md` | Action |
 |---|---|---|---|
 | yes | yes | yes | Proceed. This is the normal post-prep state. |
-| no | no | no | **Stop.** Tell the user prep was skipped and ask: (a) run `flow:prep` now (recommended), (b) proceed in-place on the current branch (only sensible for size S, and you must still create `.planning/<date>-<task>/prepare.md` manually before writing the plan), (c) abort. |
-| any | yes | no | Branch exists but planning dir is missing. Ask the user whether the prior planning was cleaned up (rare) or this is a new task on a reused branch (more common). Create `.planning/<date>-<task>/prepare.md` before writing the plan either way. |
-| any | any | yes | Planning dir exists. Proceed and write into the existing dir — do not create a second one for the same date+task. |
+| no | no | no | **Stop.** Tell the user setup was skipped and ask: (a) run `flow:kickoff` setup now (recommended), (b) proceed in-place on the current branch (only sensible for size S, and you must still create `.flow/tasks/<date>-<task>/prepare.md` manually before writing the plan), (c) abort. |
+| any | yes | no | Branch exists but the task dir is missing. Ask the user whether the prior task dir was cleaned up (rare) or this is a new task on a reused branch (more common). Create `.flow/tasks/<date>-<task>/prepare.md` before writing the plan either way. |
+| any | any | yes | Task dir exists. Proceed and write into the existing dir — do not create a second one for the same date+task. |
 
 Do not silently fix the situation. The decision affects which branch commits land on and where artifacts get audited; the user should make it.
 
@@ -50,7 +61,7 @@ If the user picks "proceed in-place" without prep, write the size into the manua
 
 ## Output files
 
-All written under `<worktree>/.planning/<date>-<task>/`:
+All written under `<worktree>/.flow/tasks/<date>-<task>/`:
 
 - **`plan.md`** — approach, scope, architecture decisions, rollout. ~500 lines max for the whole thing (including any phase sub-plans). If it grows beyond that, split into `plan-phase-1.md`, `plan-phase-2.md` and let `plan.md` become a short index.
 - **`tasks.md`** — concise behavior checkbox list (one-line behavior + pseudo-code test or Mermaid), the single source of truth for progress during develop.
@@ -87,7 +98,7 @@ Generate options through focused lenses so they are differentiated, not duplicat
 Before dispatching anything, check whether the brainstorm has already run:
 
 ```bash
-BRAINSTORM=.planning/<date>-<task>/brainstorm.md
+BRAINSTORM=.flow/tasks/<date>-<task>/brainstorm.md
 if [[ -f "$BRAINSTORM" ]] && grep -q '^status: active' "$BRAINSTORM"; then
   echo "brainstorm.md already exists (status: active)"
 fi
@@ -105,7 +116,7 @@ Idempotency: if `brainstorm.md` already exists with `status: active`, don't sile
 
 ### Synthesis — `brainstorm.md`
 
-Write a single English `brainstorm.md` at `.planning/<date>-<task>/brainstorm.md` — the options from your own lenses, plus any external-agent returns (read each once, extract load-bearing ideas). This is what the planner consults while drafting `plan.md`.
+Write a single English `brainstorm.md` at `.flow/tasks/<date>-<task>/brainstorm.md` — the options from your own lenses, plus any external-agent returns (read each once, extract load-bearing ideas). This is what the planner consults while drafting `plan.md`.
 
 ```markdown
 ---
@@ -205,6 +216,16 @@ For size-L plans broken into phase files (`plan-phase-1.md`, …): each phase fi
 
 ## Goal
 One paragraph. What does success look like for the user? Avoid mentioning files.
+Must be unambiguous — if it wasn't, you resolved it with the user (AskUser) before writing this.
+
+## Spec & user flow
+- The behavioral contract: what the system does, for whom, and in what order. Include any
+  data schema / API shape that was decided (with the user) — enough that develop can build to it.
+- A **user flow** as a Mermaid `journey` or `sequenceDiagram` — the path the user takes end to end.
+
+## Scope
+- **In:** the outcomes this task delivers.
+- **Out:** what is deliberately excluded (also restated in `## Non-goals`). Fill this now, not later.
 
 ## Decision context
 - Problem framing: who is affected, what outcome matters, and what constraints
@@ -318,6 +339,8 @@ prevents scope creep during develop, so don't omit it.
 
 Before showing the plan to the user, review it with fresh eyes and fix gaps inline:
 
+- **Goal locked:** Goal is unambiguous, the spec + user flow are written, and any
+  schema/contract was decided with the user (AskUser) — not left implicit.
 - **Coverage:** Every stated success criterion maps to at least one task.
 - **Placeholders:** No TBD/TODO/fill-in-later language remains.
 - **Change map present:** For size M/L, every file the plan implies touching
@@ -433,7 +456,7 @@ After self-review passes, generate Korean translations of `plan.md` and `tasks.m
 
 ### Dispatch method
 
-**Primary — Sonnet subagent.** Spawn a Claude Code Task agent with `model: sonnet`. The subagent reads `plan.md` and `tasks.md` from the planning directory and writes:
+**Primary — Sonnet subagent.** Spawn a Claude Code Task agent with `model: sonnet`. The subagent reads `plan.md` and `tasks.md` from the task directory and writes:
 
 - `artifacts/plan.ko.md`
 - `artifacts/tasks.ko.md`

@@ -1,6 +1,6 @@
 ---
 name: orchestrate
-description: Run the full flow workflow end-to-end — kickoff → prep → optional research → plan (with optional multi-LLM brainstorming) → develop → deploy — based on a single task goal from the user. Use this when the user wants to hand off a complete task and let the workflow run, rather than driving each step manually. Skips research and brainstorming automatically for size S tasks; runs the full pipeline for size L. Even when the user just says "build me X", consider this skill if the task warrants the full discipline.
+description: Run the full flow workflow end-to-end — kickoff (framing + setup) → optional research → plan (with optional multi-LLM brainstorming) → develop → deploy → optional cleanup — based on a single task goal from the user. Use this when the user wants to hand off a complete task and let the workflow run, rather than driving each step manually. Skips research and brainstorming automatically for size S tasks; runs the full pipeline for size L. Even when the user just says "build me X", consider this skill if the task warrants the full discipline.
 ---
 
 # flow:orchestrate — End-to-end workflow runner
@@ -16,62 +16,95 @@ Orchestrate is a thin sequencer. It does not reimplement any of the individual s
 ## The sequence
 
 ```
-0. flow:kickoff           [front door — frame the task before any setup]
+0. flow:kickoff           [front door — framing AND setup in one step]
    └── writes brief.md (GOAL, acceptance criteria + verification, scope, hypothesis,
        working rules), sets category + size, optionally posts a Korean GitHub Issue
+   └── then scaffolds: worktree, branch, .flow/tasks/, prepare.md (with size estimate)
    └── if oversized (GOAL with >3 independent parts / separable areas): splits into a
        parent + sub-issues. Then orchestrate runs the loop below on the FIRST sub-issue
        only; each remaining sub-issue is its own kickoff→…→deploy run later.
 
-1. flow:prep
-   └── creates worktree, branch, .planning/, prepare.md (with size estimate)
+   (Fast lane: flow:quick is the alternate entry for a user-asserted trivial task — it
+    classifies green/yellow/red and, on green, jumps straight to develop. See flow:quick.)
 
-2. flow:research          [skip if size = S, or user opted out]
+1. flow:research          [skip if size = S, or user opted out]
    └── writes research.md
 
-3. flow:plan              [always]
+2. flow:plan              [always]
    └── (sub-phase) multi-LLM brainstorm if size = L, or size = M with cross-module /
        security-sensitive / public-surface flag → writes brainstorm.md + artifacts/brainstorm-*.md
    └── writes plan.md, tasks.md
 
-4. — Checkpoint with user —
+3. — Checkpoint with user —
    Show plan.md (or artifacts/plan.ko.md) and tasks.md. The user reads the
    lightweight plan quickly and gives go/no-go. (No plan-review step — review
    concentrates on the result, not the plan.)
 
-5. flow:develop           [after user confirms]
+4. flow:develop           [after user confirms]
    └── executes tasks.md, atomic commits, all checkboxes filled
 
-6. flow:deploy            [as a separate session — see below]
+5. flow:deploy            [as a separate session — see below]
    └── pushes, opens Korean PR, then asks (default yes) and on confirm runs
        flow:code-review-brief; the user then runs their own agent(s) on the brief
 ```
 
-## Delegating to bundled agent tiers (Claude Code)
+## Default tier map — apply it, don't ask for it
 
-Each phase has a matching bundled subagent tier (see `../../references/models.md` → *Bundled agent tiers*). Running in Claude Code, the orchestrator (frontier model) delegates rather than doing everything itself:
+The orchestrator (frontier model, e.g. Opus) is the **team lead**: it analyzes the task, decomposes large work into phases, delegates each phase to a cost-appropriate subagent, and reviews what comes back. Apply this tier map **by default, every session** — the user should never have to restate it (see `../../references/models.md`):
 
-- **research** → fan out `flow:researcher` (Sonnet), one per area.
-- **plan** → optionally hand off to `flow:planner` (Opus) for a fresh planning context; small tasks can be planned inline.
-- **develop** → delegate the TDD build to `flow:developer` (Sonnet) to keep the frontier context lean.
-- **review** (after deploy, optional) → `flow:reviewer` (Fable) for a fast local pass. This complements — does not replace — the `flow:code-review-brief` → user-run external agents flow.
+- **orchestrate / plan** → **Opus** (this session, or `flow:planner` in a fresh context). Synthesis and trade-offs stay on the frontier.
+- **research** → **Sonnet** (`flow:researcher`), or **Haiku** for a trivial single-fact lookup. Fanned out, one per area.
+- **develop** → **Sonnet** (`flow:developer`). Mechanical TDD build off the frontier.
+- **code review** → **Fable** (`flow:reviewer`), **Opus** for high-stakes/cross-repo. For a genuinely different model *family* (Codex/GPT), that is the **user-run external review** against the brief (`flow:code-review-brief`) — the flow agent *recommends* it but **does not dispatch reviewer CLIs itself** (see `../../references/multi-llm.md`). If the user has the codex plugin installed they may run `codex:review` / `codex:codex-rescue` themselves.
+- **browser QA** *(frontend only)* → **Sonnet** (`flow:browser-tester`).
+- **React quality** *(frontend only)* → **Fable / Opus** (`flow:react-reviewer`).
 
-Delegation is a cost/context optimization, not a rule: for size S tasks, running inline is fine. The user checkpoint before develop and the separate deploy session are unchanged regardless of delegation.
+Delegation is a cost/context optimization, not a hard rule: for size S tasks, running a phase inline is fine. The user checkpoint before develop and the separate deploy session are unchanged regardless of delegation.
+
+## Run non-overlapping work in parallel
+
+The orchestrator is not just a sequencer — it runs independent work **concurrently**. Two rules:
+
+1. **Independent tasks/issues run in parallel.** When sub-issues or tasks touch **non-overlapping files**, dispatch their subagents at the same time rather than one after another. If two would edit the same files, serialize them (or isolate each in its own worktree). When unsure whether they overlap, check the change map before parallelizing.
+2. **The review lane is parallel.** After deploy opens the PR, the review is a **lane, not a step**: run **code review** (`flow:reviewer`), **browser QA** (`flow:browser-tester`, frontend only), and **React quality** (`flow:react-reviewer`, frontend only) **at the same time**. They inspect the same diff from different angles and don't depend on each other. Because orchestrate ends before deploy (deploy is a separate session), the lane is actually **dispatched by `flow:deploy` Step 4** — this section defines the model; deploy executes it.
+
+While a subagent runs, keep the orchestrator busy with the next independent piece (e.g. plan the next phase while the current one builds) instead of blocking.
+
+## Supervise and rework — the orchestrator owns quality
+
+The orchestrator does not blindly accept subagent output. Every delegated phase runs a supervision loop:
+
+1. **Instruct** — give the subagent a scoped task and the acceptance signal.
+2. **Review the result** — read the returned digest/diff/report against the brief's acceptance criteria and the plan. Did it do what was asked? Any gap, drift, or unverified claim?
+3. **Decide**:
+   - **Accept** → move on.
+   - **Rework** → send it back with specific corrections (this is normal, not failure).
+   - **Escalate** → if it's blocked or the approach is wrong, stop and bring it to the user.
+
+For review-lane findings: **small issues → fix in place** before merge; **large issues → a follow-up PR/issue** rather than blocking the current one. Keep off-critical-path investigations in their own subagent so the orchestrator's context stays clean — pull back only the conclusion.
+
+## Rate-limit / tier fallback
+
+Long parallel runs hit model rate limits (weekly / session / external-CLI quota). Decide the fallback **before** dispatching a big batch, so a mid-run cutoff doesn't strand the work:
+
+- If an in-harness tier is exhausted, fall back to the next available one (e.g. Opus plan → Sonnet; Fable review → the inherited Opus) and note the downgrade to the user. External review is user-run, so there is nothing for the flow agent to fall back on there — just tell the user their chosen external agent is unavailable.
+- For a long queue, prefer resumable checkpoints (tasks.md progress, an issue comment handoff) over one unbroken run, so a new session can pick up.
 
 ## Size-based skip logic
 
 | Step | size = S | size = M | size = L |
 |---|---|---|---|
-| kickoff | yes | yes | yes |
-| prep | yes | yes | yes |
+| kickoff (framing + setup) | yes | yes | yes |
 | research | skip | ask | yes |
-| plan (always) | yes | yes | yes |
+| plan | minimal `tasks.md` only | yes | yes |
 | ↳ brainstorm sub-phase | skip | ask (default yes if cross-module / security / public-surface) | yes |
 | user checkpoint | skip | yes | yes |
 | develop | yes | yes | yes |
 | deploy | yes | yes | yes |
 
 "Ask" means: surface the decision to the user with the size-based default pre-selected. Don't bounce every step.
+
+For **size S**, "plan" collapses to writing a **minimal `tasks.md`** (a few checkboxes, no `plan.md`, no brainstorm, no checkpoint) — `flow:develop` needs a `tasks.md` to execute, so this is the one plan artifact S still produces. This matches `flow:kickoff`'s S route and the `flow:quick` green path.
 
 ## The user checkpoint before develop
 
@@ -99,7 +132,10 @@ Do **not** auto-invoke deploy inside orchestrate. The reasons:
 
 ## After the review (recommend-only, not part of the sequence)
 
-Once reviewers have left feedback on the PR, the user can run `flow:review-triage` — in its own session — to pull all the comments, triage validity + priority, plan fixes, and apply them after sign-off. Orchestrate **never auto-invokes** it; just mention it as the next step when deploy/review is done.
+Two recommend-only steps follow the sequence. Orchestrate **never auto-invokes** either — mention them as next steps, each usually run in its own session:
+
+- **`flow:review-triage`** — once reviewers have left feedback on the PR, pull all the comments, triage validity + priority, plan fixes, and apply them after sign-off.
+- **`flow:cleanup`** — once the PR is merged, tear down the task's transient resources: kill the dev server / e2e / Playwright processes, remove the worktree, prune stale preview deployments.
 
 If the user objects and explicitly says "just run deploy too", you may invoke it inline, but mention the trade-off.
 
@@ -107,7 +143,7 @@ If the user objects and explicitly says "just run deploy too", you may invoke it
 
 Each sub-skill should report its outcome. If any step fails:
 
-- **prep fails** (branch exists, dirty tree, etc.) — surface the error, ask the user.
+- **kickoff setup fails** (branch exists, dirty tree, etc.) — surface the error, ask the user.
 - **research / plan fail** — usually recoverable, show what went wrong and offer to retry.
 - **develop fails mid-implementation** — stop. The tasks.md state shows progress; the user can resume by invoking `flow:develop` directly when they want to continue.
 
@@ -118,8 +154,9 @@ Do not retry silently. Orchestrate is a sequencer, not a self-healing pipeline.
 Each individual skill is the source of truth for its own behavior. This skill only sequences them:
 
 - `flow:kickoff`
-- `flow:prep`
+- `flow:quick` (fast-lane alternate entry)
 - `flow:research`
 - `flow:plan`
 - `flow:develop`
 - `flow:deploy`
+- `flow:cleanup` (recommend-only, post-merge)

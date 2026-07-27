@@ -1,6 +1,6 @@
 ---
 name: research
-description: Investigate codebase context, related projects, and external sources for a task that is large or unfamiliar enough that planning blind would waste effort. Use this when the task crosses modules, touches a subsystem the user has not worked on recently, or depends on external APIs / libraries whose current shape matters. Also use whenever the user explicitly asks for research, exploration, or a "deep dive" before planning. Output goes to `.planning/<date>-<task>/research.md` so the planner and reviewer can build on it.
+description: Investigate codebase context, related projects, and external sources for a task that is large or unfamiliar enough that planning blind would waste effort. Use this when the task crosses modules, touches a subsystem the user has not worked on recently, or depends on external APIs / libraries whose current shape matters. Also use whenever the user explicitly asks for research, exploration, or a "deep dive" before planning. Output goes to `.flow/tasks/<date>-<task>/research.md` so the planner and reviewer can build on it.
 ---
 
 # flow:research — Pre-plan investigation
@@ -20,7 +20,7 @@ If you are not sure whether to research: **time-box it.** Spend 5–10 minutes s
 
 ## What to produce
 
-`<worktree>/.planning/<date>-<task>/research.md`, with the standard frontmatter (full schema in `../../references/frontmatter.md`):
+`<worktree>/.flow/tasks/<date>-<task>/research.md`, with the standard frontmatter (full schema in `../../references/frontmatter.md`):
 
 ```markdown
 ---
@@ -44,8 +44,11 @@ used_external_llm: false # set true if an external agent produced raw output und
 ## Problem framing
 - User goal in one sentence, in the user's words when possible.
 - Who is affected by this change (end user, operator, maintainer, downstream agent).
-- Success criteria: what must be true for the task to be done.
+- Success criteria: what must be true for the task to be done — measurable, not "works better".
 - Constraints and non-goals already known.
+- **Goal-lock flags:** call out any part of the goal that is still ambiguous, and any
+  schema/contract/interface decision the task hinges on. These are what `flow:plan` must
+  resolve with the user (AskUser) before drafting — surface them here so they aren't missed.
 
 ## Premises to validate
 - List the assumptions the plan would rely on. Each line should say whether it is

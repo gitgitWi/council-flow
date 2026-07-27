@@ -32,7 +32,7 @@ You can also collapse the pair into a single commit if the test and impl togethe
 
 - WIP code that doesn't compile (use `git stash` or a worktree instead)
 - Generated artifacts (lockfile bumps are OK, build outputs aren't)
-- Secrets / `.env` files
+- **Secrets / `.env` files.** Store a task's tokens under `.flow/tasks/<date>-<task>/artifacts/secret.*` and reference them **by path** — never paste raw tokens into chat, and never commit them. `.flow/tasks/` is safe local scratch **only when it is gitignored**: `flow:kickoff` setup (`prep.sh`) ensures this, but on a skip-setup / in-place task, verify `.flow/tasks/` is in `.gitignore` before writing a secret there.
 - Mixed concerns that can't be cleanly described in one subject line — split first
 
 ## Branch naming
@@ -45,7 +45,17 @@ Match the task type to the branch prefix:
 - `refactor/<task-name>` — internal restructuring with no behavior change
 - `docs/<task-name>` — docs-only
 
-`<task-name>` is kebab-case and matches the `.planning/yyyy-mm-dd-<task-name>/` directory.
+`<task-name>` is kebab-case and matches the `.flow/tasks/yyyy-mm-dd-<task-name>/` directory.
+
+## GitHub Issue / PR conventions
+
+Standing rules that were re-typed session after session — apply them by default:
+
+- **Merge, don't squash, on stacked-PR chains.** Squash-merging a base PR rewrites its commits, orphaning any PR stacked on top of that branch. When PRs build on each other, use a **merge** so the chain stays intact. (A single standalone PR may squash if the project prefers it — but never a chain base.)
+- **Stack on the previous branch, not `main`.** When new work depends on unmerged work, base its branch/PR on the previous task branch and keep the chain moving forward; don't re-fork from `main` and reintroduce the same diff.
+- **Post review feedback on the PR, not the plan/tracking issue.** The diff lives on the PR — reviews, inline comments, and fix discussion belong there. The issue tracks the goal; the PR tracks the change.
+- **Link the PR to its issue so merge auto-closes it** — `Closes #N` / `부모: #N` in the PR body. Explicitly wire the linkage; don't rely on it happening by itself.
+- **No `#` before ordered-list numbers in issue/PR/comment bodies.** `#1` auto-links as an issue reference on GitHub — write `1.` `2.`, not `#1.` `#2.`. See `doc-style.md`.
 
 ## Sign-off
 

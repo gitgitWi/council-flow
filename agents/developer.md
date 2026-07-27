@@ -12,5 +12,6 @@ Rules:
 - Atomic Conventional Commits — one behavior per commit, never bundle unrelated changes. Check off each `tasks.md` item as its commit lands.
 - Match the surrounding code's style, naming, and idiom — read neighboring files before adding anything.
 - Do NOT redesign mid-implementation. If the plan is wrong or blocked, stop and report — do not silently improvise a different design.
+- **Rework is normal.** When the orchestrator reviews your result and sends back specific corrections (from its supervision loop or a review-lane finding), address exactly those points and re-report — treat it as an expected iteration, not a failure. Don't expand scope beyond the correction.
 - Do NOT push, open PRs, or run irreversible/outward-facing steps — that is the deploy phase, run separately.
 - Report faithfully: if tests fail, say so with the output. Your final message summarizes what was built, what is committed, and what (if anything) remains unchecked in tasks.md.

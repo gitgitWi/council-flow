@@ -10,23 +10,25 @@ Develop turns `tasks.md` into code, one checkbox at a time. Each unchecked behav
 ## Preconditions
 
 - You are inside the task's worktree (`git rev-parse --show-toplevel` matches the worktree path).
-- `<worktree>/.planning/<date>-<task>/tasks.md` exists.
+- `<worktree>/.flow/tasks/<date>-<task>/tasks.md` exists.
 - (Recommended) `plan.md` also exists. Develop can run without a plan if the user explicitly chose to skip planning, but only for size S.
 
-If `tasks.md` does not exist and the user is asking for an implementation, run `flow:plan` first — even a 5-line `tasks.md` is better than freestyling.
+If `tasks.md` does not exist and the user is asking for an implementation, get one first — even a 5-line `tasks.md` is better than freestyling. For a **fast-lane / size-S entry** (`flow:quick` green route, or a size-S `flow:kickoff`), that minimal `tasks.md` is written by the entry skill before it hands off here — so a 3-line checklist with no `plan.md` is a valid state to run in, not a reason to stop. Only bounce to `flow:plan` when there is genuinely nothing to execute and no entry skill produced a list.
+
+> Trigger note: develop's description says "even when the user says 'just implement this', invoke develop" — but when the user is **asserting the task is trivial** and no `tasks.md` exists yet, `flow:quick` is the entry point. It classifies green/yellow/red, writes the minimal `tasks.md` on green, and then calls develop. Don't skip that guardrail for a "just do it / quick fix" phrasing.
 
 ### Prep precondition check (run first, every invocation)
 
 Before touching code, verify the workspace is the one prep would have created. If not, commits will land on the wrong branch.
 
 ```bash
-# Worktree + branch + planning dir presence
+# Worktree + branch + task dir presence
 WT_PATH="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "not a git repo"; exit 1; }
 WT_PARENT="$(basename "$(dirname "$WT_PATH")")"
 case "$WT_PARENT" in *.worktrees) IN_WORKTREE=1;; *) IN_WORKTREE=0;; esac
 BRANCH="$(git branch --show-current)"
 case "$BRANCH" in feature/*|fix/*|chore/*|refactor/*|docs/*) ON_TASK_BRANCH=1;; *) ON_TASK_BRANCH=0;; esac
-TASKS="$(ls -1 .planning/*/tasks.md 2>/dev/null | head -n1)"
+TASKS="$(ls -1 .flow/tasks/*/tasks.md 2>/dev/null | head -n1)"
 ```
 
 Decision matrix:
@@ -35,10 +37,10 @@ Decision matrix:
 |---|---|---|---|
 | yes | yes | yes | Proceed with the core loop. |
 | any | any | no | **Stop.** Run `flow:plan` first — develop has nothing to execute without `tasks.md`. |
-| no | no | yes | Suspicious: there is a tasks file but no isolated worktree/branch. Tell the user, then ask: (a) run `flow:prep` to move the work into a worktree (preferred — preserves the in-progress branch by `--force` only with explicit consent), (b) continue in-place on the current branch (commits land here — confirm the user accepts that). Do not auto-decide. |
+| no | no | yes | Suspicious: there is a tasks file but no isolated worktree/branch. Tell the user, then ask: (a) run `flow:kickoff` setup to move the work into a worktree (preferred — preserves the in-progress branch by `--force` only with explicit consent), (b) continue in-place on the current branch (commits land here — confirm the user accepts that). Do not auto-decide. |
 | no | yes | yes | On a task branch but not in a worktree. Usually fine (the user just opened the branch directly without prep). Confirm with the user once at the start of the session, then continue. Future commits land on this branch. |
 
-Special case — **uncommitted changes on a non-task branch (e.g., `main`)**: stop immediately. Do not commit on `main`. Offer to stash + run `flow:prep` to move the work into a fresh worktree.
+Special case — **uncommitted changes on a non-task branch (e.g., `main`)**: stop immediately. Do not commit on `main`. Offer to stash + run `flow:kickoff` setup to move the work into a fresh worktree.
 
 ## The core loop
 

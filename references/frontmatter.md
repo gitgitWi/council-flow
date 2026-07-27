@@ -1,6 +1,6 @@
-# Frontmatter Schema for `.planning/` Documents
+# Frontmatter Schema for `.flow/tasks/` Documents
 
-Every file written by a flow skill into `.planning/<date>-<task>/` carries a YAML frontmatter block. The point is **agentic search** — a future Claude session, a `grep`, or a teammate's tooling can locate documents by `task`, `type`, `status`, or `related` without reading body content. Treat frontmatter as the index, not as decoration.
+Every file written by a flow skill into `.flow/tasks/<date>-<task>/` carries a YAML frontmatter block. The point is **agentic search** — a future Claude session, a `grep`, or a teammate's tooling can locate documents by `task`, `type`, `status`, or `related` without reading body content. Treat frontmatter as the index, not as decoration.
 
 ## Common fields (every document)
 
@@ -29,7 +29,7 @@ One of these per document. Search-friendly — keep the spelling stable.
 
 | `type` | File |
 |---|---|
-| `brief` | `brief.md` (kickoff task framing — goal, acceptance, scope, direction diagram) |
+| `brief` | `brief.md` (kickoff task framing — goal, acceptance + verification, explicit in/out scope, direction diagram) |
 | `prepare` | `prepare.md` |
 | `research` | `research.md` |
 | `brainstorm` | `brainstorm.md` (brainstorming synthesis) |
@@ -56,7 +56,7 @@ One of these per document. Search-friendly — keep the spelling stable.
 
 ## Per-type fields (in addition to common)
 
-### `prepare` (written by `flow:prep`)
+### `prepare` (written by `flow:kickoff` setup)
 
 ```yaml
 branch: feature/add-google-login
@@ -65,6 +65,8 @@ started: 2026-05-11
 goal: |
   Allow users to sign in with Google in addition to email/password.
 ```
+
+`parent` on `prepare.md` is `../../../` — the repo root, three levels up from `.flow/tasks/<date>-<task>/`.
 
 `prepare.md` is the one exception to the common-fields block: it **omits `task_date` and `created`**. Both would be identical to `started` (prep writes all three on the same day), and the directory name already carries the date — `started` is the single date that matters for the task. It also has no `worktree` field: the worktree path is an absolute, machine-specific value. Find the worktree with `git rev-parse --show-toplevel` from inside it instead.
 
@@ -118,12 +120,16 @@ contributors:                            # flow-agent, plus any external agent t
 ```yaml
 # brief.md (kickoff)
 category: Debug & Fix                     # Feature | Fix | Debug & Fix | Refactor | Chore | Research | UI Fix | Question
+issue: https://github.com/<org>/<repo>/issues/41   # set by kickoff Step 5 after posting the brief
+issue_role: leaf                          # leaf | parent — leaf closes on merge, parent does not
 
 # code-review-brief.md
 pr: 1234
 ```
 
 The brief body holds only review material (files, change summary, intent, lenses). Agent→lens suggestions are output to chat, not stored in the doc — so there is no `review_agents` field.
+
+`issue` is the one field that must survive the task folder being deleted, because it is what `flow:deploy` reads to build the PR's 관련 링크 section — the task folder is gitignored local memory, so the GitHub Issue is the only shareable anchor. Write the **full URL**, not `#41`: the URL is unambiguous across repos. `issue_role` tells deploy whether to write `Closes #N` (leaf) or a bare `#N` reference (parent/umbrella — closing it would orphan its remaining sub-issues). Omit both when the task never got an Issue.
 
 ### `code-review` (an external agent's returned review, saved by the user)
 
@@ -153,7 +159,7 @@ translator: sonnet                       # or glm-5.1
 ## Conventions
 
 - **Dates in `YYYY-MM-DD`** for `created`, `last_updated`, `task_date`, `started`. Use full ISO 8601 (with time and tz) only for `when` on FAILED records.
-- **Relative paths** for everything inside the same `.planning/<date>-<task>/` directory (`./plan.md`, `./artifacts/...`; from a file already inside `artifacts/`, use `../plan.md` for root docs and `./` for siblings). Use absolute paths only for `prompted_against` (in reviewer files), where absoluteness is the point.
+- **Relative paths** for everything inside the same `.flow/tasks/<date>-<task>/` directory (`./plan.md`, `./artifacts/...`; from a file already inside `artifacts/`, use `../plan.md` for root docs and `./` for siblings). Use absolute paths only for `prompted_against` (in reviewer files), where absoluteness is the point.
 - **Mirror, don't compute.** `task` and `size` are mirrored from `prepare.md`, and `task_date` from the directory name's date prefix, at authoring time. Do not invent a process to keep them in sync; if `prepare.md` changes, fix the others by hand or accept the drift.
 - **`related` is for navigation, not provenance.** Each entry is `<path> (<one-line reason>)`. If a doc is the canonical anchor (parent), put it in `parent`, not `related`.
 
@@ -161,7 +167,7 @@ translator: sonnet                       # or glm-5.1
 
 Three reasons this exists:
 
-1. **Agentic search.** A `grep -l 'type: plan' .planning/` returns every plan across every task without reading bodies. Same for `task:`, `status: superseded`, `verdict: request-changes`.
+1. **Agentic search.** A `grep -l 'type: plan' .flow/tasks/` returns every plan across every task without reading bodies. Same for `task:`, `status: superseded`, `verdict: request-changes`.
 2. **Cross-doc traceability.** `parent` and `related` form a navigable graph. A fresh session can walk from a `code-review-summary.md` back to the `brief.md` and `plan.md` it relates to.
 3. **Auditability.** `created` / `last_updated` / `status` capture the artifact lifecycle without git archaeology.
 
