@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# flow:kickoff (Step 4, setup) — create worktree + branch + .planning folder for a new task.
+# flow:kickoff (Step 4, setup) — create worktree + branch + .flow/tasks/ folder for a new task.
 # (Formerly the standalone flow:prep skill, now folded into kickoff. Filename kept for stability.)
 #
 # Usage:
@@ -57,7 +57,7 @@ WORKTREES_DIR="${REPO_PARENT}/${REPO_NAME}.worktrees"
 WORKTREE_PATH="${WORKTREES_DIR}/${TASK}"
 BRANCH="${TYPE}/${TASK}"
 DATE="$(date +%Y-%m-%d)"
-PLANNING_DIR=".planning/${DATE}-${TASK}"
+TASK_DIR=".flow/tasks/${DATE}-${TASK}"
 
 # --- handle existing state ---
 if git worktree list --porcelain | grep -q "^worktree ${WORKTREE_PATH}$"; then
@@ -107,17 +107,27 @@ else
   echo "prep: no lockfile found, skipping dependency install" >&2
 fi
 
-# --- ensure .planning/ is gitignored (local working memory; non-code docs live in GitHub) ---
-GITIGNORE="${WORKTREE_PATH}/.gitignore"
-if ! { [[ -f "$GITIGNORE" ]] && grep -qE '^\.planning/?$' "$GITIGNORE"; }; then
-  printf '\n# flow: per-task planning working memory — not committed (docs live in GitHub Issues/PRs)\n.planning/\n' >> "$GITIGNORE"
-  echo "prep: added .planning/ to .gitignore" >&2
+# --- ensure .flow/tasks/ is gitignored (local working memory; non-code docs live in GitHub) ---
+# Ask git, not the .gitignore text: a broader rule elsewhere (a global excludesfile, a
+# parent .gitignore, an existing `.flow/` entry) may already cover it. Note `.flow/config.yaml`
+# is meant to STAY committed, so only the tasks/ subtree is ignored.
+if ! git -C "${WORKTREE_PATH}" check-ignore -q ".flow/tasks/" 2>/dev/null; then
+  printf '\n# flow: per-task working memory (plans, artifacts, logs) — not committed (docs live in GitHub Issues/PRs)\n.flow/tasks/\n' >> "${WORKTREE_PATH}/.gitignore"
+  echo "prep: added .flow/tasks/ to .gitignore" >&2
+else
+  echo "prep: .flow/tasks/ already gitignored" >&2
 fi
 
-# --- create planning folder + prepare.md ---
-mkdir -p "${WORKTREE_PATH}/${PLANNING_DIR}/artifacts"
+# --- create task folder + prepare.md ---
+mkdir -p "${WORKTREE_PATH}/${TASK_DIR}/artifacts"
 
-cat > "${WORKTREE_PATH}/${PLANNING_DIR}/prepare.md" <<PREPARE
+# Belt-and-braces: a self-ignoring .gitignore inside the task folder. Even if the root
+# .gitignore entry is lost to a merge, or the repo is later re-init'd, nothing in here
+# (secrets under artifacts/secret.*, logs, raw agent output) can be staged by `git add`.
+printf '# flow: this whole folder is local working memory — never committed.\n*\n' \
+  > "${WORKTREE_PATH}/${TASK_DIR}/.gitignore"
+
+cat > "${WORKTREE_PATH}/${TASK_DIR}/prepare.md" <<PREPARE
 ---
 title: "Prepare — ${TASK}"
 type: prepare
@@ -125,7 +135,7 @@ task: ${TASK}
 last_updated: ${DATE}
 status: active
 size: ${SIZE}
-parent: ../../
+parent: ../../../
 related: []
 branch: ${BRANCH}
 base: ${BASE}
@@ -142,4 +152,4 @@ PREPARE
 # --- output for caller ---
 echo "${WORKTREE_PATH}"
 echo "prep: created branch ${BRANCH} at ${WORKTREE_PATH}" >&2
-echo "prep: planning dir ${WORKTREE_PATH}/${PLANNING_DIR}" >&2
+echo "prep: task dir ${WORKTREE_PATH}/${TASK_DIR}" >&2

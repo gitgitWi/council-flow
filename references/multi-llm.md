@@ -38,7 +38,7 @@ Drop lenses irrelevant to the change; redundant lenses are noise.
 
 ## Bringing results back
 
-- The user saves each agent's output to `.planning/<task>/artifacts/<step>-<agent>.md`.
+- The user saves each agent's output to `.flow/tasks/<task>/artifacts/<step>-<agent>.md`.
 - The flow agent reads each **once**, synthesizes a Korean summary where relevant, and verifies any cited `file:line` against the repo (agents hallucinate paths).
 - **Do not pipe raw other-LLM output into the flow agent's main conversation.** File it; read only what matters. Keeps context lean.
 

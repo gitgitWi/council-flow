@@ -1,6 +1,6 @@
 # Doc style — prefer lists over tables
 
-A small rule that applies to every `.planning/` artifact, every `SKILL.md`, every `references/*.md`, and any Korean summary the user reads.
+A small rule that applies to every `.flow/tasks/` artifact, every `SKILL.md`, every `references/*.md`, and any Korean summary the user reads.
 
 ## The rule
 
@@ -8,7 +8,7 @@ A small rule that applies to every `.planning/` artifact, every `SKILL.md`, ever
 
 Reasons it can't be a list (i.e., tables are OK):
 
-- **Decision matrix** — three or more columns of categorical inputs determine one output (e.g., the prep-precondition matrix in `flow:plan`: `worktree × branch × planning-dir → action`).
+- **Decision matrix** — three or more columns of categorical inputs determine one output (e.g., the prep-precondition matrix in `flow:plan`: `worktree × branch × task-dir → action`).
 - **Comparison matrix** — N items × M attributes, where readers visually scan across attributes (e.g., model registry in `references/models.md`).
 - **Compact reference lookup** — N rows of identical shape that a reader will search by row key, and where every row genuinely uses every column.
 
@@ -92,11 +92,11 @@ In GitHub Issue / PR / comment bodies, **do not prefix a list number with `#`.**
 Keep it tight: 3+ columns, identical row shape, every column used. Example of a legitimate table (the prep-precondition decision matrix from `flow:plan`):
 
 ```markdown
-| In worktree | On task branch | Has `.planning/.../prepare.md` | Action |
+| In worktree | On task branch | Has `.flow/tasks/.../prepare.md` | Action |
 |---|---|---|---|
 | yes | yes | yes | Proceed. |
 | no  | no  | no  | Stop and ask the user. |
-| any | yes | no  | Branch reused — create planning dir. |
+| any | yes | no  | Branch reused — create task dir. |
 ```
 
 Each row's columns are categorical inputs to a decision; a list would lose the matrix shape.

@@ -25,8 +25,8 @@ This skill **prepares the base material** a reviewer needs — it does not run t
 
 ## Output location
 
-- **Flow task worktree** (branch matches the PR head, `.planning/<date>-<task>/` exists) → `.planning/<date>-<task>/artifacts/code-review-brief.md`.
-- **Standalone** → `.planning/<YYYY-MM-DD>-pr<N>-review/artifacts/code-review-brief.md` in the current worktree.
+- **Flow task worktree** (branch matches the PR head, `.flow/tasks/<date>-<task>/` exists) → `.flow/tasks/<date>-<task>/artifacts/code-review-brief.md`.
+- **Standalone** → `.flow/tasks/<YYYY-MM-DD>-pr<N>-review/artifacts/code-review-brief.md` in the current worktree.
 
 Print the resolved path before writing.
 
@@ -123,7 +123,7 @@ Do **not** post anything to GitHub yourself. If the user later brings reviewer o
 
 ## Step 4 — Do not commit the brief
 
-`.planning/` is gitignored — the brief is local working memory, not a repo artifact. **Never `git add` it.** If the brief should be shared, post it (or its key points) to the PR as a comment or to a GitHub Issue — that is the durable copy. See `../../references/directory-structure.md` (Git policy).
+`.flow/tasks/` is gitignored — the brief is local working memory, not a repo artifact. **Never `git add` it.** If the brief should be shared, post it (or its key points) to the PR as a comment or to a GitHub Issue — that is the durable copy. See `../../references/directory-structure.md` (Git policy).
 
 ## What NOT to do
 

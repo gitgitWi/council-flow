@@ -10,7 +10,7 @@ Develop turns `tasks.md` into code, one checkbox at a time. Each unchecked behav
 ## Preconditions
 
 - You are inside the task's worktree (`git rev-parse --show-toplevel` matches the worktree path).
-- `<worktree>/.planning/<date>-<task>/tasks.md` exists.
+- `<worktree>/.flow/tasks/<date>-<task>/tasks.md` exists.
 - (Recommended) `plan.md` also exists. Develop can run without a plan if the user explicitly chose to skip planning, but only for size S.
 
 If `tasks.md` does not exist and the user is asking for an implementation, get one first — even a 5-line `tasks.md` is better than freestyling. For a **fast-lane / size-S entry** (`flow:quick` green route, or a size-S `flow:kickoff`), that minimal `tasks.md` is written by the entry skill before it hands off here — so a 3-line checklist with no `plan.md` is a valid state to run in, not a reason to stop. Only bounce to `flow:plan` when there is genuinely nothing to execute and no entry skill produced a list.
@@ -22,13 +22,13 @@ If `tasks.md` does not exist and the user is asking for an implementation, get o
 Before touching code, verify the workspace is the one prep would have created. If not, commits will land on the wrong branch.
 
 ```bash
-# Worktree + branch + planning dir presence
+# Worktree + branch + task dir presence
 WT_PATH="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "not a git repo"; exit 1; }
 WT_PARENT="$(basename "$(dirname "$WT_PATH")")"
 case "$WT_PARENT" in *.worktrees) IN_WORKTREE=1;; *) IN_WORKTREE=0;; esac
 BRANCH="$(git branch --show-current)"
 case "$BRANCH" in feature/*|fix/*|chore/*|refactor/*|docs/*) ON_TASK_BRANCH=1;; *) ON_TASK_BRANCH=0;; esac
-TASKS="$(ls -1 .planning/*/tasks.md 2>/dev/null | head -n1)"
+TASKS="$(ls -1 .flow/tasks/*/tasks.md 2>/dev/null | head -n1)"
 ```
 
 Decision matrix:

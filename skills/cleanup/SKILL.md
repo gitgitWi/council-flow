@@ -20,7 +20,7 @@ Do **not** run cleanup on a task still in progress, or on a PR awaiting review w
 ## Preconditions (check first)
 
 1. **Confirm the work is durable.** The PR is merged, or the user confirms the branch is being abandoned. If unmerged commits exist that aren't on any remote, **stop and surface them** — do not remove a worktree that would lose work.
-2. **Confirm the worktree is clean** (`git -C <worktree> status --porcelain`). Uncommitted changes → show them and ask before removing. **Note:** `.planning/` is gitignored, so its contents do **not** appear in porcelain — a "clean" result does not mean the worktree holds nothing you care about. Explicitly check `.planning/<date>-<task>/artifacts/` for anything unpublished (secrets, reusable e2e scripts a browser-tester left, Korean summaries) before Step 2 deletes it with the worktree.
+2. **Confirm the worktree is clean** (`git -C <worktree> status --porcelain`). Uncommitted changes → show them and ask before removing. **Note:** `.flow/tasks/` is gitignored, so its contents do **not** appear in porcelain — a "clean" result does not mean the worktree holds nothing you care about. Explicitly check `.flow/tasks/<date>-<task>/artifacts/` for anything unpublished (secrets, reusable e2e scripts a browser-tester left, Korean summaries) before Step 2 deletes it with the worktree.
 3. **Identify what the task started.** Look for the dev server / e2e / Playwright processes and preview deployments tied to this task before killing anything broad.
 
 ## Steps
@@ -34,7 +34,7 @@ Kill only what this task started; don't sweep unrelated processes.
 
 ### 2 — Salvage, then remove the worktree
 
-`.planning/<date>-<task>/` lives **inside** the worktree, so `git worktree remove` deletes it — including gitignored artifacts. **Salvage first:** if `artifacts/` holds anything worth keeping (a reusable e2e script, a review summary), copy it out or post it to the PR/issue before removing. The durable record of non-code docs is meant to be on GitHub, not the worktree.
+`.flow/tasks/<date>-<task>/` lives **inside** the worktree, so `git worktree remove` deletes it — including gitignored artifacts. **Salvage first:** if `artifacts/` holds anything worth keeping (a reusable e2e script, a review summary), copy it out or post it to the PR/issue before removing. The durable record of non-code docs is meant to be on GitHub, not the worktree.
 
 ```bash
 # from the canonical repo (not inside the worktree being removed)
@@ -51,7 +51,7 @@ If the project auto-deploys previews per branch/PR (Cloudflare Worker, ACA, Verc
 
 ### 4 — Record the teardown
 
-If the task tracked work under a parent GitHub Issue, add a short Korean comment noting what was cleaned (worktree removed, resources stopped, previews pruned) so the issue reflects the closed-out state. Note that removing the worktree in Step 2 already deleted `.planning/<date>-<task>/` along with it — that is expected (it was gitignored local scratch, and the durable copy lives in the PR/issue). If the task worked **in-place** (no worktree), `.planning/` is still on disk — remove it only if the user asks.
+If the task tracked work under a parent GitHub Issue, add a short Korean comment noting what was cleaned (worktree removed, resources stopped, previews pruned) so the issue reflects the closed-out state. Note that removing the worktree in Step 2 already deleted `.flow/tasks/<date>-<task>/` along with it — that is expected (it was gitignored local scratch, and the durable copy lives in the PR/issue). If the task worked **in-place** (no worktree), `.flow/tasks/` is still on disk — remove it only if the user asks.
 
 ## What NOT to do
 

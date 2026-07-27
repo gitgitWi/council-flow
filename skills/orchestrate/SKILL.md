@@ -19,7 +19,7 @@ Orchestrate is a thin sequencer. It does not reimplement any of the individual s
 0. flow:kickoff           [front door — framing AND setup in one step]
    └── writes brief.md (GOAL, acceptance criteria + verification, scope, hypothesis,
        working rules), sets category + size, optionally posts a Korean GitHub Issue
-   └── then scaffolds: worktree, branch, .planning/, prepare.md (with size estimate)
+   └── then scaffolds: worktree, branch, .flow/tasks/, prepare.md (with size estimate)
    └── if oversized (GOAL with >3 independent parts / separable areas): splits into a
        parent + sub-issues. Then orchestrate runs the loop below on the FIRST sub-issue
        only; each remaining sub-issue is its own kickoff→…→deploy run later.

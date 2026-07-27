@@ -84,7 +84,7 @@ Write `artifacts/review-triage.md` (Korean — user-facing). Keep it scannable.
 - <반영 대상들을 atomic 단위로 묶은 작업 순서. 각 단위 = 한 커밋.>
 ```
 
-`.planning/` is gitignored — **do not commit this file**. It is local working memory.
+`.flow/tasks/` is gitignored — **do not commit this file**. It is local working memory.
 
 ## Step 4 — User checkpoint
 

@@ -49,8 +49,8 @@ PR body in Korean, using this template:
 (UI 변경이 있는 경우)
 
 ## 관련 링크
-- 플랜: `.planning/<date>-<task>/plan.md`
-- 리뷰 brief: `.planning/<date>-<task>/artifacts/code-review-brief.md` (자동 생성 예정)
+- 플랜: `.flow/tasks/<date>-<task>/plan.md`
+- 리뷰 brief: `.flow/tasks/<date>-<task>/artifacts/code-review-brief.md` (자동 생성 예정)
 ```
 
 Apply PR metadata from `.flow/config.yaml` (`github.assignee`, `github.milestone`, `github.labels` — reuse existing repo labels, create only if needed). Create with HEREDOC for correct formatting:
@@ -74,7 +74,7 @@ After the PR is open, ask the user (one `AskUserQuestion`, default = yes):
 
 > PR #<N> 열림. 이어서 `flow:code-review-brief`로 리뷰 brief를 만들까요?
 
-- **Yes (default)** → invoke `flow:code-review-brief` for PR #<N> inline. The current branch matches the PR head and `.planning/<date>-<task>/` exists, so it resolves its output automatically. After it writes the brief, deploy is done.
+- **Yes (default)** → invoke `flow:code-review-brief` for PR #<N> inline. The current branch matches the PR head and `.flow/tasks/<date>-<task>/` exists, so it resolves its output automatically. After it writes the brief, deploy is done.
 - **No** → stop at the open PR and tell the user they can run `flow:code-review-brief` later.
 
 Either way, deploy never runs reviewer CLIs or posts comments — once the brief exists, the **user** runs their reviewer agent(s) against it and posts to the PR.

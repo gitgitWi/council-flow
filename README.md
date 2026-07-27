@@ -6,11 +6,11 @@ An opinionated multi-step development workflow for Claude Code. Claude is the **
 kickoff → (research) → plan → develop → deploy → (code-review-brief) → (review-triage) → (cleanup)
 ```
 
-`flow:quick` is the fast lane for a trivial task (jumps toward develop after a green/yellow/red safety check). Atomic commits. TDD-first. `.planning/<date>-<task>/` as local working memory (gitignored — the durable copy of non-code docs lives in GitHub Issues / PR bodies).
+`flow:quick` is the fast lane for a trivial task (jumps toward develop after a green/yellow/red safety check). Atomic commits. TDD-first. `.flow/tasks/<date>-<task>/` as local working memory (gitignored — the durable copy of non-code docs lives in GitHub Issues / PR bodies).
 
 ## Skills
 
-- **`flow:kickoff`** — the single front door: frame the task (goal + acceptance + scope + Mermaid direction) **and** set up the worktree, branch, and `.planning/<date>-<task>/`.
+- **`flow:kickoff`** — the single front door: frame the task (goal + acceptance + scope + Mermaid direction) **and** set up the worktree, branch, and `.flow/tasks/<date>-<task>/`.
 - **`flow:quick`** — fast lane for a user-asserted trivial task; classifies green/yellow/red and routes to develop / ask / escalate.
 - **`flow:research`** — optional pre-plan investigation, fanned out to parallel subagents, writes `research.md`.
 - **`flow:plan`** — a short visual `plan.md` (goal + spec + user flow + Mermaid) and a checklist `tasks.md`.
@@ -37,7 +37,7 @@ Bundled subagents (Claude Code) the orchestrator delegates phases to, each pinne
 
 - LLM-facing docs (brief.md, plan.md, tasks.md, research.md, prepare.md): **English**
 - User-facing docs (kickoff/review briefs as GitHub Issues, `artifacts/code-review-summary.md`, PR body, `artifacts/*.ko.md`): **Korean**
-- Working dir: `.planning/<yyyy-mm-dd>-<kebab-task>/` (**gitignored** — never committed; durable copy lives in GitHub Issues / PR bodies)
+- Working dir: `.flow/tasks/<yyyy-mm-dd>-<kebab-task>/` (**gitignored** — never committed; durable copy lives in GitHub Issues / PR bodies)
 - Branches: `<type>/<task-name>` where type ∈ `feature|fix|chore|refactor|docs`
 - Commits: Conventional Commits, atomic (one behavior per commit)
 
@@ -100,8 +100,8 @@ Shared reference docs live at the plugin root and are linked from each SKILL.md:
 - `references/models.md` — model registry & bundled agent tiers (swap IDs here, not in skills)
 - `references/multi-llm.md` — the brief → user-run-agents model (why the flow doesn't dispatch reviewer CLIs)
 - `references/config.md` — the consumer repo's `.flow/config.yaml` (assignee/labels/worktree root/review agents)
-- `references/directory-structure.md` — `.planning/` layout & git policy
-- `references/frontmatter.md` — YAML frontmatter schema for `.planning/` docs
+- `references/directory-structure.md` — `.flow/tasks/` layout & git policy
+- `references/frontmatter.md` — YAML frontmatter schema for `.flow/tasks/` docs
 - `references/mermaid.md` — diagram types GitHub renders + skeletons
 - `references/doc-style.md` — prefer lists over tables; GitHub-body gotchas
 - `references/commit-conventions.md` — atomic + conventional commits, Issue/PR conventions
@@ -110,7 +110,7 @@ Shared reference docs live at the plugin root and are linked from each SKILL.md:
 
 ## Scripts
 
-- `scripts/prep.sh` — worktree + branch + `.planning/` scaffolding (idempotent); invoked by `flow:kickoff`'s setup step
+- `scripts/prep.sh` — worktree + branch + `.flow/tasks/` scaffolding (idempotent); invoked by `flow:kickoff`'s setup step
 
 ## Acknowledgements
 

@@ -63,7 +63,7 @@ For a fast local pass without spinning up external agents, Claude Code can also 
 
 ## Output handling rule
 
-**Do not pipe raw other-LLM output back into the flow agent's conversation.** When the user brings reviewer output back, save it to a file under `.planning/<task>/artifacts/` and read only the parts that matter. Keeps context lean.
+**Do not pipe raw other-LLM output back into the flow agent's conversation.** When the user brings reviewer output back, save it to a file under `.flow/tasks/<task>/artifacts/` and read only the parts that matter. Keeps context lean.
 
 ## When multi-LLM is worth it
 

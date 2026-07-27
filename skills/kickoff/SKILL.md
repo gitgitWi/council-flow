@@ -1,13 +1,13 @@
 ---
 name: kickoff
-description: The single entry point for any flow task — it both frames the work AND sets up the workspace, so there is nothing to call before it. Start here for every new piece of work — a feature, bug fix, debug, chore, refactor, or research question — even a one-line "fix X" or "이거 작업하자". Kickoff figures out the task type (asking if unstated), runs cost-efficient research subagents for just-enough context, writes a short visual brief (goal + acceptance + scope, with a Mermaid diagram), then creates the isolated worktree, branch, and `.planning/<date>-<task>/` directory — landing you ready to plan or develop. It replaces retyping the same kickoff prompt and forces the fields that were chronically missing (how do we know it's done? how is it verified? what is out of scope?). Do not start coding from here. Also fires on "frame this task", "create a worktree", "세션 시작", "이거 작업 시작하자".
+description: The single entry point for any flow task — it both frames the work AND sets up the workspace, so there is nothing to call before it. Start here for every new piece of work — a feature, bug fix, debug, chore, refactor, or research question — even a one-line "fix X" or "이거 작업하자". Kickoff figures out the task type (asking if unstated), runs cost-efficient research subagents for just-enough context, writes a short visual brief (goal + acceptance + scope, with a Mermaid diagram), then creates the isolated worktree, branch, and `.flow/tasks/<date>-<task>/` directory — landing you ready to plan or develop. It replaces retyping the same kickoff prompt and forces the fields that were chronically missing (how do we know it's done? how is it verified? what is out of scope?). Do not start coding from here. Also fires on "frame this task", "create a worktree", "세션 시작", "이거 작업 시작하자".
 ---
 
 # flow:kickoff — The single front door (framing + setup)
 
 Every flow task starts here. There is **one** entry point, not several — the user should never have to remember whether to call `prep` or `plan` or `orchestrate` first. They describe what they want; kickoff frames it, sets up the workspace, and routes into the pipeline.
 
-Kickoff codifies the kickoff-prompt template the user converged on across dozens of real sessions, and closes the gaps that made the weaker sessions stall (missing acceptance criteria, vague scope, no verification method). It also absorbs task setup (worktree / branch / `.planning/`) — previously a separate `prep` step — so framing and scaffolding happen in one move.
+Kickoff codifies the kickoff-prompt template the user converged on across dozens of real sessions, and closes the gaps that made the weaker sessions stall (missing acceptance criteria, vague scope, no verification method). It also absorbs task setup (worktree / branch / `.flow/tasks/`) — previously a separate `prep` step — so framing and scaffolding happen in one move.
 
 ## Operating philosophy — fast iteration over heavy planning
 
@@ -41,7 +41,7 @@ Each subagent returns a **tight digest**, not raw dumps. The orchestrator reads 
 
 ## Step 3 — Write the brief (short + visual)
 
-Compose `brief.md` (English — LLM-facing). Keep it tight. The non-negotiable fields — the ones the review showed are usually missing — are **MUST**. Note the task directory does not exist until Step 4 creates it: draft the brief now and **write it into `.planning/<date>-<task>/` (root) right after setup**, or if setup already ran, write it there directly. Do not scatter a `brief.md` at the repo root.
+Compose `brief.md` (English — LLM-facing). Keep it tight. The non-negotiable fields — the ones the review showed are usually missing — are **MUST**. Note the task directory does not exist until Step 4 creates it: draft the brief now and **write it into `.flow/tasks/<date>-<task>/` (root) right after setup**, or if setup already ran, write it there directly. Do not scatter a `brief.md` at the repo root.
 
 ```markdown
 ---
@@ -84,7 +84,7 @@ Rules learned from the session review:
 - **Bugs need repro + payload.** Symptom alone forces a clarification round.
 - **Multi-goal → prioritize or split.** If the goal has more than ~3 independent parts, propose splitting into sub-tasks/sub-issues. The longest, most painful sessions were under-scoped single briefs.
 
-## Step 4 — Set up the workspace (worktree · branch · `.planning/`)
+## Step 4 — Set up the workspace (worktree · branch · `.flow/tasks/`)
 
 With the brief written, scaffold the isolated workspace so the pipeline has somewhere to run. This is the old `prep` step, now folded in.
 
@@ -113,17 +113,17 @@ bash <plugin-dir>/scripts/prep.sh \
   --goal "<one-line goal>"
 ```
 
-The script is idempotent. It creates the worktree at `<repo-parent>/<repo-name>.worktrees/<task>`, the branch, and `.planning/<date>-<task>/` with a seeded `prepare.md`; ensures `.planning/` is gitignored; and auto-installs dependencies (detects pnpm > bun > npm > yarn > uv; non-fatal on failure). It prints the worktree path on stdout — **capture it; every subsequent skill operates inside that path.**
+The script is idempotent. It creates the worktree at `<repo-parent>/<repo-name>.worktrees/<task>`, the branch, and `.flow/tasks/<date>-<task>/` with a seeded `prepare.md`; ensures `.flow/tasks/` is gitignored; and auto-installs dependencies (detects pnpm > bun > npm > yarn > uv; non-fatal on failure). It prints the worktree path on stdout — **capture it; every subsequent skill operates inside that path.**
 
-`.planning/` is **local working memory and is never committed** — the durable copy of briefs/plans/reviews lives in GitHub Issues / PR bodies. Write (or move) `brief.md` into `.planning/<date>-<task>/` (root) now that the directory exists. Store any secrets/tokens the task needs under `.planning/<date>-<task>/artifacts/secret.*` and reference them **by path** — never paste raw tokens into chat. (`prep.sh` gitignores `.planning/` here; on the skip-setup / in-place path, **verify `.planning/` is gitignored before writing any secret** so a later `git add` can't commit it.) See `../../references/directory-structure.md`.
+`.flow/tasks/` is **local working memory and is never committed** — the durable copy of briefs/plans/reviews lives in GitHub Issues / PR bodies. Write (or move) `brief.md` into `.flow/tasks/<date>-<task>/` (root) now that the directory exists. Store any secrets/tokens the task needs under `.flow/tasks/<date>-<task>/artifacts/secret.*` and reference them **by path** — never paste raw tokens into chat. (`prep.sh` gitignores `.flow/tasks/` here; on the skip-setup / in-place path, **verify `.flow/tasks/` is gitignored before writing any secret** so a later `git add` can't commit it.) See `../../references/directory-structure.md`.
 
 ### 4c — Land in the worktree
 
 1. **`cd` into the worktree** and confirm with `git rev-parse --show-toplevel`. Every later change assumes the working directory is the worktree; staying in the original dir lands commits on the wrong branch.
-2. **Verify** `.planning/<date>-<task>/prepare.md` exists and carries size/goal. Append detail to its Notes section if the one-line goal was insufficient.
+2. **Verify** `.flow/tasks/<date>-<task>/prepare.md` exists and carries size/goal. Append detail to its Notes section if the one-line goal was insufficient.
 3. **Report** the worktree path, branch, and size.
 
-**Skip-setup path:** if the user says "just do this on the current branch", skip the worktree but still create `.planning/<date>-<task>/` + `prepare.md`, and tell the user no isolated worktree was created.
+**Skip-setup path:** if the user says "just do this on the current branch", skip the worktree but still create `.flow/tasks/<date>-<task>/` + `prepare.md`, and tell the user no isolated worktree was created.
 
 ## Step 5 — Publish & hand off
 
@@ -182,7 +182,7 @@ A split of 3–6 sub-issues is typical for an L that was really several tasks. P
 
 ## Reference
 
-- `.planning/` layout & `prepare.md` schema: `../../references/directory-structure.md`
+- `.flow/tasks/` layout & `prepare.md` schema: `../../references/directory-structure.md`
 - Mermaid diagram types & skeletons: `../../references/mermaid.md`
 - Research subagent tier: `../../references/models.md`
 - Commit / PR conventions: `../../references/commit-conventions.md`

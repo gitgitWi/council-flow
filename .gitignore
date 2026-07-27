@@ -6,11 +6,16 @@
 node_modules/
 
 # Dogfooding artifacts — when iterating on this plugin via its own workflow,
-# prep.sh seeds .planning/<date>-<task>/ with task-local working memory
-# (meta.md, plan.md, code-reviews/, ...). That's "committed by default" in
-# consumer projects, but shipping it through the marketplace would dump
-# every installer's tree with our in-flight notes. Ignore here so we can
-# dogfood freely without polluting the plugin source surface.
+# prep.sh seeds .flow/tasks/<date>-<task>/ with task-local working memory
+# (brief.md, prepare.md, plan.md, tasks.md, artifacts/, logs, secrets).
+# It is gitignored in every consumer project too — the durable copy of
+# non-code docs lives in GitHub Issues / PR bodies. Note only tasks/ is
+# ignored: .flow/config.yaml is per-project config and stays committed.
+# (prep.sh also drops a self-ignoring `*` .gitignore inside each task dir.)
+.flow/tasks/
+
+# Pre-2.2.0 name for the same thing. Kept so leftover local dirs from an
+# older session can't be accidentally committed. Safe to drop later.
 .planning/
 
 # Multi-LLM dispatch diagnostic runlogs (regenerable from CLI re-runs)

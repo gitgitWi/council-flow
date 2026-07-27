@@ -36,7 +36,7 @@ Examples: a copy/typo fix, a style tweak, a dependency bump, a one-line bug fix 
 
 ## Step 2 — Route
 
-- **🟢 Green** → confirm a **one-line goal + done-check** to the user (e.g. "Goal: 헤더 오타 수정 → done when the header reads X"), ensure a task branch exists (never work on `main` — if on `main`, create/switch to a typed branch first), then write a **minimal `.planning/<date>-<task>/tasks.md`** — 1–3 checkboxes derived from the goal. `flow:develop`'s precondition requires a `tasks.md` to execute (it will otherwise stop and bounce to `flow:plan`, defeating the fast lane); a 3-line checklist is enough — no `plan.md`, no research. Then hand to **`flow:develop`**.
+- **🟢 Green** → confirm a **one-line goal + done-check** to the user (e.g. "Goal: 헤더 오타 수정 → done when the header reads X"), ensure a task branch exists (never work on `main` — if on `main`, create/switch to a typed branch first), then write a **minimal `.flow/tasks/<date>-<task>/tasks.md`** — 1–3 checkboxes derived from the goal. `flow:develop`'s precondition requires a `tasks.md` to execute (it will otherwise stop and bounce to `flow:plan`, defeating the fast lane); a 3-line checklist is enough — no `plan.md`, no research. Then hand to **`flow:develop`**.
 - **🟡 Yellow** → use `AskUserQuestion`: "This is a bit more than a one-liner — quick 3-line plan first (`flow:plan`), or straight to develop?" Default to a quick plan for anything touching multiple files. Route per the answer.
 - **🔴 Red** → tell the user plainly: "This is bigger than a quick fix — it touches <reason>. I'd start from `flow:kickoff` (framing + a short plan) so we lock the goal and don't rework later." Recommend `flow:kickoff`; proceed the fast way only if the user overrides after hearing the risk.
 
