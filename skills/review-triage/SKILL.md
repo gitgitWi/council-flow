@@ -117,3 +117,4 @@ For invalid / skipped comments, a short reply on the thread explaining why is co
 - Push/PR update: `../commit-pr/SKILL.md`
 - Thread reply/resolve mechanics: `../../references/inline-review-posting.md`
 - Project defaults: `../../references/config.md`
+- Doc style (Simplified Technical English, lists over tables): `../../references/doc-style.md`

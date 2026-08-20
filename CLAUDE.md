@@ -36,6 +36,7 @@ Key cross-cutting conventions encoded in the references (treat as authoritative 
 - **Research subagents**: pre-plan research (codebase / GitHub / history / web) is fanned out to cost-efficient subagents (Sonnet in Claude Code), not the frontier orchestrator. See `references/models.md`.
 - **Project defaults** (assignee / milestone / labels / worktree root / review agents) live in the consumer repo's `.flow/config.yaml` — don't hardcode them in skills. See `references/config.md`.
 - **Atomic + Conventional Commits** with TDD pairs (`test(...)` then `feat(...)`). See `references/commit-conventions.md` and `references/tdd-policy.md`.
+- **Simplified Technical English (ASD-STE100)** for every authored sentence — one idea per sentence, active voice, one term per concept, no slang and no invented abbreviations. Korean user-facing docs follow the same discipline, plus a read-back check for corrupted syllables. See `references/doc-style.md`.
 - **Prefer lists over tables** in all authored docs. Tables render inconsistently across renderers and on mobile — reserve them for decision/comparison matrices. See `references/doc-style.md`.
 
 ## Working on the plugin itself

@@ -40,6 +40,7 @@ Bundled subagents (Claude Code) the orchestrator delegates phases to, each pinne
 - Working dir: `.flow/tasks/<yyyy-mm-dd>-<kebab-task>/` (**gitignored** — never committed; durable copy lives in GitHub Issues / PR bodies)
 - Branches: `<type>/<task-name>` where type ∈ `feature|fix|chore|refactor|docs`
 - Commits: Conventional Commits, atomic (one behavior per commit)
+- Writing style: **Simplified Technical English (ASD-STE100)** — one idea per sentence, active voice, one term per concept; Korean docs follow the same discipline
 
 ## Install
 
@@ -103,7 +104,7 @@ Shared reference docs live at the plugin root and are linked from each SKILL.md:
 - `references/directory-structure.md` — `.flow/tasks/` layout & git policy
 - `references/frontmatter.md` — YAML frontmatter schema for `.flow/tasks/` docs
 - `references/mermaid.md` — diagram types GitHub renders + skeletons
-- `references/doc-style.md` — prefer lists over tables; GitHub-body gotchas
+- `references/doc-style.md` — Simplified Technical English (ASD-STE100); prefer lists over tables; GitHub-body gotchas
 - `references/commit-conventions.md` — atomic + conventional commits, Issue/PR conventions
 - `references/tdd-policy.md` — when TDD applies, when it doesn't
 - `references/inline-review-posting.md` — gh API mechanics for inline PR comments

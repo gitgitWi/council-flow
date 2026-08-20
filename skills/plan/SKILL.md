@@ -512,7 +512,7 @@ Treat these as ceilings, not targets — keep plans as short as the work allows.
 - Directory layout: `../../references/directory-structure.md`
 - Frontmatter schema: `../../references/frontmatter.md`
 - TDD policy (what gets tests, what doesn't): `../../references/tdd-policy.md`
-- Doc style (prefer lists over tables): `../../references/doc-style.md`
+- Doc style (Simplified Technical English, lists over tables): `../../references/doc-style.md`
 - Mermaid diagram types & skeletons: `../../references/mermaid.md`
 - Multi-LLM brief model (used by brainstorming): `../../references/multi-llm.md`
 - Model registry (research tier + external agents): `../../references/models.md`

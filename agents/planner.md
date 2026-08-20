@@ -22,3 +22,4 @@ Rules:
 - Prefer reusing existing code over inventing abstractions; challenge the premise if the task is ill-posed.
 - The mandatory checkpoint is the user reading this plan before develop starts — write for a fast human read.
 - Your final message points to the files you wrote and summarizes the approach in a few lines. No preamble.
+- **Write in Simplified Technical English (ASD-STE100).** One idea per sentence; procedural sentences 20 words or fewer, descriptive 25 or fewer; active voice; one term per concept (never alternate synonyms); no slang, no internet shorthand, no invented abbreviations. This covers `plan.md`, `tasks.md`, and your final message. When you write Korean, apply the same discipline and read it back — confirm every syllable forms a real word before you send it.

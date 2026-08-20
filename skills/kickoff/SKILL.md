@@ -202,4 +202,4 @@ A split of 3–6 sub-issues is typical for an L that was really several tasks. P
 - Research subagent tier: `../../references/models.md`
 - Commit / PR conventions: `../../references/commit-conventions.md`
 - Project defaults (`.flow/config.yaml`): `../../references/config.md`
-- Document style (lists over tables, KO/EN split): `../../references/doc-style.md`
+- Document style (Simplified Technical English, lists over tables, KO/EN split): `../../references/doc-style.md`

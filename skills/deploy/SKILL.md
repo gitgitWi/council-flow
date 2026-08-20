@@ -129,4 +129,4 @@ Once the PR is merged, the task's worktree and any dev-server / e2e / preview-de
 - Project defaults (`assignee`/`milestone`/`labels`): `../../references/config.md`
 - Frontmatter schema (`issue` / `issue_role` on `brief.md`): `../../references/frontmatter.md`
 - Why `.flow/tasks/` is never linked from GitHub: `../../references/directory-structure.md` (Git policy)
-- Doc style (prefer lists over tables): `../../references/doc-style.md`
+- Doc style (Simplified Technical English, lists over tables): `../../references/doc-style.md`
