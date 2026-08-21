@@ -100,3 +100,4 @@ For other stacks (backend Node, Python, Go), use whatever the repo already uses.
 - Commit conventions: `../../references/commit-conventions.md`
 - Multi-LLM invocation: `../../references/multi-llm.md`
 - Model registry: `../../references/models.md`
+- Doc style (Simplified Technical English, lists over tables): `../../references/doc-style.md`

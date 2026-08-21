@@ -139,5 +139,6 @@ Do **not** post anything to GitHub yourself. If the user later brings reviewer o
 - New multi-LLM model (brief → user-run agents): `../../references/multi-llm.md`
 - Inline review posting mechanics (source for the brief's 작업 규칙 — inline it, don't just link): `../../references/inline-review-posting.md`
 - Frontmatter schema: `../../references/frontmatter.md`
+- Doc style (Simplified Technical English, lists over tables): `../../references/doc-style.md`
 - Project defaults (`review.agents`, for the chat suggestion): `../../references/config.md`
 - Mermaid: `../../references/mermaid.md`

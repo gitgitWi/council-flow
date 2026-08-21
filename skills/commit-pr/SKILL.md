@@ -53,4 +53,5 @@ Tell the user: the commits made (one line each), the branch, and the PR URL. If 
 
 - Commit conventions: `../../references/commit-conventions.md`
 - TDD policy: `../../references/tdd-policy.md`
+- Doc style (Simplified Technical English, lists over tables): `../../references/doc-style.md`
 - Full close-out (PR + review brief): `flow:deploy` + `flow:code-review-brief`

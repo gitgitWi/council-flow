@@ -146,4 +146,4 @@ obvious. Use this shape:
 - Directory layout: `../../references/directory-structure.md`
 - Frontmatter schema: `../../references/frontmatter.md`
 - Calling other LLMs: `../../references/multi-llm.md`
-- Doc style (prefer lists over tables): `../../references/doc-style.md`
+- Doc style (Simplified Technical English, lists over tables): `../../references/doc-style.md`
