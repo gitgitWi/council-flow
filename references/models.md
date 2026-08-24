@@ -4,9 +4,9 @@ How `flow` uses models, and the model IDs per harness. The plugin uses models **
 
 1. **Bundled agent tiers** — in-harness subagents shipped with the plugin (`flow:planner`, `flow:developer`, `flow:researcher`, `flow:reviewer`, plus the frontend-only `flow:browser-tester` and `flow:react-reviewer`) that the orchestrator delegates phases to, each pinned to a cost-appropriate tier.
 2. **Research subagents** — the `flow:researcher` tier above (and ad-hoc `Explore`/`Task` subagents), spawned cheap to gather context.
-3. **External review agents** — diverse models the **user runs themselves** against a brief the flow agent writes.
+3. **External review agents** — diverse models that judge a brief the flow agent writes. Either the **user** runs them (Route A, default) or the flow agent **dispatches** them through a supervisor (Route B, opt-in).
 
-> **The flow agent does not dispatch external review/brainstorm CLIs anymore.** The old "agent runs `opencode`/`codex` with a file-write contract" mechanism is **deprecated**: non-interactive CLI modes are inconsistent across tools, and opencode agent sessions carry ~30k-token startup overhead. Instead the flow agent writes a **brief** (base document) and the user runs whichever agent(s) they prefer. See `multi-llm.md`.
+> **Hand-rolled CLI shell-outs stay deprecated.** The old "agent runs `opencode`/`codex` with a file-write contract, quorum, sentinels, heartbeats" mechanism is not coming back — it drifted from actual CLI output and had no timeout or supervision. What *is* allowed is dispatch through a supervisor that owns auth, timeouts, and schema-enforced returns: `paseo run` (claude / codex / opencode / …) and `agy -p` (Antigravity). Never `opencode ...` / `codex ...` directly. See `multi-llm.md`.
 
 ## Bundled agent tiers (Claude Code)
 
@@ -23,7 +23,7 @@ The plugin bundles six subagents (registered in `.claude-plugin/plugin.json` →
 
 The last two are **frontend-only** and run **in parallel with `flow:reviewer`** — a review *lane*, not a sequential step. They no-op on non-frontend changes. The lane is **dispatched by `flow:deploy`** (Step 4), because deploy runs in the session where the PR exists; `flow:orchestrate` describes the parallel/supervision model but has already ended before deploy. See `flow:deploy` and `flow:orchestrate`.
 
-Agent frontmatter pins the **alias** (`opus` / `sonnet` / `fable`) — stable across model versions — so this registry stays the single place mapping aliases to full per-harness IDs. Delegation is optional: the orchestrator may still run plan/develop inline when a task is small. The `flow:reviewer` in-harness pass does **not** replace the brief → user-run-external-agents flow below; it is the no-setup option.
+Agent frontmatter pins the **alias** (`opus` / `sonnet` / `fable`) — stable across model versions — so this registry stays the single place mapping aliases to full per-harness IDs. Delegation is optional: the orchestrator may still run plan/develop inline when a task is small. The `flow:reviewer` in-harness pass does **not** replace the external-agent review below; it is the no-setup option.
 
 **Model availability & fallback.** There is no fallback-list syntax in the `model:` field (`model: fable, opus` is not a thing). If an org's `availableModels` allowlist excludes a tier, Claude Code silently runs that agent on the **inherited** model instead ([sub-agents docs](https://code.claude.com/docs/en/sub-agents)). So `flow:reviewer` on `fable` degrades to the orchestrator's model (Opus in flow's frontier setup) when Fable is unavailable — a higher-quality, still-correct fallback. To make the fallback explicit rather than incidental: remap the alias session-wide (`export ANTHROPIC_DEFAULT_FABLE_MODEL=claude-opus-4-8`), set the reviewer to `model: inherit`, or have the orchestrator spawn it with an explicit `model: opus` override (the Agent-tool `model` param beats frontmatter in the resolution order).
 
@@ -46,20 +46,25 @@ Rules:
 - The orchestrator (frontier model) reads digests and decides; it does not crawl itself.
 - These are **in-harness** subagents, not external CLIs. In Claude Code, delegate to the bundled `flow:researcher` agent (Sonnet); fan out several, one per area.
 
-## External review agents (user-run)
+## External review agents
 
-These are the agents the **user** runs against a review/brainstorm brief — the flow agent never invokes them. Which ones to use is project config (`.flow/config.yaml` → `review.agents`). Common choices:
+These are the agents that judge a review/brainstorm brief. Which ones to use is project config (`.flow/config.yaml` → `review.agents`); how they are launched is per-step (Route A user-run vs Route B dispatch — see `multi-llm.md`).
 
-| Agent | Model | Notes |
-|---|---|---|
-| Claude Code | Sonnet | Same harness; good default reviewer. |
-| Antigravity | Gemini 3.5 Flash | Interactive only for now. |
-| Codex | Codex 5.6 Sol | Codex stack second opinion. |
-| opencode | kimi / deepseek / glm | Still scriptable, but heavy per-call overhead; optional. |
+Reasoning effort: pin each model's **highest supported** level.
 
-The brief tells the user which lenses to ask for (architecture, risk, security, UX, etc.) so different agents produce differentiated, non-duplicated feedback.
+| Agent | Runner | Model | Effort | Notes |
+|---|---|---|---|---|
+| Claude Code | `paseo --provider claude` | `claude-fable-5` | `--thinking max` | Same family; synthesis and body work. `ultracode` sits above `max` but changes behavior, not just effort. |
+| Codex | `paseo --provider codex` | `gpt-5.6-sol` | `--thinking max` | Code / security second opinion. `max` is already its default; `ultra` sits above it. |
+| opencode | `paseo --provider opencode` | `opencode-go/kimi-k3` | `--thinking max` | Cross-check. |
+| opencode | `paseo --provider opencode` | `opencode-go/qwen3.8-max` | none | Cross-check. **Cannot take `--output-schema`** — the provider rejects forced `tool_choice` in thinking mode; run schema-less and read via `paseo logs`. |
+| Antigravity | `agy` (not a Paseo provider) | `gemini-3.7-flash-high` | `--effort high` | UX / design lens. Effort is baked into the model ID; `gemini-3.1-pro-high` for a deeper pass. |
 
-For a fast local pass without spinning up external agents, Claude Code can also delegate to the bundled in-harness `flow:reviewer` (Fable) — see *Bundled agent tiers* above. It complements, not replaces, the user-run external review: the external agents remain the way to get genuinely diverse multi-LLM perspectives, so prefer them when the change is large, cross-module, or security-sensitive.
+Availability moves — confirm with `paseo provider ls` before dispatching, and read opencode model IDs from `opencode models` (Paseo's opencode catalog mismaps the `google/*` namespace). opencode is currently limited to `opencode-go/*` and `*-free`; Zen paid and OpenRouter have no credit.
+
+The brief tells each agent which lens to apply (architecture, risk, security, UX, etc.) so different agents produce differentiated, non-duplicated feedback.
+
+For a fast local pass without spinning up external agents, Claude Code can also delegate to the bundled in-harness `flow:reviewer` (Fable) — see *Bundled agent tiers* above. It complements, not replaces, the external review: a different model *family* is the whole point of the external pass, so prefer it when the change is large, cross-module, or security-sensitive.
 
 ## Output handling rule
 
