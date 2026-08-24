@@ -32,7 +32,7 @@ Inside one task folder:
 └── artifacts/           # all supporting / derived / historical artifacts, one flat folder
     ├── plan.ko.md                  # Korean reading copy of plan.md, written by `flow:plan`
     ├── tasks.ko.md                 # Korean reading copy of tasks.md
-    ├── code-review-brief.md        # PR review brief (user runs their agents on it), `flow:code-review-brief`
+    ├── code-review-brief.md        # PR review brief (user-run or dispatched), `flow:code-review-brief`
     ├── code-review-<agent>.md      # an external agent's returned review, saved by the user
     ├── code-review-summary.md      # Claude's synthesis of returned reviews, Korean
     ├── brainstorm-brief.md         # optional brief for external brainstorm agents

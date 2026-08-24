@@ -1,6 +1,6 @@
 # council-flow
 
-An opinionated multi-step development workflow for Claude Code. Claude is the **orchestrator** (team lead): it frames the task, delegates each phase to a cost-appropriate bundled subagent tier, runs non-overlapping work in parallel, reviews what comes back, and prepares a **review brief** the user runs their own external agent(s) against. Lightweight, visual, fast iteration over heavy up-front planning.
+An opinionated multi-step development workflow for Claude Code. Claude is the **orchestrator** (team lead): it frames the task, delegates each phase to a cost-appropriate bundled subagent tier, runs non-overlapping work in parallel, reviews what comes back, and prepares a **review brief** — which the user runs their own external agent(s) against, or which the flow agent dispatches itself through Paseo / `agy`. Lightweight, visual, fast iteration over heavy up-front planning.
 
 ```
 kickoff → (research) → plan → develop → deploy → (code-review-brief) → (review-triage) → (cleanup)
@@ -16,7 +16,7 @@ kickoff → (research) → plan → develop → deploy → (code-review-brief) �
 - **`flow:plan`** — a short visual `plan.md` (goal + spec + user flow + Mermaid) and a checklist `tasks.md`.
 - **`flow:develop`** — TDD cycle per `tasks.md` checkbox, atomic Conventional Commits.
 - **`flow:deploy`** — push, open a Korean PR, then offer the code-review brief.
-- **`flow:code-review-brief`** — prepare the base material for a review (the user runs their own agents against it); does not post comments.
+- **`flow:code-review-brief`** — prepare the base material for a review (the user runs their own agents against it, or the flow agent dispatches it via Paseo / `agy`); does not post comments.
 - **`flow:review-triage`** — pull all PR feedback, triage validity + priority, plan and apply fixes. Recommend-only.
 - **`flow:cleanup`** — post-merge teardown: kill dev-server / e2e processes, remove the worktree, prune stale previews. Recommend-only.
 - **`flow:commit-pr`** — the everyday commit → push → open/update-PR loop.
@@ -98,7 +98,7 @@ codex plugin marketplace add --help
 Shared reference docs live at the plugin root and are linked from each SKILL.md:
 
 - `references/models.md` — model registry & bundled agent tiers (swap IDs here, not in skills)
-- `references/multi-llm.md` — the brief → user-run-agents model (why the flow doesn't dispatch reviewer CLIs)
+- `references/multi-llm.md` — the brief model + its two execution routes (user-run vs Paseo/`agy` dispatch)
 - `references/config.md` — the consumer repo's `.flow/config.yaml` (assignee/labels/worktree root/review agents)
 - `references/directory-structure.md` — `.flow/tasks/` layout & git policy
 - `references/frontmatter.md` — YAML frontmatter schema for `.flow/tasks/` docs

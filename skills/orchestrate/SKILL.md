@@ -45,7 +45,7 @@ Orchestrate is a thin sequencer. It does not reimplement any of the individual s
 
 5. flow:deploy            [as a separate session — see below]
    └── pushes, opens Korean PR, then asks (default yes) and on confirm runs
-       flow:code-review-brief; the user then runs their own agent(s) on the brief
+       flow:code-review-brief; the brief is then judged by the reviewing agent(s)
 ```
 
 ## Default tier map — apply it, don't ask for it
@@ -55,7 +55,7 @@ The orchestrator (frontier model, e.g. Opus) is the **team lead**: it analyzes t
 - **orchestrate / plan** → **Opus** (this session, or `flow:planner` in a fresh context). Synthesis and trade-offs stay on the frontier.
 - **research** → **Sonnet** (`flow:researcher`), or **Haiku** for a trivial single-fact lookup. Fanned out, one per area.
 - **develop** → **Sonnet** (`flow:developer`). Mechanical TDD build off the frontier.
-- **code review** → **Fable** (`flow:reviewer`), **Opus** for high-stakes/cross-repo. For a genuinely different model *family* (Codex/GPT), that is the **user-run external review** against the brief (`flow:code-review-brief`) — the flow agent *recommends* it but **does not dispatch reviewer CLIs itself** (see `../../references/multi-llm.md`). If the user has the codex plugin installed they may run `codex:review` / `codex:codex-rescue` themselves.
+- **code review** → **Fable** (`flow:reviewer`), **Opus** for high-stakes/cross-repo. For a genuinely different model *family* (Codex/GPT/Gemini), that is the **external review** against the brief (`flow:code-review-brief`): the user runs it, or — for `review.agents` entries marked `run: paseo` / `run: agy`, on confirmation — the flow agent dispatches it through the supervisor. Never a bare `opencode ...` / `codex ...` shell-out (see `../../references/multi-llm.md`). If the user has the codex plugin installed they may also run `codex:review` / `codex:codex-rescue` themselves.
 - **browser QA** *(frontend only)* → **Sonnet** (`flow:browser-tester`).
 - **React quality** *(frontend only)* → **Fable / Opus** (`flow:react-reviewer`).
 
@@ -87,7 +87,7 @@ For review-lane findings: **small issues → fix in place** before merge; **larg
 
 Long parallel runs hit model rate limits (weekly / session / external-CLI quota). Decide the fallback **before** dispatching a big batch, so a mid-run cutoff doesn't strand the work:
 
-- If an in-harness tier is exhausted, fall back to the next available one (e.g. Opus plan → Sonnet; Fable review → the inherited Opus) and note the downgrade to the user. External review is user-run, so there is nothing for the flow agent to fall back on there — just tell the user their chosen external agent is unavailable.
+- If an in-harness tier is exhausted, fall back to the next available one (e.g. Opus plan → Sonnet; Fable review → the inherited Opus) and note the downgrade to the user. For external review, check availability first (`paseo provider ls`) and reassign the lens to another configured agent; if none are available, say so rather than silently dropping the lens.
 - For a long queue, prefer resumable checkpoints (tasks.md progress, an issue comment handoff) over one unbroken run, so a new session can pick up.
 
 ## Size-based skip logic

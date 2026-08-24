@@ -39,7 +39,7 @@ One of these per document. Search-friendly — keep the spelling stable.
 | `tasks` | `tasks.md` |
 | `tasks-version` | `artifacts/tasks.v<N>.md` (superseded tasks) |
 | `plan-phase` | `plan-phase-<N>.md` (size-L breakouts) |
-| `code-review-brief` | `artifacts/code-review-brief.md` (PR review brief for user-run agents) |
+| `code-review-brief` | `artifacts/code-review-brief.md` (PR review brief — user-run or dispatched) |
 | `code-review` | `artifacts/code-review-<agent>.md` (an agent's returned review) |
 | `code-summary` | `artifacts/code-review-summary.md` (synthesis of returned reviews) |
 | `plan-translation` | `artifacts/plan.ko.md` |

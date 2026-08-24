@@ -1,13 +1,13 @@
 ---
 name: code-review-brief
-description: Write the base material for a code review — a "review brief" for a pull request that the USER feeds to their own external agent(s) to post review/comments on GitHub. This skill does NOT perform the review itself and does NOT post comments; it prepares the document a reviewer works from. The flow agent gathers the diff, the changed-file list, a summary of major changes, and the original intent/plan plus the user's key requests, then writes multi-angle review prompts (UX, code quality, redundant or over-engineered implementation, security, stability) tailored to the change. Use to prepare a review for any PR, whether just opened by flow:deploy or already on GitHub. Triggers on "코드리뷰 준비", "리뷰 brief 만들어줘", "PR 리뷰 자료 작성", "prep a review for PR #N".
+description: Write the base material for a code review — a "review brief" for a pull request that reviewing agent(s) work from to post review/comments on GitHub (the user runs them, or the skill dispatches them via Paseo/agy on confirmation). This skill does NOT perform the review itself and does NOT post comments; it prepares the document a reviewer works from. The flow agent gathers the diff, the changed-file list, a summary of major changes, and the original intent/plan plus the user's key requests, then writes multi-angle review prompts (UX, code quality, redundant or over-engineered implementation, security, stability) tailored to the change. Use to prepare a review for any PR, whether just opened by flow:deploy or already on GitHub. Triggers on "코드리뷰 준비", "리뷰 brief 만들어줘", "PR 리뷰 자료 작성", "prep a review for PR #N".
 ---
 
 # flow:code-review-brief — Prepare the base material for a PR review
 
-This skill **prepares the base material** a reviewer needs — it does not run the review itself. It writes a **review brief**: the diff facts, change summary, original intent, and the lenses to review through. The **user** then runs their preferred agent(s) (Antigravity, Codex, Claude Code, …) against the brief to post review/comments on the GitHub PR.
+This skill **prepares the base material** a reviewer needs — it does not run the review itself. It writes a **review brief**: the diff facts, change summary, original intent, and the lenses to review through. The reviewing agent(s) (Antigravity, Codex, Claude Code, …) then judge the brief and post review/comments on the GitHub PR.
 
-> **The flow agent does not run reviewer CLIs and does not post comments.** The old auto-dispatch mechanism is deprecated (interactive-only tools, high per-call overhead, fragile automation). Diversity comes from the user running the agents they choose. See `../../references/multi-llm.md`.
+> **The flow agent never posts PR comments, and never shells out to a reviewer CLI directly.** Who launches the reviewers depends on `.flow/config.yaml` → `review.agents`: `run: user` (default) means the user runs them; `run: paseo` / `run: agy` means this skill may dispatch them through the supervisor **after the user confirms**. The old hand-rolled `opencode ...` / `codex ...` auto-dispatch stays deprecated. See `../../references/multi-llm.md`.
 
 `flow:deploy` **asks** whether to run this skill after opening a PR and runs it on confirm; you can also invoke it directly on any existing PR.
 
@@ -15,7 +15,7 @@ This skill **prepares the base material** a reviewer needs — it does not run t
 
 1. **PR number** — auto-detect from the current branch (`gh pr view --json number --jq .number`); ask if there is none.
 2. **Context** — if inside a flow task worktree, read `brief.md` / `plan.md` for original intent and the user's requests. Otherwise work from the diff + PR description alone.
-3. **`.flow/config.yaml`** — read `review.agents` to suggest an agent→lens split **in chat** (this goes to the user, not into the brief).
+3. **`.flow/config.yaml`** — read `review.agents` for the agent→lens split and each entry's `run:` mode (`user` / `paseo` / `agy`). Both go to **chat**, not into the brief.
 
 ## Preconditions
 
@@ -48,7 +48,7 @@ Read the diff and changed files yourself (or via a Sonnet subagent for a large d
 
 ## Step 2 — Write the review brief (Korean)
 
-Write `code-review-brief.md`. It is user/team-facing and fed to the agents the user runs, so write it in **Korean**. Frontmatter first (schema in `../../references/frontmatter.md`):
+Write `code-review-brief.md`. It is user/team-facing and fed to the reviewing agents, so write it in **Korean**. Frontmatter first (schema in `../../references/frontmatter.md`):
 
 ```yaml
 ---
@@ -107,7 +107,7 @@ Body:
 
 The brief must be **self-contained**: the reviewing agent may not have this plugin or its references installed, so write the working rules **into** the brief (the `## 리뷰 작업 규칙` section) — substitute the real `<owner>/<repo>` and `<N>`. Source the posting recipe from `../../references/inline-review-posting.md` and inline the essentials; never leave a bare pointer the external agent can't open.
 
-What still stays **out** of the brief is **user-orchestration**: which agents the user runs, and the agent→lens split — those go to chat (Step 3), not the document. Keep it tight — a brief, not a report.
+What still stays **out** of the brief is **orchestration**: which agents run it, how they are launched, and the agent→lens split — those go to chat (Step 3), not the document. Keep it tight — a brief, not a report.
 
 Keep the **리뷰 관점 section rough**: a short, non-binding list of starting points, *not* an exhaustive checklist and *never* lenses pinned to specific files/changes. The worry is a narrow brief makes the agent review only what is listed — so explicitly invite it to go beyond. Don't pre-classify each file by lens; let the reviewer decide what matters where. Drop a lens only when it is plainly irrelevant (e.g. UX for a pure build-script PR).
 
@@ -118,8 +118,11 @@ In the **chat** (not the document) tell the user:
 - The brief path (so they can link the reviewing agent to it).
 - A one-line change summary.
 - A suggested **agent→lens split** based on `.flow/config.yaml` `review.agents` — e.g. "Codex = 보안/안정성, Antigravity = UX/퀄리티, Claude Code = 코드 퀄리티". This suggestion lives in the chat only; it is deliberately kept out of the brief.
+- Whether any configured agent has `run: paseo` / `run: agy`. If so, **offer to dispatch it** and wait for the user to confirm — dispatch spends their provider credit, so never fire it unasked.
 
-Do **not** post anything to GitHub yourself. If the user later brings reviewer output back, save it under `artifacts/` and help triage — but the user posts to the PR.
+On confirmation, dispatch per `../../references/multi-llm.md` (Route B): one agent per lens, `--output-schema` for the findings shape, results to `artifacts/code-review-<agent>.json`. Read each once and verify every cited `file:line` against the repo. Without confirmation, this stays Route A — the user runs the agents.
+
+Do **not** post anything to GitHub yourself, in either route. If reviewer output comes back, save it under `artifacts/` and help triage — but the user posts to the PR.
 
 ## Step 4 — Do not commit the brief
 
@@ -127,16 +130,17 @@ Do **not** post anything to GitHub yourself. If the user later brings reviewer o
 
 ## What NOT to do
 
-- **Don't run reviewer CLIs or post PR comments.** Write the brief; the user runs the agents.
+- **Don't post PR comments.** The review lands on the PR by the user's hand, not yours.
+- **Don't shell out to reviewer CLIs directly** (`opencode ...`, `codex ...`). Dispatch only through `paseo run` / `agy -p`, only for agents configured with `run: paseo` / `run: agy`, and only after the user confirms.
 - **Don't auto-merge.**
 - **Don't invent file:line references or change summaries** — read the diff.
-- **Don't put user-orchestration in the brief.** Which agents the user runs and the agent→lens split go to chat — not the document. (The reviewer's *own* working rules, e.g. how to post to the PR, DO belong in the brief — it must be self-contained.)
+- **Don't put orchestration in the brief.** Which agents run it, how they are launched, and the agent→lens split go to chat — not the document. (The reviewer's *own* working rules, e.g. how to post to the PR, DO belong in the brief — it must be self-contained.)
 - **Don't leave bare references the external agent can't open.** Inline the posting rules; the reviewer may not have this plugin.
 - **Don't over-scope the review prompt.** Keep the lenses rough and non-binding; never pin a lens to a specific file/change or present them as an exhaustive checklist — that narrows the reviewer. Drop only plainly-irrelevant lenses.
 
 ## Reference
 
-- New multi-LLM model (brief → user-run agents): `../../references/multi-llm.md`
+- Multi-LLM model (brief + its two execution routes): `../../references/multi-llm.md`
 - Inline review posting mechanics (source for the brief's 작업 규칙 — inline it, don't just link): `../../references/inline-review-posting.md`
 - Frontmatter schema: `../../references/frontmatter.md`
 - Project defaults (`review.agents`, for the chat suggestion): `../../references/config.md`

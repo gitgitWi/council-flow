@@ -97,7 +97,7 @@ Either way, deploy never runs reviewer CLIs or posts comments — once the brief
 
 ## Step 4 — Dispatch the in-harness review lane (in parallel)
 
-Deploy runs in the session where the PR now exists, so it — not `flow:orchestrate` (which has already ended by this point) — is what actually **dispatches the bundled in-harness review lane**. This is an *additive* fast pass that complements the user-run external review the brief sets up; it does not post anything.
+Deploy runs in the session where the PR now exists, so it — not `flow:orchestrate` (which has already ended by this point) — is what actually **dispatches the bundled in-harness review lane**. This is an *additive* fast pass that complements the external review the brief sets up; it does not post anything.
 
 Run these bundled tiers **concurrently** (a lane, not a sequence) against the PR diff:
 
@@ -125,7 +125,7 @@ Once the PR is merged, the task's worktree and any dev-server / e2e / preview-de
 
 - Review brief skill: `../code-review-brief/SKILL.md`
 - Post-task teardown: `../cleanup/SKILL.md`
-- New multi-LLM model (brief → user-run agents): `../../references/multi-llm.md`
+- Multi-LLM model (brief + its two execution routes): `../../references/multi-llm.md`
 - Project defaults (`assignee`/`milestone`/`labels`): `../../references/config.md`
 - Frontmatter schema (`issue` / `issue_role` on `brief.md`): `../../references/frontmatter.md`
 - Why `.flow/tasks/` is never linked from GitHub: `../../references/directory-structure.md` (Git policy)

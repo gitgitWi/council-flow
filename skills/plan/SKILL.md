@@ -108,9 +108,9 @@ If it does, **do not silently re-dispatch.** Ask the user: (a) keep the existing
 
 ### How it works
 
-**The flow agent generates the options itself** — it is the frontier model; it does not dispatch external CLIs. Work each lens above in turn and capture the options directly into `brainstorm.md`.
+**By default the flow agent generates the options itself** — it is the frontier model. Work each lens above in turn and capture the options directly into `brainstorm.md`.
 
-If the user wants **external** diversity, write a short brainstorm brief (the lenses + context, pointing at `prepare.md`/`research.md`) to `artifacts/brainstorm-brief.md`, let the user run their chosen agent(s) against it, save each return as `artifacts/brainstorm-<agent>.md`, and fold them into the synthesis. This is the same brief → user-run-agents model as code-review (see `../../references/multi-llm.md`). Default is Claude-only; reach for external agents only when the stakes justify the round-trip.
+For **external** diversity, write a short brainstorm brief (the lenses + context, pointing at `prepare.md`/`research.md`) to `artifacts/brainstorm-brief.md`. Then either the user runs their chosen agent(s) against it, or — for `review.agents` entries marked `run: paseo` / `run: agy`, and only after the user confirms — this skill dispatches one agent per lens itself. Save each return as `artifacts/brainstorm-<agent>.md` (or `.json` for schema returns) and fold them into the synthesis. Same two-route model as code-review (see `../../references/multi-llm.md`). Default stays Claude-only; reach for external models when the stakes justify the round-trip.
 
 Idempotency: if `brainstorm.md` already exists with `status: active`, don't silently redo it — ask the user to keep it, regenerate (move the old to `artifacts/brainstorm.v<N>.md`), or skip.
 
